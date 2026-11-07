@@ -100,13 +100,20 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   await expect(pagina2.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
   await outro.close();
 
-  // O mesmo CPF não se inscreve duas vezes no evento.
+  // Quem já está inscrito vê o aviso, e o mesmo CPF não se inscreve duas vezes no evento.
   await page.goto('/eventos/simulado-10k-dezembro/inscricao');
-  const r1 = page.getByRole('region', { name: 'Seus dados' });
+  await expect(page.getByText(/Você já está inscrito neste evento/)).toBeVisible();
+  const r1 = page.getByRole('region', { name: 'Participante 1' });
   await r1.getByRole('button', { name: /10 km/ }).click();
   await r1.getByLabel('CPF').fill(cpfCheio);
+  await expect(r1.getByText('Este CPF já está inscrito neste evento')).toBeVisible();
+  await r1.getByLabel('Nome completo').fill('Pedro Teste');
+  await r1.getByLabel('Nascimento').fill('1995-07-20');
+  await r1.getByLabel('Sexo').selectOption('M');
+  await r1.getByLabel('WhatsApp').fill('11988889999');
   await r1.getByLabel('Camisa').selectOption('M');
+  await r1.getByLabel('Contato de emergência').fill('Ana 11977772222');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: /Pagar/ }).click();
-  await expect(page.getByText(/Já existe inscrição neste evento/)).toBeVisible();
+  await expect(page.getByText(/este CPF já está inscrito neste evento\./)).toBeVisible();
 });

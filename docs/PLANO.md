@@ -49,13 +49,13 @@ O protótipo foi aprovado em conversa: `docs/prototipo.html` no repositório e n
 
 A sintaxe do TypeScript é parecida com a do C# (tipos, classes, async/await).
 
-**Atenção na hospedagem:** o plano gratuito da Vercel (Hobby) é para uso não comercial. Ele serve para desenvolver e testar. Antes de receber inscrições pagas de verdade (etapa 4), decidimos entre o Vercel Pro (US$ 20 por mês) e outra hospedagem com plano gratuito que aceite uso comercial, como Netlify ou Cloudflare. O código não muda.
+**Atenção na hospedagem:** o plano gratuito da Vercel (Hobby) é para uso não comercial. Ele serve para desenvolver e testar. Antes de receber inscrições pagas de verdade (etapa 5), decidimos entre o Vercel Pro (US$ 20 por mês) e outra hospedagem com plano gratuito que aceite uso comercial, como Netlify ou Cloudflare. O código não muda.
 
 **Custo mensal estimado no início:** R$ 0 de infraestrutura, mais as taxas do Mercado Pago (cerca de 1% no Pix). Essa taxa fica com o Mercado Pago, não com o site.
 
 ## Receita da plataforma (o que o site ganha)
 
-- **Onde se define:** cada clube tem uma comissão configurada (`clubes.comissao_tipo` em % ou R$, mais `clubes.comissao_valor`). Quem configura é só o dono da plataforma, por um painel de administrador na etapa 6.
+- **Onde se define:** cada clube tem uma comissão configurada (`clubes.comissao_tipo` em % ou R$, mais `clubes.comissao_valor`). Quem configura é só o dono da plataforma, por um painel de administrador na etapa 7.
 - **Como se cobra:** a comissão vai no campo `application_fee` do pagamento no Mercado Pago (modelo marketplace). No mesmo Pix, o valor da comissão cai na conta da plataforma e o resto na conta do clube, sem repasse manual.
 - **Quem paga** (opção por evento, `eventos.taxa_paga_por`):
   - o **atleta**: aparece uma "taxa de serviço" somada ao total;
@@ -180,15 +180,26 @@ Toda página e API confere a permissão no servidor. Esconder um botão não bas
 
 **Pronto quando:** um atleta transferir a inscrição sem chamar a organização.
 
-### Etapa 4: Uso real
+### Etapa 4: Versão para computador
+Hoje todas as telas são desenhadas para o celular (uma coluna estreita, também no computador). Nesta etapa:
+- **Página do evento:** em tela larga, a imagem e as informações ficam lado a lado, e o resumo com o botão "Inscrever-se" fica fixo na lateral.
+- **Formulário:** os participantes ocupam a coluna principal, e o resumo do pedido (total, cupom, pagar) fica fixo na lateral.
+- **Tela do Pix:** o QR code aparece grande ao lado das instruções, para quem paga escaneando a tela do computador com o celular.
+- **Painel do organizador:** tabela de inscritos larga, com mais colunas visíveis, filtros na lateral e atalhos de teclado na busca.
+- **Página inicial:** grade de eventos em vez de lista.
+- O celular continua sendo a prioridade: nada muda no layout atual de telas pequenas.
+
+**Pronto quando:** o fluxo inteiro (evento → inscrição → Pix → painel) ficar bom num monitor de 1366 px ou mais, e o teste automático rodar também nesse tamanho de tela.
+
+### Etapa 5: Uso real
 - Decidir a hospedagem comercial.
 - Configurar o Mercado Pago de produção e o Resend com remetente próprio.
 - Rodar um simulado real e ajustar o que aparecer.
 
-### Etapa 5: Extras, conforme a necessidade
+### Etapa 6: Extras, conforme a necessidade
 Cartão de crédito, check-in no dia com QR code, lotes de preço por data, cupons avançados e duplicar evento.
 
-### Etapa 6: Outros clubes
+### Etapa 7: Outros clubes
 - Cadastro de clubes.
 - Cada clube conecta o próprio Mercado Pago, com a comissão automática da plataforma (`application_fee`).
 - Página do clube.

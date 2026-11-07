@@ -4,9 +4,9 @@
  * Ações chamadas pelas telas (Server Actions). Todas rodam no servidor.
  */
 import { redirect } from 'next/navigation';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
-import { cupons, eventos, socios } from '@/db/schema';
+import { cupons, eventos, inscricoes, socios } from '@/db/schema';
 import { solicitarCodigo, verificarCodigo } from '@/lib/auth/codigo-email';
 import { encerrarSessao, usuarioAtual } from '@/lib/auth/sessao';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
@@ -34,15 +34,28 @@ export async function sairAcao(): Promise<void> {
   redirect('/');
 }
 
-/** Diz se o CPF está na lista de sócios do clube do evento (só quando o evento tem preço de sócio). */
-export async function verificarSocioAcao(eventoId: string, cpf: string): Promise<boolean> {
-  if (!(await usuarioAtual())) return false;
+/**
+ * Para o formulário: o CPF é sócio do clube (se o evento tiver preço de sócio)?
+ * Já tem inscrição ativa neste evento? (o servidor bloqueia de novo ao pagar)
+ */
+export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{ socio: boolean; jaInscrito: boolean }> {
+  const nada = { socio: false, jaInscrito: false };
+  if (!(await usuarioAtual())) return nada;
   const limpo = limparCpf(cpf);
-  if (!validarCpf(limpo)) return false;
+  if (!validarCpf(limpo)) return nada;
   const [evento] = await db.select({ clubeId: eventos.clubeId, ativo: eventos.precoSocioAtivo }).from(eventos).where(eq(eventos.id, eventoId));
-  if (!evento?.ativo) return false;
-  const [achado] = await db.select({ cpf: socios.cpf }).from(socios).where(and(eq(socios.clubeId, evento.clubeId), eq(socios.cpf, limpo)));
-  return !!achado;
+  if (!evento) return nada;
+  const [inscrito] = await db
+    .select({ id: inscricoes.id })
+    .from(inscricoes)
+    .where(and(eq(inscricoes.eventoId, eventoId), eq(inscricoes.cpf, limpo), inArray(inscricoes.status, ['pendente', 'confirmada'])))
+    .limit(1);
+  let socio = false;
+  if (evento.ativo) {
+    const [achado] = await db.select({ cpf: socios.cpf }).from(socios).where(and(eq(socios.clubeId, evento.clubeId), eq(socios.cpf, limpo)));
+    socio = !!achado;
+  }
+  return { socio, jaInscrito: !!inscrito };
 }
 
 export type CupomValidado = { ok: true; codigo: string; tipo: 'percentual' | 'valor'; valor: number } | { ok: false; erro: string };

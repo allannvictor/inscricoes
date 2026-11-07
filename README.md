@@ -13,7 +13,9 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 |---|---|
 | 1. Inscrição com Pix | **Pronta para teste**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
 | 2. Painel do organizador | A fazer. Por enquanto o evento é criado pelo `npm run db:seed` |
-| 3 a 6 | A fazer |
+| 3. Área do atleta | A fazer |
+| 4. Versão para computador | A fazer |
+| 5 a 7 | A fazer (uso real, extras, outros clubes) |
 
 ## Stack
 

@@ -170,11 +170,14 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   }
 
   // 7. Guarda os dados do participante 1 ("Você") na conta, para a próxima inscrição vir preenchida.
+  //    Se a conta já tem outro CPF (a pessoa está inscrevendo outra pessoa), não sobrescreve.
   const eu = participantes[0];
-  await db
-    .update(usuarios)
-    .set({ nome: eu.nome, cpf: eu.cpf, nascimento: eu.nascimento, sexo: eu.sexo, telefone: eu.telefone, camisa: eu.camisa || null, contatoEmergencia: eu.contatoEmergencia })
-    .where(eq(usuarios.id, usuario.id));
+  if (!usuario.cpf || usuario.cpf === eu.cpf) {
+    await db
+      .update(usuarios)
+      .set({ nome: eu.nome, cpf: eu.cpf, nascimento: eu.nascimento, sexo: eu.sexo, telefone: eu.telefone, camisa: eu.camisa || null, contatoEmergencia: eu.contatoEmergencia })
+      .where(eq(usuarios.id, usuario.id));
+  }
 
   // 8. Pedido gratuito (ex.: cupom de 100%) confirma na hora.
   if (calculo.total === 0) {

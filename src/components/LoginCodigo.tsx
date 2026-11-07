@@ -65,7 +65,7 @@ export function LoginCodigo({ destino }: { destino: string }) {
             <label htmlFor="codigo">Código</label>
             <input
               id="codigo"
-              className="entrada num text-center font-display text-2xl font-bold tracking-[.3em]"
+              className="entrada num h-14 text-center font-display text-2xl font-bold tracking-[.3em]"
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}

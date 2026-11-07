@@ -42,17 +42,17 @@ export function calcularPedido(args: {
 }): ResultadoPedido {
   const base = args.participantes.map((p) => {
     const d = args.distancias.find((x) => x.id === p.distanciaId);
-    if (!d) return { distanciaId: p.distanciaId, valor: 0, motivo: null as MotivoDesconto, categoria: null };
+    const cat =
+      args.usaCategoria && p.sexo && /^\d{4}-\d{2}-\d{2}$/.test(p.nascimento)
+        ? categoria(p.nascimento, p.sexo, args.dataEvento)
+        : null;
+    if (!d) return { distanciaId: p.distanciaId, valor: 0, motivo: null as MotivoDesconto, categoria: cat };
     const preco = precoParticipante(d, {
       precoSocioAtivo: args.precoSocioAtivo,
       ehSocio: args.cpfsSocios.has(limparCpf(p.cpf)),
       nascimento: p.nascimento,
       dataInscricao: args.dataInscricao,
     });
-    const cat =
-      args.usaCategoria && p.sexo && /^\d{4}-\d{2}-\d{2}$/.test(p.nascimento)
-        ? categoria(p.nascimento, p.sexo, args.dataEvento)
-        : null;
     return { distanciaId: p.distanciaId, valor: preco.valor, motivo: preco.motivo, categoria: cat };
   });
   const subtotal = base.reduce((s, i) => s + i.valor, 0);

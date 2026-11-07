@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { criarPedidoAcao, validarCupomAcao, verificarSocioAcao } from '@/app/acoes';
+import { criarPedidoAcao, validarCupomAcao, verificarCpfAcao } from '@/app/acoes';
 import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { nascimentoValido } from '@/lib/regras/datas';
 import { calcularPedido } from '@/lib/regras/pedido';
@@ -30,6 +30,8 @@ interface Props {
   hoje: string;
   emailConta: string;
   perfil: Omit<Participante, 'distanciaId' | 'email'>;
+  /** Inscrição ativa do dono da conta neste evento, se houver. */
+  jaInscrito: { numero: number | null; pago: boolean; pedidoId: string | null } | null;
 }
 
 const vazio = (): Participante => ({ distanciaId: '', nome: '', cpf: '', email: '', nascimento: '', sexo: '', telefone: '', camisa: '', contatoEmergencia: '' });
@@ -42,12 +44,15 @@ function mascaraTelefone(v: string): string {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil }: Props) {
+export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito }: Props) {
   const router = useRouter();
   const [participantes, setParticipantes] = useState<Participante[]>([
-    { ...vazio(), ...perfil, cpf: perfil.cpf ? formatarCpf(perfil.cpf) : '', distanciaId: distancias.length === 1 ? distancias[0].id : '' },
+    // Se a pessoa já está inscrita, o formulário começa vazio (para inscrever outra pessoa).
+    jaInscrito
+      ? { ...vazio(), distanciaId: distancias.length === 1 ? distancias[0].id : '' }
+      : { ...vazio(), ...perfil, cpf: perfil.cpf ? formatarCpf(perfil.cpf) : '', distanciaId: distancias.length === 1 ? distancias[0].id : '' },
   ]);
-  const [socios, setSocios] = useState<Record<string, boolean>>({});
+  const [infoCpf, setInfoCpf] = useState<Record<string, { socio: boolean; jaInscrito: boolean }>>({});
   const [cupomTxt, setCupomTxt] = useState('');
   const [cupom, setCupom] = useState<{ codigo: string; tipo: 'percentual' | 'valor'; valor: number } | null>(null);
   const [cupomMsg, setCupomMsg] = useState<string | null>(null);
@@ -55,18 +60,19 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
   const [erros, setErros] = useState<string[]>([]);
   const [enviando, iniciar] = useTransition();
 
-  // Pergunta ao servidor se cada CPF válido é sócio (só se o evento tiver preço de sócio).
+  // Pergunta ao servidor, para cada CPF válido: é sócio? já está inscrito neste evento?
   const cpfsValidos = participantes.map((p) => limparCpf(p.cpf)).filter(validarCpf);
   const chaveCpfs = cpfsValidos.join(',');
   useEffect(() => {
-    if (!evento.precoSocioAtivo) return;
-    const faltam = chaveCpfs.split(',').filter((c) => c && !(c in socios));
+    const faltam = chaveCpfs.split(',').filter((c) => c && !(c in infoCpf));
     faltam.forEach((cpf) => {
-      verificarSocioAcao(evento.id, cpf).then((eh) => setSocios((s) => ({ ...s, [cpf]: eh })));
+      verificarCpfAcao(evento.id, cpf).then((info) => setInfoCpf((s) => ({ ...s, [cpf]: info })));
     });
-  }, [chaveCpfs, evento.id, evento.precoSocioAtivo, socios]);
+  }, [chaveCpfs, evento.id, infoCpf]);
 
-  const cpfsSocios = useMemo(() => new Set(Object.entries(socios).filter(([, v]) => v).map(([k]) => k)), [socios]);
+  const cpfsSocios = useMemo(() => new Set(Object.entries(infoCpf).filter(([, v]) => v.socio).map(([k]) => k)), [infoCpf]);
+  const cpfJaInscrito = (cpf: string) => !!infoCpf[limparCpf(cpf)]?.jaInscrito;
+  const faltaDistancia = participantes.some((p) => !p.distanciaId);
   const calculo = calcularPedido({
     participantes: participantes.map((p) => ({ distanciaId: p.distanciaId, cpf: p.cpf, nascimento: p.nascimento, sexo: p.sexo })),
     distancias,
@@ -99,6 +105,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
       const falta: string[] = [];
       if (!p.distanciaId) falta.push('distância');
       if (!validarCpf(p.cpf)) falta.push('CPF válido');
+      else if (cpfJaInscrito(p.cpf)) lista.push(`${quem}: este CPF já está inscrito neste evento.`);
       if (p.nome.trim().length < 3) falta.push('nome');
       if (!nascimentoValido(p.nascimento, hoje)) falta.push('nascimento');
       if (!p.sexo) falta.push('sexo');
@@ -142,6 +149,16 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
         <span className="text-sm text-suave">Inscrevendo com a conta {emailConta}. Adicione outras pessoas no fim da página.</span>
       </div>
 
+      {jaInscrito && (
+        <div className="cartao border-ok bg-ok-fundo">
+          <b>{jaInscrito.pago ? `Você já está inscrito neste evento${jaInscrito.numero ? ` (nº ${jaInscrito.numero})` : ''}.` : 'Você já tem uma inscrição aguardando o Pix neste evento.'}</b>
+          {jaInscrito.pedidoId && (
+            <a className="link self-start" href={`/pedidos/${jaInscrito.pedidoId}`}>{jaInscrito.pago ? 'Ver minha inscrição' : 'Ir para o pagamento'}</a>
+          )}
+          <span className="text-sm">Para inscrever outra pessoa, preencha os dados dela abaixo.</span>
+        </div>
+      )}
+
       {erros.length > 0 && (
         <div className="erros" role="alert">
           <b>Falta pouco:</b>
@@ -156,11 +173,11 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
         const item = calculo.itens[i];
         const id = (campo: string) => `${campo}-${i}`;
         return (
-          <section key={i} className="cartao" aria-label={i === 0 ? 'Seus dados' : `Participante ${i + 1}`}>
+          <section key={i} className="cartao" aria-label={i === 0 && !jaInscrito ? 'Seus dados' : `Participante ${i + 1}`}>
             <div className="flex items-center justify-between">
               <h2 className="titulo-3 flex items-center gap-2">
                 <span className="rounded-md bg-tinta px-2 font-display font-extrabold text-white">{i + 1}</span>
-                {i === 0 ? 'Você' : `Participante ${i + 1}`}
+                {i === 0 && !jaInscrito ? 'Você' : `Participante ${i + 1}`}
               </h2>
               {i > 0 && (
                 <button type="button" className="link text-sm" onClick={() => setParticipantes((l) => l.filter((_, j) => j !== i))}>Remover</button>
@@ -189,6 +206,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
                 {cpfLimpo.length === 11 && !validarCpf(cpfLimpo) && <span className="selo selo-erro">CPF inválido</span>}
                 {ehSocio && <span className="selo selo-ok">Sócio do clube · preço de sócio</span>}
                 {repetido && <span className="selo selo-erro">CPF repetido neste pedido</span>}
+                {cpfJaInscrito(p.cpf) && <span className="selo selo-erro">Este CPF já está inscrito neste evento</span>}
               </div>
             </div>
 
@@ -309,7 +327,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
 
       <div className="fixo-baixo">
         <button type="button" className="botao botao-primario w-full" disabled={enviando} onClick={pagar}>
-          {enviando ? 'Gerando Pix…' : `Pagar ${formatarReais(calculo.total)} com Pix`}
+          {enviando ? 'Gerando Pix…' : faltaDistancia ? 'Escolha a distância para continuar' : `Pagar ${formatarReais(calculo.total)} com Pix`}
         </button>
       </div>
     </div>
