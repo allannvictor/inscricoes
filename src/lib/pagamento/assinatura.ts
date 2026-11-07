@@ -13,10 +13,12 @@ export function assinaturaValida(args: { xSignature: string | null; xRequestId: 
     }),
   );
   if (!partes.ts || !partes.v1) return false;
-  const id = /^[a-z0-9]+$/i.test(args.dataId) ? args.dataId.toLowerCase() : args.dataId;
-  let manifesto = `id:${id};`;
-  if (args.xRequestId) manifesto += `request-id:${args.xRequestId};`;
-  manifesto += `ts:${partes.ts};`;
-  const esperado = createHmac('sha256', args.segredo).update(manifesto).digest('hex');
-  return esperado === partes.v1;
+  const calcular = (id: string) => {
+    let manifesto = `id:${id};`;
+    if (args.xRequestId) manifesto += `request-id:${args.xRequestId};`;
+    manifesto += `ts:${partes.ts};`;
+    return createHmac('sha256', args.segredo).update(manifesto).digest('hex');
+  };
+  // O SDK oficial usa o id como veio; a documentação antiga pedia minúsculas. Aceitamos os dois.
+  return [args.dataId, args.dataId.toLowerCase()].some((id) => calcular(id) === partes.v1);
 }

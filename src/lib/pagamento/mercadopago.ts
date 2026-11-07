@@ -1,31 +1,27 @@
 import 'server-only';
-import type { ConsultaPagamento, CriarPixEntrada, DadosPix, ProvedorPagamento, StatusPagamento } from './tipos';
+import { traduzirStatusOrder } from './status-order';
+import type { ConsultaPagamento, CriarPixEntrada, DadosPix, ProvedorPagamento } from './tipos';
 
 /**
- * Mercado Pago: Pix pela API de Pagamentos (Checkout Transparente).
- * Docs: https://www.mercadopago.com.br/developers/pt/reference/payments/_payments/post
+ * Mercado Pago: Pix pela API de Orders (Checkout Transparente).
+ * Docs: https://www.mercadopago.com.br/developers/pt/docs/checkout-api-orders/payment-integration/pix
+ *
+ * Guardamos o id da order (ex.: "ORD01H...") em pedidos.pagamento_id. A confirmação chega pelo
+ * webhook do tópico "Order" e também pela consulta GET /v1/orders/{id} que a tela do Pix faz.
  */
 
 const API = 'https://api.mercadopago.com';
 
-/** Data no formato que o Mercado Pago aceita, no fuso de Brasília: 2026-12-01T10:30:00.000-03:00 */
-export function dataMercadoPago(d: Date): string {
-  const local = new Date(d.getTime() - 3 * 60 * 60 * 1000);
-  return local.toISOString().replace('Z', '-03:00');
-}
+/** Tempo para pagar o Pix, em duração ISO 8601. O Mercado Pago aceita de 30 minutos a 30 dias. */
+export const VALIDADE_PIX = 'PT30M';
 
-function traduzirStatus(s: string): StatusPagamento {
-  if (s === 'approved') return 'aprovado';
-  if (s === 'rejected') return 'recusado';
-  if (s === 'cancelled' || s === 'refunded' || s === 'charged_back') return 'cancelado';
-  return 'pendente';
-}
+const reais = (centavos: number) => (centavos / 100).toFixed(2);
 
-export function criarMercadoPago(accessToken: string, appUrl: string | undefined): ProvedorPagamento {
+export function criarMercadoPago(accessToken: string): ProvedorPagamento {
   async function chamar(caminho: string, init: RequestInit = {}) {
     const resposta = await fetch(API + caminho, {
       ...init,
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', accept: 'application/json', ...(init.headers ?? {}) },
       cache: 'no-store',
     });
     const corpo = await resposta.json().catch(() => ({}));
@@ -40,38 +36,38 @@ export function criarMercadoPago(accessToken: string, appUrl: string | undefined
     nome: 'mercadopago',
     async criarPix(e: CriarPixEntrada): Promise<DadosPix> {
       const [primeiro, ...resto] = e.comprador.nome.trim().split(/\s+/);
-      const corpo: Record<string, unknown> = {
-        transaction_amount: e.totalCentavos / 100,
-        description: e.descricao.slice(0, 250),
-        payment_method_id: 'pix',
-        external_reference: e.pedidoId,
-        date_of_expiration: dataMercadoPago(e.expiraEm),
-        payer: {
-          email: e.comprador.email,
-          first_name: primeiro ?? '',
-          last_name: resto.join(' '),
-          identification: { type: 'CPF', number: e.comprador.cpf },
-        },
-      };
-      // O Mercado Pago só aceita notification_url pública em https.
-      if (appUrl?.startsWith('https://')) corpo.notification_url = `${appUrl}/api/webhooks/mercadopago`;
-      const r = await chamar('/v1/payments', {
+      const total = reais(e.totalCentavos);
+      const order = await chamar('/v1/orders', {
         method: 'POST',
         headers: { 'X-Idempotency-Key': e.pedidoId },
-        body: JSON.stringify(corpo),
+        body: JSON.stringify({
+          type: 'online',
+          processing_mode: 'automatic',
+          total_amount: total,
+          external_reference: e.pedidoId,
+          transactions: {
+            payments: [{ amount: total, payment_method: { id: 'pix', type: 'bank_transfer' }, expiration_time: VALIDADE_PIX }],
+          },
+          payer: {
+            email: e.comprador.email,
+            first_name: primeiro ?? '',
+            last_name: resto.join(' '),
+            identification: { type: 'CPF', number: e.comprador.cpf },
+          },
+        }),
       });
-      const t = r.point_of_interaction?.transaction_data ?? {};
-      if (!t.qr_code) throw new Error('O Mercado Pago não devolveu o código Pix.');
-      return { pagamentoId: String(r.id), copiaECola: t.qr_code, qrBase64: t.qr_code_base64 ?? '' };
+      const metodo = order.transactions?.payments?.[0]?.payment_method ?? {};
+      if (!order.id || !metodo.qr_code) throw new Error('O Mercado Pago não devolveu o código Pix.');
+      return { pagamentoId: String(order.id), copiaECola: metodo.qr_code, qrBase64: metodo.qr_code_base64 ?? '' };
     },
-    async consultar(pagamentoId: string): Promise<ConsultaPagamento> {
-      const r = await chamar(`/v1/payments/${encodeURIComponent(pagamentoId)}`);
-      const taxa = Array.isArray(r.fee_details) ? r.fee_details.reduce((s: number, f: { amount: number }) => s + (f.amount ?? 0), 0) : null;
+    async consultar(orderId: string): Promise<ConsultaPagamento> {
+      const order = await chamar(`/v1/orders/${encodeURIComponent(orderId)}`);
+      const pago = Number(order.total_paid_amount ?? (order.status === 'processed' ? order.total_amount : 0));
       return {
-        status: traduzirStatus(r.status),
-        pedidoId: r.external_reference ?? null,
-        valorCentavos: Math.round(Number(r.transaction_amount ?? 0) * 100),
-        taxaCentavos: taxa == null ? null : Math.round(taxa * 100),
+        status: traduzirStatusOrder(order.status, order.status_detail),
+        pedidoId: order.external_reference ?? null,
+        valorCentavos: Math.round(pago * 100),
+        taxaCentavos: null, // a API de Orders não informa a taxa aqui; aparece no extrato do Mercado Pago
       };
     },
   };

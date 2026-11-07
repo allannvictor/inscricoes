@@ -22,7 +22,7 @@ export function modoSimulado(clube: { mpAccessToken: string | null }): boolean {
 
 export function provedorDoClube(clube: { mpAccessToken: string | null }): ProvedorPagamento {
   const t = token(clube);
-  if (t) return criarMercadoPago(t, process.env.APP_URL);
+  if (t) return criarMercadoPago(t);
   if (simuladoPermitido()) return provedorSimulado;
   throw new Error('Pagamento ainda não configurado para este clube.');
 }

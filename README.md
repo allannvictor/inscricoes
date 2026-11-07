@@ -86,9 +86,9 @@ Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver 
 
 ## Mercado Pago
 
-1. Em [mercadopago.com.br/developers](https://www.mercadopago.com.br/developers) → **Suas integrações** → **Criar aplicação** (pagamentos online, Checkout Transparente).
+1. Em [mercadopago.com.br/developers](https://www.mercadopago.com.br/developers) → **Suas integrações** → **Criar aplicação** → **Checkout Transparente** → tipo de API **Orders**.
 2. Em **Credenciais de teste** copie o *Access Token* para `MP_ACCESS_TOKEN`. Para cobrar de verdade, use o de **produção**.
-3. Em **Webhooks**, cadastre `https://SEU-SITE/api/webhooks/mercadopago` com o evento **Pagamentos**, e copie a chave secreta para `MP_WEBHOOK_SECRET`.
+3. Em **Webhooks**, cadastre `https://SEU-SITE/api/webhooks/mercadopago` com o tópico **Order**, e copie a chave secreta para `MP_WEBHOOK_SECRET`.
    - O webhook só funciona com o site publicado (https).
    - Localmente, a tela do Pix consulta o Mercado Pago a cada 5 segundos, então a confirmação funciona mesmo sem webhook.
 

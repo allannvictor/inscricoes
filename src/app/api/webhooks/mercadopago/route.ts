@@ -6,15 +6,17 @@ import { assinaturaValida } from '@/lib/pagamento/assinatura';
 import { sincronizarPagamento } from '@/lib/pedidos/servico';
 
 /**
- * Webhook do Mercado Pago (Suas integrações > Webhooks > evento "Pagamentos").
+ * Webhook do Mercado Pago (Suas integrações > Webhooks > tópico "Order").
  * Nunca confiamos no conteúdo da notificação: buscamos o pagamento de novo na API antes de confirmar.
  */
 export async function POST(req: Request) {
   const url = new URL(req.url);
   const corpo = await req.json().catch(() => ({}) as Record<string, unknown>);
   const tipo = (corpo.type as string) ?? url.searchParams.get('type') ?? url.searchParams.get('topic');
-  const dataId = String((corpo.data as { id?: string } | undefined)?.id ?? url.searchParams.get('data.id') ?? url.searchParams.get('id') ?? '');
-  if (tipo !== 'payment' || !dataId) return NextResponse.json({ ok: true });
+  // A assinatura usa o data.id da URL; o corpo é só reserva.
+  const dataId = String(url.searchParams.get('data.id') ?? (corpo.data as { id?: string } | undefined)?.id ?? url.searchParams.get('id') ?? '');
+  // Usamos a API de Orders (tópico "order"); "payment" fica aceito por compatibilidade.
+  if (!['order', 'payment'].includes(tipo ?? '') || !dataId) return NextResponse.json({ ok: true });
 
   const segredo = process.env.MP_WEBHOOK_SECRET;
   if (segredo && !assinaturaValida({ xSignature: req.headers.get('x-signature'), xRequestId: req.headers.get('x-request-id'), dataId, segredo })) {
