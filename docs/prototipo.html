@@ -169,6 +169,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .org-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .org-nav button { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .88rem; }
 .org-nav button[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.cover { aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); }
+.cover img, .cover svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.1rem; flex: none; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar.lg { width: 96px; height: 96px; font-size: 2rem; }
+.organizer { display: flex; gap: 12px; align-items: center; }
+.upload { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.upload .cover { width: 240px; }
+.upload .stack { flex: 1; min-width: 200px; }
 .crumb { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
 .ev-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
 .ev-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; font-weight: 600; cursor: pointer; color: var(--muted); white-space: nowrap; }
@@ -248,7 +257,7 @@ const SCREENS = {
   ],
   org: [
     ['org-eventos', 'Meus eventos'], ['org-inscritos', 'Evento › Inscritos'], ['org-editar', 'Evento › Editar'],
-    ['org-cupons', 'Evento › Cupons'], ['org-novo', 'Novo evento'], ['org-socios', 'Sócios (CPFs)'], ['org-pagamento', 'Mercado Pago']
+    ['org-cupons', 'Evento › Cupons'], ['org-novo', 'Novo evento'], ['org-socios', 'Sócios (CPFs)'], ['org-perfil', 'Perfil do clube'], ['org-pagamento', 'Mercado Pago']
   ]
 };
 
@@ -271,14 +280,14 @@ function freshState() {
   return {
     logged: false, email: '', codeSent: false, code: '',
     parts: [], cupom: null, cupomTxt: '', cupomMsg: '', aceite: false, errors: [],
-    pedido: null, pay: 'pix',
+    pedido: null, pay: 'pix', capa: null,
     minhas: [],
     transferIdx: 0, transferDone: false,
     org: {
       inscritos: seedInscritos(), fDist: '', fStatus: '', busca: '', cancelConfirm: null,
       socios: Object.entries(SOCIOS).map(([cpf, nome]) => ({ cpf, nome })).concat([{ cpf: '33333333333', nome: 'Diego Martins' }, { cpf: '44444444444', nome: 'Camila Rocha' }]),
       sociosTxt: '', cupons: [{ cod: 'AMIGO10', desc: '10% de desconto', usos: 3, max: 20 }, { cod: 'PARCEIRO', desc: 'R$ 10 de desconto', usos: 1, max: 10 }],
-      distEdit: EV.dists.map(d => ({ ...d })), distNovo: [{ id: 'n1', nome: '', preco: 0, socio: 0, vagas: 0 }], camisa: true, faixa: true, mp: true, taxa: 'clube'
+      distEdit: EV.dists.map(d => ({ ...d })), distNovo: [{ id: 'n1', nome: '', preco: 0, socio: 0, vagas: 0 }], capaNovo: null, foto: null, perfilNome: EV.clube, perfilInsta: '@cfassessoriaesportiva', camisa: true, faixa: true, mp: true, taxa: 'clube'
     }
   };
 }
@@ -303,6 +312,9 @@ function totais() {
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
 function go(screen) { if (location.hash.slice(1) === screen) render(); else location.hash = screen; }
+const COVER_PLACEHOLDER = `<svg viewBox="0 0 160 90" role="img" aria-label="Imagem de exemplo do evento"><rect width="160" height="90" fill="#dde5ef"/><circle cx="124" cy="26" r="9" fill="#f5f6f8"/><path d="M0 60 Q40 48 80 56 T160 50 V90 H0Z" fill="#bccadb"/><path d="M71 90 L78.5 56 L81.5 56 L89 90Z" fill="#8e9db1"/><path d="M80 60v3M80 68v5M80 79v7" stroke="#ffffff" stroke-width="1"/><text x="8" y="14" font-size="6.5" fill="#5f6670" font-family="sans-serif">Imagem de exemplo</text></svg>`;
+function coverHtml(src) { return `<div class="cover">${src ? `<img src="${src}" alt="Imagem do evento">` : COVER_PLACEHOLDER}</div>`; }
+function avatarHtml(src, big) { return `<div class="avatar${big ? ' lg' : ''}">${src ? `<img src="${src}" alt="Foto do organizador">` : 'CF'}</div>`; }
 function note(title, items) { return `<details class="note"><summary>Para discutir: ${title}</summary><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></details>`; }
 function emptyPart() { return { nome: '', cpf: '', email: '', nasc: '', sexo: '', tel: '', camisa: '', emerg: '', dist: '' }; }
 
@@ -313,6 +325,7 @@ function scrEvento() {
       <div><div class="price num">${brl(d.preco)}</div><div class="socio num">sócio ${brl(d.socio)}</div></div>
     </div>`).join('');
   return `<div class="phone">
+    ${coverHtml(S.capa)}
     <section class="hero">
       <span class="club">${EV.clube} · simulado</span>
       <h1>${EV.nome}</h1>
@@ -331,9 +344,14 @@ function scrEvento() {
     <section class="card">
       <h3>Kit</h3><p>${EV.kit}.</p>
       <h3>Transferência</h3><p>Não há reembolso, mas você pode transferir sua inscrição para outra pessoa ${EV.transf}.</p>
-      <div class="row"><button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento em PDF">Ver regulamento</button><span class="muted">·</span><button class="link" type="button" data-action="toast" data-msg="Abriria o WhatsApp do organizador">Falar com a organização</button></div>
+      <button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento em PDF" style="align-self:flex-start">Ver regulamento</button>
     </section>
-    ${note('página do evento', ['Só o essencial antes do botão: data, local, distâncias e preço. O limite de vagas existe, mas não aparece para o atleta; quando esgota, a distância mostra "Esgotada".', 'Texto longo (regulamento, percurso) fica em links, não na página.', 'Mostrar o preço de sócio aqui ou só no formulário?'])}
+    <section class="card">
+      <span class="label">Organização</span>
+      <div class="organizer">${avatarHtml(S.org.foto)}<div class="stack" style="gap:2px"><b>${esc(S.org.perfilNome)}</b><span class="small muted">${esc(S.org.perfilInsta)}</span></div></div>
+      <button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria o WhatsApp do organizador" style="align-self:flex-start">Falar no WhatsApp</button>
+    </section>
+    ${note('página do evento', ['A imagem do evento também aparece quando o link é enviado no WhatsApp.','Só o essencial antes do botão: data, local, distâncias e preço. O limite de vagas existe, mas não aparece para o atleta; quando esgota, a distância mostra "Esgotada".', 'Texto longo (regulamento, percurso) fica em links, não na página.', 'Mostrar o preço de sócio aqui ou só no formulário?'])}
     <div class="sticky-cta"><button class="btn btn-primary btn-block" type="button" data-action="start">Inscrever-se</button></div>
   </div>`;
 }
@@ -519,9 +537,9 @@ function scrTransferir() {
 
 // ---------- Telas do organizador ----------
 function orgNav(cur) {
-  const tabs = [['org-eventos', 'Eventos'], ['org-socios', 'Sócios'], ['org-pagamento', 'Mercado Pago']];
+  const tabs = [['org-eventos', 'Eventos'], ['org-socios', 'Sócios'], ['org-perfil', 'Perfil do clube'], ['org-pagamento', 'Mercado Pago']];
   const top = ['org-inscritos', 'org-editar', 'org-cupons', 'org-novo'].includes(cur) ? 'org-eventos' : cur;
-  return `<div class="row between"><div><span class="label">${EV.clube}</span><h2>Painel do organizador</h2></div><span class="small muted">organizador@exemplo.com</span></div>
+  return `<div class="row between"><div class="organizer">${avatarHtml(S.org.foto)}<div><span class="label">${esc(S.org.perfilNome)}</span><h2>Painel do organizador</h2></div></div><span class="small muted">organizador@exemplo.com</span></div>
   <nav class="org-nav" aria-label="Seções do painel">${tabs.map(([k, l]) => `<button type="button" data-action="goto" data-to="${k}" ${k === top ? 'aria-current="page"' : ''}>${l}</button>`).join('')}</nav>`;
 }
 function evHeader(cur) {
@@ -615,6 +633,13 @@ function scrOrgEditar(novo) {
         <div class="field"><label for="ev-transf">Transferência até</label><input class="input" id="ev-transf" type="date" value="${v('2026-12-06')}"></div>
       </div>
       <div class="field"><label for="ev-kit">Kit e informações</label><textarea class="input" id="ev-kit" rows="3">${v(EV.kit + '.')}</textarea></div>
+      <div class="field"><span class="label">Imagem do evento</span>
+        <div class="upload">${coverHtml(novo ? o.capaNovo : S.capa)}
+          <div class="stack"><label class="btn btn-ghost btn-sm" for="ev-capa" style="align-self:flex-start">${(novo ? o.capaNovo : S.capa) ? 'Trocar imagem' : 'Enviar imagem'}</label>
+          <input id="ev-capa" type="file" accept="image/*" data-upload="${novo ? 'capaNovo' : 'capa'}" hidden>
+          <span class="hint">Formato deitado (16:9), por exemplo 1200 × 675. Aparece no topo da página e na prévia do link no WhatsApp.</span></div>
+        </div>
+      </div>
       <div class="field"><label for="ev-reg">Regulamento (PDF)</label><input class="input" id="ev-reg" type="file" accept="application/pdf"></div>
     </section>
     <section class="card"><h3>Distâncias e preços</h3>${dr}
@@ -661,6 +686,27 @@ function scrOrgSocios() {
   </div>`;
 }
 
+function scrOrgPerfil() {
+  const o = S.org;
+  return `<div class="wide">${orgNav('org-perfil')}
+    <section class="card"><h3>Perfil do clube</h3>
+      <div class="upload">${avatarHtml(o.foto, true)}
+        <div class="stack"><label class="btn btn-ghost btn-sm" for="pf-foto" style="align-self:flex-start">${o.foto ? 'Trocar foto' : 'Enviar foto ou logo'}</label>
+        <input id="pf-foto" type="file" accept="image/*" data-upload="foto" hidden>
+        <span class="hint">Quadrada, por exemplo 400 × 400. Aparece na página de todos os eventos do clube.</span></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="pf-nome">Nome do clube ou organizador</label><input class="input" id="pf-nome" value="${esc(o.perfilNome)}" data-bind="org-perfilNome"></div>
+        <div class="field"><label for="pf-whats">WhatsApp para dúvidas</label><input class="input" id="pf-whats" inputmode="tel" value="(00) 99999-0000"></div>
+        <div class="field"><label for="pf-insta">Instagram</label><input class="input" id="pf-insta" value="${esc(o.perfilInsta)}" data-bind="org-perfilInsta"></div>
+        <div class="field"><label for="pf-email">E-mail de contato</label><input class="input" id="pf-email" type="email" value="contato@exemplo.com"></div>
+      </div>
+      <div class="row"><button class="btn btn-primary btn-sm" type="button" data-action="toast" data-msg="Perfil salvo">Salvar</button><button class="btn btn-ghost btn-sm" type="button" data-action="goto" data-to="evento">Ver na página do evento</button></div>
+    </section>
+    ${note('perfil', ['Foto ou logo? A maioria dos clubes usa o logo; um organizador individual usaria a foto.', 'Com vários clubes, cada um terá também uma página própria listando seus eventos.'])}
+  </div>`;
+}
+
 function scrOrgPagamento() {
   const o = S.org;
   return `<div class="wide">${orgNav('org-pagamento')}
@@ -684,7 +730,7 @@ function scrOrgPagamento() {
 }
 
 // ---------- Render ----------
-const RENDER = { evento: scrEvento, entrar: scrEntrar, participantes: scrParticipantes, pix: scrPix, confirmado: scrConfirmado, minhas: scrMinhas, transferir: scrTransferir, 'org-eventos': scrOrgEventos, 'org-inscritos': scrOrgInscritos, 'org-editar': scrOrgEditar, 'org-novo': scrOrgNovo, 'org-cupons': scrOrgCupons, 'org-socios': scrOrgSocios, 'org-pagamento': scrOrgPagamento };
+const RENDER = { evento: scrEvento, entrar: scrEntrar, participantes: scrParticipantes, pix: scrPix, confirmado: scrConfirmado, minhas: scrMinhas, transferir: scrTransferir, 'org-eventos': scrOrgEventos, 'org-inscritos': scrOrgInscritos, 'org-editar': scrOrgEditar, 'org-novo': scrOrgNovo, 'org-cupons': scrOrgCupons, 'org-socios': scrOrgSocios, 'org-perfil': scrOrgPerfil, 'org-pagamento': scrOrgPagamento };
 
 function current() { const h = location.hash.slice(1); return RENDER[h] ? h : 'evento'; }
 function render() {
@@ -804,9 +850,21 @@ document.addEventListener('input', ev => {
   if (k === 'org-fdist') { S.org.fDist = val; render(); return; }
   if (k === 'org-fstatus') { S.org.fStatus = val; render(); return; }
   if (k === 'org-taxa') { S.org.taxa = val; return; }
+  if (k === 'org-perfilNome') { S.org.perfilNome = val; return; }
+  if (k === 'org-perfilInsta') { S.org.perfilInsta = val; return; }
   S[k] = val;
 });
-document.addEventListener('change', ev => { const t = ev.target; if (t.dataset.bind && t.tagName === 'SELECT' && t.dataset.i !== undefined) { S.parts[+t.dataset.i][t.dataset.bind] = t.value; refreshPart(+t.dataset.i); } });
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.dataset.upload && t.files && t.files[0]) {
+    const file = t.files[0];
+    if (!file.type.startsWith('image/')) { toast('Escolha um arquivo de imagem'); return; }
+    const r = new FileReader();
+    r.onload = () => { const k = t.dataset.upload; if (k === 'capa') S.capa = r.result; else if (k === 'capaNovo') S.org.capaNovo = r.result; else S.org.foto = r.result; render(); toast('Imagem enviada'); };
+    r.readAsDataURL(file);
+  }
+});
+document.addEventListener('change', ev => { const t = ev.target;if (t.dataset.bind && t.tagName === 'SELECT' && t.dataset.i !== undefined) { S.parts[+t.dataset.i][t.dataset.bind] = t.value; refreshPart(+t.dataset.i); } });
 $('#screen-pick').addEventListener('change', e => go(e.target.value));
 window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
 render();

@@ -27,3 +27,4 @@ Estado atual: **protótipo** (`docs/prototipo.html`, abre direto no navegador, d
 - Hospedagem: Vercel (endereço gratuito no início), banco Postgres no Neon, e-mails via Resend.
 - Visual neutro: sempre fundo branco (sem modo escuro), uma cor de destaque; o limite de vagas não aparece para o atleta.
 - Primeiro clube: CF Assessoria Esportiva.
+- Cada evento tem imagem de capa (16:9, também usada na prévia do link no WhatsApp); o clube tem foto/logo no perfil, exibida na página dos eventos.
