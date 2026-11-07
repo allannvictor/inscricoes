@@ -201,7 +201,8 @@ tr:last-child td { border-bottom: 0; }
 .filters .search { flex: 1; min-width: 180px; }
 .ev-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
 @media (max-width: 560px) { .ev-card { grid-template-columns: auto 1fr; } .ev-card .ev-actions { grid-column: 1 / -1; } }
-.dist-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+.dist-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr auto; gap: 8px; align-items: start; }
+.dist-row > .btn { margin-top: 26px; }
 @media (max-width: 640px) { .dist-row { grid-template-columns: 1fr 1fr; } }
 .toggle { display: flex; gap: 10px; align-items: flex-start; }
 .toggle input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--action); }
@@ -270,9 +271,10 @@ function seedInscritos() {
   const ida = ['30–39', '40–49', '18–29', '30–39', '50–59', '40–49', '30–39', '18–29', '40–49', '30–39', '30–39', '50–59', '30–39', '18–29', '60+', '40–49', '30–39', '40–49', '18–29', '30–39', '50–59', '18–29', '40–49', '30–39'];
   return NOMES.map((n, i) => {
     const dist = EV.dists.find(x => x.id === d[i]);
-    const socio = i % 3 === 0 || n === 'Marina Costa' || n === 'Rafael Lima';
+    const meia = ida[i] === '60+';
+    const socio = !meia && (i % 3 === 0 || n === 'Marina Costa' || n === 'Rafael Lima');
     const status = i === 4 || i === 15 ? 'pendente' : (i === 9 ? 'cancelada' : 'paga');
-    return { n: 101 + i, nome: n, dist: d[i], cat: (sx[i] === 'F' ? 'Fem ' : 'Masc ') + ida[i], camisa: cam[i], valor: socio ? dist.socio : dist.preco, socio, status, transf: i === 7 ? 'de Paulo Souza' : '' };
+    return { n: 101 + i, nome: n, dist: d[i], cat: (sx[i] === 'F' ? 'Fem ' : 'Masc ') + ida[i], camisa: cam[i], valor: meia ? dist.preco / 2 : socio ? dist.socio : dist.preco, socio, meia, status, transf: i === 7 ? 'de Paulo Souza' : '' };
   });
 }
 
@@ -287,7 +289,7 @@ function freshState() {
       inscritos: seedInscritos(), fDist: '', fStatus: '', busca: '', cancelConfirm: null,
       socios: Object.entries(SOCIOS).map(([cpf, nome]) => ({ cpf, nome })).concat([{ cpf: '33333333333', nome: 'Diego Martins' }, { cpf: '44444444444', nome: 'Camila Rocha' }]),
       sociosTxt: '', cupons: [{ cod: 'AMIGO10', desc: '10% de desconto', usos: 3, max: 20 }, { cod: 'PARCEIRO', desc: 'R$ 10 de desconto', usos: 1, max: 10 }],
-      distEdit: EV.dists.map(d => ({ ...d })), distNovo: [{ id: 'n1', nome: '', preco: 0, socio: 0, vagas: 0 }], capaNovo: null, foto: null, perfilNome: EV.clube, perfilInsta: '@cfassessoriaesportiva', camisa: true, faixa: true, mp: true, taxa: 'clube'
+      distEdit: EV.dists.map(d => ({ ...d })), distNovo: [{ id: 'n1', nome: '', preco: 0, socio: 0, vagas: 0 }], capaNovo: null, foto: null, precoSocio: true, socioNovo: false, perfilNome: EV.clube, perfilInsta: '@cfassessoriaesportiva', camisa: true, faixa: true, mp: true, taxa: 'clube'
     }
   };
 }
@@ -303,11 +305,25 @@ function fmtCpf(v) { const d = digits(v).slice(0, 11); return d.replace(/(\d{3})
 function fmtCpfDigits(d) { return fmtCpf(d); }
 function idade(nasc) { if (!nasc) return null; const b = new Date(nasc + 'T12:00:00'), ev = new Date('2026-12-13T12:00:00'); let a = ev.getFullYear() - b.getFullYear(); if (ev < new Date(ev.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
 function categoria(p) { const a = idade(p.nasc); if (a == null || !p.sexo) return null; const f = EV.faixas.find(([lo, hi]) => a >= lo && a <= hi); return (p.sexo === 'F' ? 'Feminino ' : 'Masculino ') + (f ? f[2] : ''); }
-function precoDe(p) { const d = EV.dists.find(x => x.id === p.dist); if (!d) return 0; return SOCIOS[digits(p.cpf)] ? d.socio : d.preco; }
+const HOJE = '2026-11-07';
+function idadeEm(nasc, data) { if (!nasc) return null; const b = new Date(nasc + 'T12:00:00'), ev = new Date(data + 'T12:00:00'); let a = ev.getFullYear() - b.getFullYear(); if (ev < new Date(ev.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
+function idoso(p) { const a = idadeEm(p.nasc, HOJE); return a != null && a >= 60; }
+function socioOn() { return S.org.precoSocio; }
+function ehSocio(p) { return socioOn() && !!SOCIOS[digits(p.cpf)]; }
+// Descontos não acumulam: vale o menor preço entre cheio, sócio e meia (60+).
+function precoInfo(p, distId) {
+  const d = EV.dists.find(x => x.id === (distId || p.dist)); if (!d) return { valor: 0, motivo: null };
+  let best = { valor: d.preco, motivo: null };
+  if (ehSocio(p) && d.socio < best.valor) best = { valor: d.socio, motivo: 'sócio' };
+  if (idoso(p) && d.preco / 2 < best.valor) best = { valor: d.preco / 2, motivo: 'meia 60+' };
+  return best;
+}
+function precoDe(p) { return precoInfo(p).valor; }
 function totais() {
   const sub = S.parts.reduce((s, p) => s + precoDe(p), 0);
+  const base = S.parts.reduce((s, p) => s + (precoInfo(p).motivo ? 0 : precoDe(p)), 0);
   let desc = 0;
-  if (S.cupom) desc = S.cupom.tipo === 'pct' ? sub * S.cupom.valor / 100 : Math.min(S.cupom.valor, sub);
+  if (S.cupom) desc = S.cupom.tipo === 'pct' ? base * S.cupom.valor / 100 : Math.min(S.cupom.valor, base);
   return { sub, desc, total: sub - desc };
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
@@ -322,7 +338,7 @@ function emptyPart() { return { nome: '', cpf: '', email: '', nasc: '', sexo: ''
 function scrEvento() {
   const rows = EV.dists.map(d => `<div class="dist">
       <div class="km">${d.nome}</div>
-      <div><div class="price num">${brl(d.preco)}</div><div class="socio num">sócio ${brl(d.socio)}</div></div>
+      <div><div class="price num">${brl(d.preco)}</div>${socioOn() ? `<div class="socio num">sócio ${brl(d.socio)}</div>` : ''}</div>
     </div>`).join('');
   return `<div class="phone">
     ${coverHtml(S.capa)}
@@ -339,7 +355,7 @@ function scrEvento() {
     <section class="card">
       <h2>Distâncias</h2>
       <div>${rows}</div>
-      <p class="small muted">Preço de sócio aplicado automaticamente pelo CPF.</p>
+      <p class="small muted">${socioOn() ? 'Preço de sócio aplicado automaticamente pelo CPF. ' : ''}Pessoas com 60 anos ou mais pagam meia (Estatuto da Pessoa Idosa), aplicada pela data de nascimento.</p>
     </section>
     <section class="card">
       <h3>Kit</h3><p>${EV.kit}.</p>
@@ -379,10 +395,9 @@ function scrEntrar() {
 
 function partCard(p, i) {
   const d = EV.dists.find(x => x.id === p.dist);
-  const socio = SOCIOS[digits(p.cpf)];
-  const cat = categoria(p);
+  const socio = ehSocio(p);
   const dup = p.cpf && S.parts.some((q, j) => j !== i && digits(q.cpf) === digits(p.cpf) && digits(p.cpf).length === 11);
-  const chips = EV.dists.map(x => `<button type="button" class="chip" aria-pressed="${p.dist === x.id}" data-action="dist" data-i="${i}" data-d="${x.id}"><b>${x.nome}</b><span class="num">${brl(socio ? x.socio : x.preco)}</span></button>`).join('');
+  const chips = EV.dists.map(x => `<button type="button" class="chip" aria-pressed="${p.dist === x.id}" data-action="dist" data-i="${i}" data-d="${x.id}"><b>${x.nome}</b><span class="num">${brl(precoInfo(p, x.id).valor)}</span></button>`).join('');
   return `<section class="card" data-part="${i}">
     <div class="part-head">
       <h3><span class="part-num">${i + 1}</span>${i === 0 ? 'Você' : 'Participante ' + (i + 1)}</h3>
@@ -398,7 +413,7 @@ function partCard(p, i) {
       <div class="field"><label for="nasc-${i}">Nascimento</label><input class="input" id="nasc-${i}" type="date" value="${esc(p.nasc)}" data-bind="nasc" data-i="${i}"></div>
       <div class="field"><label for="sexo-${i}">Sexo</label><select class="input" id="sexo-${i}" data-bind="sexo" data-i="${i}"><option value="">Selecione</option><option value="F" ${p.sexo === 'F' ? 'selected' : ''}>Feminino</option><option value="M" ${p.sexo === 'M' ? 'selected' : ''}>Masculino</option></select></div>
     </div>
-    <div id="cat-${i}" class="small">${cat ? `Categoria: <b>${cat}</b>` : '<span class="muted">A categoria aparece depois de nascimento e sexo.</span>'}</div>
+    <div id="cat-${i}" class="small">${catHtml(p)}</div>
     <div class="grid2">
       <div class="field"><label for="tel-${i}">WhatsApp</label><input class="input" id="tel-${i}" inputmode="tel" value="${esc(p.tel)}" data-bind="tel" data-i="${i}"></div>
       <div class="field"><label for="camisa-${i}">Camisa</label><select class="input" id="camisa-${i}" data-bind="camisa" data-i="${i}"><option value="">Tamanho</option>${EV.tamanhos.map(t => `<option ${p.camisa === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
@@ -407,11 +422,17 @@ function partCard(p, i) {
   </section>`;
 }
 
+function catHtml(p) {
+  const cat = categoria(p);
+  const meia = idoso(p) ? ' <span class="pill pill-ok">60+ · paga meia</span>' : '';
+  return (cat ? `Categoria: <b>${cat}</b>` : '<span class="muted">A categoria aparece depois de nascimento e sexo.</span>') + meia;
+}
 function summaryHtml() {
   const t = totais();
   const lines = S.parts.map((p, i) => {
     const d = EV.dists.find(x => x.id === p.dist);
-    return `<div class="summary-line"><span>${esc(p.nome || 'Participante ' + (i + 1))} · ${d ? d.nome : '—'}${SOCIOS[digits(p.cpf)] ? ' · sócio' : ''}</span><span class="num">${d ? brl(precoDe(p)) : '—'}</span></div>`;
+    const info = precoInfo(p);
+    return `<div class="summary-line"><span>${esc(p.nome || 'Participante ' + (i + 1))} · ${d ? d.nome : '—'}${info.motivo ? ' · ' + info.motivo : ''}</span><span class="num">${d ? brl(info.valor) : '—'}</span></div>`;
   }).join('');
   return `${lines}
     ${t.desc ? `<div class="summary-line" style="color:var(--ok)"><span>Cupom ${esc(S.cupom.cod)}</span><span class="num">− ${brl(t.desc)}</span></div>` : ''}
@@ -432,7 +453,7 @@ function scrParticipantes() {
       <div id="summary" class="stack">${summaryHtml()}</div>
       <label class="toggle"><input type="checkbox" id="aceite" data-bind="aceite" ${S.aceite ? 'checked' : ''}><span class="small">Li e aceito o <button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento">regulamento</button> e autorizo o uso dos meus dados para esta inscrição.</span></label>
     </section>
-    ${note('formulário', ['CPF primeiro: já aplica preço de sócio e evita inscrição duplicada no evento.', 'Teste os CPFs 111.111.111-11 e 222.222.222-22 (sócios na lista).', 'Categoria por idade é calculada sozinha (idade no dia da prova).', 'Quais campos são obrigatórios para o clube? Camisa e categoria podem ser desligadas por evento.'])}
+    ${note('formulário', ['CPF primeiro: já aplica preço de sócio e evita inscrição duplicada no evento.', 'Teste os CPFs 111.111.111-11 e 222.222.222-22 (sócios na lista) e um nascimento antes de 1966 (meia 60+).', 'Descontos não acumulam: vale o menor preço entre cheio, sócio e meia. Cupom vale só para quem paga preço cheio.', 'Na retirada do kit, quem pagou meia apresenta documento com foto.', 'Categoria por idade é calculada sozinha (idade no dia da prova).', 'Quais campos são obrigatórios para o clube? Camisa e categoria podem ser desligadas por evento.'])}
     <div class="sticky-cta"><button class="btn btn-primary btn-block" type="button" data-action="checkout">Pagar ${brl(totais().total)} com Pix</button></div>
   </div>`;
 }
@@ -581,7 +602,7 @@ function scrOrgInscritos() {
   const rows = all.filter(x => (!o.fDist || x.dist === o.fDist) && (!o.fStatus || x.status === o.fStatus) && (!q || x.nome.toLowerCase().includes(q) || String(x.n).includes(q)));
   const pill = s => s === 'paga' ? '<span class="pill pill-ok">Paga</span>' : s === 'pendente' ? '<span class="pill pill-warn">Aguardando Pix</span>' : '<span class="pill pill-bad">Cancelada</span>';
   const tr = rows.map(x => { const d = EV.dists.find(y => y.id === x.dist); return `<tr>
-      <td class="num">${x.n}</td><td><b>${esc(x.nome)}</b>${x.socio ? ' <span class="pill pill-muted">sócio</span>' : ''}${x.transf ? `<div class="small muted">transferida ${esc(x.transf)}</div>` : ''}</td>
+      <td class="num">${x.n}</td><td><b>${esc(x.nome)}</b>${x.socio ? ' <span class="pill pill-muted">sócio</span>' : ''}${x.meia ? ' <span class="pill pill-muted">meia 60+</span>' : ''}${x.transf ? `<div class="small muted">transferida ${esc(x.transf)}</div>` : ''}</td>
       <td>${d.nome}</td><td>${x.cat}</td><td>${x.camisa}</td><td class="num">${brl(x.valor)}</td><td>${pill(x.status)}</td>
       <td>${x.status === 'cancelada' ? '' : o.cancelConfirm === x.n ? `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-danger btn-sm" type="button" data-action="org-cancel-yes" data-n="${x.n}">Confirmar</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel-no">Voltar</button></span>` : `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria o formulário de transferência">Transferir</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel" data-n="${x.n}">Cancelar</button></span>`}</td>
     </tr>`; }).join('') || `<tr><td colspan="8" class="muted">Nenhum inscrito com esses filtros.</td></tr>`;
@@ -590,7 +611,7 @@ function scrOrgInscritos() {
       <div class="tile"><span class="label">Confirmados</span><strong class="num">${pagos.length}</strong><span class="small muted">de ${vagas} vagas</span></div>
       <div class="tile"><span class="label">Aguardando Pix</span><strong class="num">${pend.length}</strong><span class="small muted">liberam em 30 min</span></div>
       <div class="tile"><span class="label">Recebido</span><strong class="num">${brl(arrec)}</strong><span class="small muted">na conta Mercado Pago</span></div>
-      <div class="tile"><span class="label">Sócios</span><strong class="num">${pagos.filter(x => x.socio).length}</strong><span class="small muted">com preço de sócio</span></div>
+      <div class="tile"><span class="label">Com desconto</span><strong class="num">${pagos.filter(x => x.socio || x.meia).length}</strong><span class="small muted num">${pagos.filter(x => x.socio).length} sócios · ${pagos.filter(x => x.meia).length} meia 60+</span></div>
     </div>
     <div class="split">
       <section class="card"><h3>Por distância</h3>${porDist}</section>
@@ -613,10 +634,11 @@ function scrOrgEditar(novo) {
   const o = S.org;
   const list = novo ? o.distNovo : o.distEdit;
   const v = (x) => novo ? '' : x;
+  const socioLig = novo ? o.socioNovo : o.precoSocio;
   const dr = list.map((d, i) => `<div class="dist-row">
     <div class="field"><label for="de-n-${i}">Distância</label><input class="input" id="de-n-${i}" placeholder="Ex.: 10 km" value="${esc(d.nome)}"></div>
-    <div class="field"><label for="de-p-${i}">Preço</label><input class="input num" id="de-p-${i}" inputmode="decimal" placeholder="R$" value="${d.preco || ''}"></div>
-    <div class="field"><label for="de-s-${i}">Preço sócio</label><input class="input num" id="de-s-${i}" inputmode="decimal" placeholder="R$" value="${d.socio || ''}"></div>
+    <div class="field"><label for="de-p-${i}">Preço</label><input class="input num" id="de-p-${i}" inputmode="decimal" placeholder="R$" value="${d.preco || ''}"><span class="hint num">60+: ${d.preco ? brl(d.preco / 2) : 'metade'}</span></div>
+    ${socioLig ? `<div class="field"><label for="de-s-${i}">Preço sócio</label><input class="input num" id="de-s-${i}" inputmode="decimal" placeholder="R$" value="${d.socio || ''}"></div>` : '<div></div>'}
     <div class="field"><label for="de-v-${i}">Limite de vagas</label><input class="input num" id="de-v-${i}" inputmode="numeric" placeholder="Sem limite" value="${d.vagas || ''}"></div>
     <button class="btn btn-ghost btn-sm" type="button" data-action="de-remove" data-i="${i}" data-novo="${novo}" aria-label="Remover distância">Remover</button>
   </div>`).join('');
@@ -642,7 +664,10 @@ function scrOrgEditar(novo) {
       </div>
       <div class="field"><label for="ev-reg">Regulamento (PDF)</label><input class="input" id="ev-reg" type="file" accept="application/pdf"></div>
     </section>
-    <section class="card"><h3>Distâncias e preços</h3>${dr}
+    <section class="card"><h3>Distâncias e preços</h3>
+      <label class="toggle"><input type="checkbox" id="opt-socio" data-action="toggle-socio" data-novo="${novo}" ${socioLig ? 'checked' : ''}><span><b>Preço diferenciado para sócio</b><br><span class="small muted">Desligado: todos pagam o mesmo preço, sócio ou não.</span></span></label>
+      <p class="small muted">Meia para 60+ é aplicada sozinha pela data de nascimento (obrigatória pelo Estatuto da Pessoa Idosa).</p>
+      ${dr}
       <button class="btn btn-ghost btn-sm" type="button" data-action="de-add" data-novo="${novo}" style="align-self:flex-start">+ Adicionar distância</button>
     </section>
     <section class="card"><h3>O que pedir no formulário</h3>
@@ -749,12 +774,12 @@ function render() {
 
 function refreshPart(i) {
   const p = S.parts[i]; if (!p) return;
-  const socio = SOCIOS[digits(p.cpf)];
+  const socio = ehSocio(p);
   const dup = digits(p.cpf).length === 11 && S.parts.some((q, j) => j !== i && digits(q.cpf) === digits(p.cpf));
   const info = $('#cpf-info-' + i); if (info) info.innerHTML = (socio ? `<span class="pill pill-ok">Sócio do clube · preço de sócio</span>` : '') + (dup ? `<span class="pill pill-bad">CPF repetido neste pedido</span>` : '');
   const card = $(`[data-part="${i}"]`);
-  if (card) card.querySelectorAll('.chip').forEach(c => { const d = EV.dists.find(x => x.id === c.dataset.d); c.querySelector('span').textContent = brl(socio ? d.socio : d.preco); });
-  const cat = $('#cat-' + i); if (cat) { const c = categoria(p); cat.innerHTML = c ? `Categoria: <b>${c}</b>` : '<span class="muted">A categoria aparece depois de nascimento e sexo.</span>'; }
+  if (card) card.querySelectorAll('.chip').forEach(c => { c.querySelector('span').textContent = brl(precoInfo(p, c.dataset.d).valor); });
+  const cat = $('#cat-' + i); if (cat) cat.innerHTML = catHtml(p);
   const sm = $('#summary'); if (sm) sm.innerHTML = summaryHtml();
   const cta = $('[data-action="checkout"]'); if (cta) cta.textContent = 'Pagar ' + brl(totais().total) + ' com Pix';
 }
@@ -806,7 +831,7 @@ document.addEventListener('click', ev => {
     case 'remove-part': S.parts.splice(i, 1); render(); break;
     case 'cupom': {
       const c = CUPONS[(S.cupomTxt || '').trim().toUpperCase()];
-      if (c) { S.cupom = { ...c, cod: S.cupomTxt.trim().toUpperCase() }; S.cupomMsg = 'Cupom aplicado: ' + c.desc + '.'; }
+      if (c) { S.cupom = { ...c, cod: S.cupomTxt.trim().toUpperCase() }; S.cupomMsg = totais().desc ? 'Cupom aplicado: ' + c.desc + '.' : 'Cupom válido, mas vale só para quem paga preço cheio (não acumula com sócio ou meia).'; }
       else { S.cupom = null; S.cupomMsg = 'Cupom não encontrado ou esgotado.'; }
       render(); break;
     }
@@ -828,6 +853,7 @@ document.addEventListener('click', ev => {
     case 'org-cancel': S.org.cancelConfirm = +b.dataset.n; render(); break;
     case 'org-cancel-no': S.org.cancelConfirm = null; render(); break;
     case 'org-cancel-yes': { const x = S.org.inscritos.find(y => y.n === +b.dataset.n); x.status = 'cancelada'; S.org.cancelConfirm = null; render(); toast('Inscrição ' + x.n + ' cancelada. A vaga voltou a ficar disponível.'); break; }
+    case 'toggle-socio': if (b.dataset.novo === 'true') S.org.socioNovo = b.checked; else S.org.precoSocio = b.checked; render(); toast(b.checked ? 'Preço de sócio ligado' : 'Preço único: sócio paga igual'); break;
     case 'de-add': (b.dataset.novo === 'true' ? S.org.distNovo : S.org.distEdit).push({ id: 'n' + Date.now(), nome: '', preco: 0, socio: 0, vagas: 0 }); render(); break;
     case 'de-remove': (b.dataset.novo === 'true' ? S.org.distNovo : S.org.distEdit).splice(i, 1); render(); break;
     case 'add-cupom': { const cod = $('#cp-cod').value.trim().toUpperCase(); if (!cod) { toast('Digite um código'); return; } S.org.cupons.push({ cod, desc: $('#cp-desc').value + ' de desconto', usos: 0, max: +$('#cp-max').value || 0 }); render(); toast('Cupom ' + cod + ' criado'); break; }

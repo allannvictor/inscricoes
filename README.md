@@ -23,7 +23,8 @@ Estado atual: **protótipo** (`docs/prototipo.html`, abre direto no navegador, d
 - Pix primeiro; cartão preparado para depois.
 - Atleta entra com e-mail + código de 6 dígitos (sem senha); conta criada na primeira inscrição.
 - Sem reembolso; o atleta pode transferir a inscrição até a data definida pelo organizador.
-- Preço de sócio pela lista de CPFs do clube; cupons como opção extra.
+- Preço de sócio pela lista de CPFs do clube, opcional por evento (pode ser preço único); cupons como opção extra.
+- Meia-entrada automática para 60+ pela data de nascimento (Estatuto da Pessoa Idosa). Descontos não acumulam: vale o menor entre cheio, sócio e meia; cupom só para quem paga preço cheio.
 - Hospedagem: Vercel (endereço gratuito no início), banco Postgres no Neon, e-mails via Resend.
 - Visual neutro: sempre fundo branco (sem modo escuro), uma cor de destaque; o limite de vagas não aparece para o atleta.
 - Primeiro clube: CF Assessoria Esportiva.
