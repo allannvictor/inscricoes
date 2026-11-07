@@ -162,6 +162,7 @@ Toda página e API confere a permissão no servidor. Esconder um botão não bas
 **Pronto quando:** uma inscrição de teste com 2 participantes for paga com Pix de R$ 1 na conta real do clube e confirmada sozinha.
 
 ### Etapa 2: Painel básico
+O painel já nasce pensado para o **computador** (organizador costuma usar notebook), e continua funcionando no celular.
 - Login do organizador, com o mesmo código por e-mail.
 - Lista de eventos.
 - Criar e editar evento: distâncias, preço de sócio liga/desliga, campos, capa e regulamento.
@@ -181,15 +182,14 @@ Toda página e API confere a permissão no servidor. Esconder um botão não bas
 **Pronto quando:** um atleta transferir a inscrição sem chamar a organização.
 
 ### Etapa 4: Versão para computador
-Hoje todas as telas são desenhadas para o celular (uma coluna estreita, também no computador). Nesta etapa:
+As páginas do atleta são desenhadas para o celular (uma coluna estreita, também no computador). O painel do organizador já é feito para computador na etapa 2. Nesta etapa:
 - **Página do evento:** em tela larga, a imagem e as informações ficam lado a lado, e o resumo com o botão "Inscrever-se" fica fixo na lateral.
 - **Formulário:** os participantes ocupam a coluna principal, e o resumo do pedido (total, cupom, pagar) fica fixo na lateral.
 - **Tela do Pix:** o QR code aparece grande ao lado das instruções, para quem paga escaneando a tela do computador com o celular.
-- **Painel do organizador:** tabela de inscritos larga, com mais colunas visíveis, filtros na lateral e atalhos de teclado na busca.
 - **Página inicial:** grade de eventos em vez de lista.
 - O celular continua sendo a prioridade: nada muda no layout atual de telas pequenas.
 
-**Pronto quando:** o fluxo inteiro (evento → inscrição → Pix → painel) ficar bom num monitor de 1366 px ou mais, e o teste automático rodar também nesse tamanho de tela.
+**Pronto quando:** o fluxo inteiro (evento → inscrição → Pix) ficar bom num monitor de 1366 px ou mais, e o teste automático rodar também nesse tamanho de tela.
 
 ### Etapa 5: Uso real
 - Decidir a hospedagem comercial.
