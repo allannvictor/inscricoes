@@ -94,7 +94,16 @@ Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver 
 
 ## Publicar (Vercel + Neon)
 
-1. Importe o repositório na Vercel.
-2. Configure as variáveis do `.env.example`: `DATABASE_URL` do Neon (use a URL com *pooler*), `APP_URL` com o endereço `https://...vercel.app` e `SESSION_SECRET` com um texto longo aleatório.
-3. Rode `npm run db:migrate` e `npm run db:seed` apontando para o banco do Neon. O seed pode ser rodado da sua máquina.
-4. Enquanto o Mercado Pago não estiver configurado, `PERMITIR_SIMULADO=1` libera o modo simulado na prévia. **Tire essa variável** antes de abrir as inscrições de verdade.
+1. Na Vercel: **Add New → Project** e importe `allannvictor/inscricoes`. Ela detecta o Next.js sozinha.
+2. No projeto: **Storage → Create Database → Neon**. A integração cria `DATABASE_URL` e `DATABASE_URL_UNPOOLED` automaticamente.
+3. Em **Settings → Environment Variables**, adicione:
+   - `SESSION_SECRET`: um texto longo e aleatório;
+   - `APP_URL`: o endereço `https://...vercel.app`;
+   - `RODAR_SEED=1`: só no primeiro deploy, para criar o evento de exemplo;
+   - `PERMITIR_SIMULADO=1`: enquanto o Mercado Pago não estiver configurado;
+   - `RESEND_API_KEY`: para os e-mails.
+4. Faça um **Redeploy**. O build (`vercel-build`) aplica as migrações no banco, roda o seed se `RODAR_SEED=1` estiver ligado e publica o site.
+
+Antes de abrir inscrições de verdade:
+- **remova** `PERMITIR_SIMULADO`;
+- remova `RODAR_SEED` (ou o evento de exemplo).

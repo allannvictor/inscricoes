@@ -7,6 +7,12 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 config();
 
+// Na Vercel o seed só roda se a variável RODAR_SEED=1 estiver configurada.
+if (process.argv.includes('--so-se-RODAR_SEED') && process.env.RODAR_SEED !== '1') {
+  console.log('Seed pulado (RODAR_SEED diferente de 1).');
+  process.exit(0);
+}
+
 const { db } = await import('./index');
 const { clubes, cupons, distancias, eventos, organizadores, socios, usuarios } = await import('./schema');
 const { eq } = await import('drizzle-orm');
