@@ -25,5 +25,5 @@ Estado atual: **protótipo** (`docs/prototipo.html`, abre direto no navegador, d
 - Sem reembolso; o atleta pode transferir a inscrição até a data definida pelo organizador.
 - Preço de sócio pela lista de CPFs do clube; cupons como opção extra.
 - Hospedagem: Vercel (endereço gratuito no início), banco Postgres no Neon, e-mails via Resend.
-- Visual neutro (fundo branco, uma cor de destaque); o limite de vagas não aparece para o atleta.
+- Visual neutro: sempre fundo branco (sem modo escuro), uma cor de destaque; o limite de vagas não aparece para o atleta.
 - Primeiro clube: CF Assessoria Esportiva.

@@ -28,20 +28,8 @@
   --body: "Public Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --radius: 12px;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #121417; --surface: #1a1d21; --surface-2: #22262b; --ink: #eceef1; --muted: #a0a6ae;
-    --line: #30353b; --action: #6b9bff; --action-ink: #0d1117; --bib: #22262b; --bib-ink: #eceef1;
-    --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
-    --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #121417; --surface: #1a1d21; --surface-2: #22262b; --ink: #eceef1; --muted: #a0a6ae;
-  --line: #30353b; --action: #6b9bff; --action-ink: #0d1117; --bib: #22262b; --bib-ink: #eceef1;
-  --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
-  --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
-}
+/* Sempre claro (fundo branco), independente do tema do aparelho */
+:root, :root[data-theme="dark"] { color-scheme: light; }
 * { box-sizing: border-box; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
