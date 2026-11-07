@@ -6,16 +6,16 @@
 <style>
 /* Layout: barra do protótipo fixa no topo; atleta em coluna de celular, organizador em painel largo */
 :root {
-  --bg: #eef1f5;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f6f8fb;
-  --ink: #142038;
-  --muted: #5a6680;
-  --line: #d9dfe8;
-  --action: #1d4ed8;
+  --surface-2: #f5f6f8;
+  --ink: #1b1f24;
+  --muted: #5f6670;
+  --line: #e2e5e9;
+  --action: #2563eb;
   --action-ink: #ffffff;
-  --bib: #ffd43b;
-  --bib-ink: #142038;
+  --bib: #f5f6f8;
+  --bib-ink: #1b1f24;
   --ok: #157a46;
   --ok-bg: #e3f4ea;
   --warn: #9a5b00;
@@ -30,15 +30,15 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d1424; --surface: #151f35; --surface-2: #1b2741; --ink: #e8edf6; --muted: #9aa7c0;
-    --line: #2a3755; --action: #5b8cff; --action-ink: #0b1220; --bib: #ffd43b; --bib-ink: #142038;
+    --bg: #121417; --surface: #1a1d21; --surface-2: #22262b; --ink: #eceef1; --muted: #a0a6ae;
+    --line: #30353b; --action: #6b9bff; --action-ink: #0d1117; --bib: #22262b; --bib-ink: #eceef1;
     --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
     --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0d1424; --surface: #151f35; --surface-2: #1b2741; --ink: #e8edf6; --muted: #9aa7c0;
-  --line: #2a3755; --action: #5b8cff; --action-ink: #0b1220; --bib: #ffd43b; --bib-ink: #142038;
+  --bg: #121417; --surface: #1a1d21; --surface-2: #22262b; --ink: #eceef1; --muted: #a0a6ae;
+  --line: #30353b; --action: #6b9bff; --action-ink: #0d1117; --bib: #22262b; --bib-ink: #eceef1;
   --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
   --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
 }
@@ -48,7 +48,7 @@ body {
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 0 48px;
 }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #24292f; }
 h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: .01em; }
 h1 { font-size: 2rem; font-weight: 800; text-transform: uppercase; }
 h2 { font-size: 1.5rem; font-weight: 700; }
@@ -69,15 +69,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--ink); color: var(--bg);
   display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center;
 }
-:root .proto { color: #eef1f5; background: #142038; }
+:root .proto { color: #f0f2f4; background: #24292f; }
 .proto .tag { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .95rem; }
-.proto .tag b { background: var(--bib); color: var(--bib-ink); padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
-.seg { display: inline-flex; border: 1px solid #3a4a6e; border-radius: 999px; overflow: hidden; }
-.seg button { background: transparent; border: 0; color: #c9d3e6; padding: 5px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; }
-.seg button[aria-pressed="true"] { background: var(--bib); color: var(--bib-ink); }
-.proto select { background: #1e2c4b; color: #eef1f5; border: 1px solid #3a4a6e; border-radius: 8px; padding: 5px 8px; font-size: .85rem; max-width: 100%; }
+.proto .tag b { background: #f0f2f4; color: #24292f; padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
+.seg { display: inline-flex; border: 1px solid #4a525b; border-radius: 999px; overflow: hidden; }
+.seg button { background: transparent; border: 0; color: #c8cdd3; padding: 5px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: #f0f2f4; color: #24292f; }
+.proto select { background: #32383f; color: #f0f2f4; border: 1px solid #4a525b; border-radius: 8px; padding: 5px 8px; font-size: .85rem; max-width: 100%; }
 .proto .spacer { flex: 1; }
-.proto .reset { background: transparent; border: 1px solid #3a4a6e; color: #c9d3e6; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: .82rem; }
+.proto .reset { background: transparent; border: 1px solid #4a525b; color: #c8cdd3; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: .82rem; }
 
 /* Containers */
 .phone { max-width: 440px; margin: 20px auto 0; display: flex; flex-direction: column; gap: 14px; }
@@ -111,16 +111,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hint { font-size: .78rem; color: var(--muted); }
 
 /* Evento */
-.hero { background: var(--ink); color: var(--bg); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
-:root .hero { background: #142038; color: #eef1f5; }
-.hero .club { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--bib); font-weight: 700; }
-.hero h1 { color: #ffffff; font-size: 2.3rem; }
+.hero { background: var(--surface-2); color: var(--ink); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.hero .club { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--action); font-weight: 700; }
+.hero h1 { font-size: 2.3rem; }
 .hero .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
 .hero .facts div { display: flex; flex-direction: column; }
-.hero .facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: #9fb0d0; }
-.hero .facts strong { font-weight: 600; color: #ffffff; }
-.hero .stripe { position: absolute; right: -30px; top: 18px; width: 140px; height: 26px; background: repeating-linear-gradient(90deg, var(--bib) 0 18px, transparent 18px 30px); transform: rotate(-35deg); opacity: .85; }
-.dist { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.hero .facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.hero .facts strong { font-weight: 600; }
+.dist { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); align-items: center; }
 .dist:first-of-type { border-top: 0; padding-top: 0; }
 .dist .km { font-family: var(--display); font-size: 1.6rem; font-weight: 800; line-height: 1; }
 .dist .price { text-align: right; font-weight: 700; font-size: 1.05rem; }
@@ -142,7 +140,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pill-muted { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 .part-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .part-head h3 { display: flex; align-items: center; gap: 8px; }
-.part-num { background: var(--bib); color: var(--bib-ink); font-family: var(--display); font-weight: 800; border-radius: 6px; padding: 0 7px; }
+.part-num { background: var(--ink); color: var(--bg); font-family: var(--display); font-weight: 800; border-radius: 6px; padding: 0 7px; }
 .errors { background: var(--bad-bg); color: var(--bad); border-radius: 10px; padding: 10px 12px; font-size: .88rem; }
 .errors ul { margin: 4px 0 0; padding-left: 18px; }
 .summary-line { display: flex; justify-content: space-between; gap: 8px; font-size: .92rem; }
@@ -164,7 +162,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pay-tabs button:disabled { opacity: .55; cursor: not-allowed; }
 
 /* Número de peito (confirmação) */
-.bib { background: var(--bib); color: var(--bib-ink); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center; position: relative; }
+.bib { background: var(--bib); color: var(--bib-ink); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center; position: relative; }
 .bib::before, .bib::after { content: ""; position: absolute; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--bg); }
 .bib::before { left: 8px; } .bib::after { right: 8px; }
 .bib .n { grid-row: span 2; font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1; padding-left: 8px; }
@@ -183,6 +181,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .org-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .org-nav button { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .88rem; }
 .org-nav button[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.crumb { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+.ev-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.ev-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; font-weight: 600; cursor: pointer; color: var(--muted); white-space: nowrap; }
+.ev-tabs button[aria-current="page"] { color: var(--ink); border-bottom-color: var(--action); }
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
@@ -233,7 +235,7 @@ tr:last-child td { border-bottom: 0; }
 <script>
 // ---------- Dados de exemplo ----------
 const EV = {
-  clube: 'Avia Mininu',
+  clube: 'CF Assessoria Esportiva',
   nome: 'Simulado 10K',
   data: 'Dom, 13 dez 2026', hora: '5h30',
   local: 'Parque da Cidade (exemplo)',
@@ -257,8 +259,8 @@ const SCREENS = {
     ['pix', 'Pagamento Pix'], ['confirmado', 'Inscrição confirmada'], ['minhas', 'Minhas inscrições'], ['transferir', 'Transferir inscrição']
   ],
   org: [
-    ['org-eventos', 'Meus eventos'], ['org-inscritos', 'Inscritos e resumo'], ['org-editar', 'Criar/editar evento'],
-    ['org-cupons', 'Cupons'], ['org-socios', 'Sócios (CPFs)'], ['org-pagamento', 'Mercado Pago']
+    ['org-eventos', 'Meus eventos'], ['org-inscritos', 'Evento › Inscritos'], ['org-editar', 'Evento › Editar'],
+    ['org-cupons', 'Evento › Cupons'], ['org-novo', 'Novo evento'], ['org-socios', 'Sócios (CPFs)'], ['org-pagamento', 'Mercado Pago']
   ]
 };
 
@@ -288,7 +290,7 @@ function freshState() {
       inscritos: seedInscritos(), fDist: '', fStatus: '', busca: '', cancelConfirm: null,
       socios: Object.entries(SOCIOS).map(([cpf, nome]) => ({ cpf, nome })).concat([{ cpf: '33333333333', nome: 'Diego Martins' }, { cpf: '44444444444', nome: 'Camila Rocha' }]),
       sociosTxt: '', cupons: [{ cod: 'AMIGO10', desc: '10% de desconto', usos: 3, max: 20 }, { cod: 'PARCEIRO', desc: 'R$ 10 de desconto', usos: 1, max: 10 }],
-      distEdit: EV.dists.map(d => ({ ...d })), camisa: true, faixa: true, mp: true, taxa: 'clube'
+      distEdit: EV.dists.map(d => ({ ...d })), distNovo: [{ id: 'n1', nome: '', preco: 0, socio: 0, vagas: 0 }], camisa: true, faixa: true, mp: true, taxa: 'clube'
     }
   };
 }
@@ -318,17 +320,12 @@ function emptyPart() { return { nome: '', cpf: '', email: '', nasc: '', sexo: ''
 
 // ---------- Telas do atleta ----------
 function scrEvento() {
-  const rows = EV.dists.map(d => {
-    const rest = d.vagas - d.ocup;
-    return `<div class="dist">
-      <div><div class="km">${d.nome}</div><div class="small muted num">${rest} vagas restantes</div></div>
+  const rows = EV.dists.map(d => `<div class="dist">
+      <div class="km">${d.nome}</div>
       <div><div class="price num">${brl(d.preco)}</div><div class="socio num">sócio ${brl(d.socio)}</div></div>
-      <div class="bar" aria-hidden="true"><i style="width:${Math.round(d.ocup / d.vagas * 100)}%"></i></div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
   return `<div class="phone">
     <section class="hero">
-      <span class="stripe" aria-hidden="true"></span>
       <span class="club">${EV.clube} · simulado</span>
       <h1>${EV.nome}</h1>
       <div class="facts">
@@ -348,7 +345,7 @@ function scrEvento() {
       <h3>Transferência</h3><p>Não há reembolso, mas você pode transferir sua inscrição para outra pessoa ${EV.transf}.</p>
       <div class="row"><button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento em PDF">Ver regulamento</button><span class="muted">·</span><button class="link" type="button" data-action="toast" data-msg="Abriria o WhatsApp do organizador">Falar com a organização</button></div>
     </section>
-    ${note('página do evento', ['Só o essencial antes do botão: data, local, distâncias, preço e vagas.', 'Texto longo (regulamento, percurso) fica em links, não na página.', 'Mostrar o preço de sócio aqui ou só no formulário?'])}
+    ${note('página do evento', ['Só o essencial antes do botão: data, local, distâncias e preço. O limite de vagas existe, mas não aparece para o atleta; quando esgota, a distância mostra "Esgotada".', 'Texto longo (regulamento, percurso) fica em links, não na página.', 'Mostrar o preço de sócio aqui ou só no formulário?'])}
     <div class="sticky-cta"><button class="btn btn-primary btn-block" type="button" data-action="start">Inscrever-se</button></div>
   </div>`;
 }
@@ -446,7 +443,7 @@ function fakeQr(canvas, seed) {
 function scrPix() {
   if (!S.pedido) { S.parts = S.parts.length ? S.parts : [{ ...CONTA, dist: '10' }]; S.logged = true; S.email = S.email || CONTA.email; S.pedido = { id: 'A7K2', total: totais().total, status: 'pendente', secs: 30 * 60, parts: S.parts.map(p => ({ ...p })) }; }
   const p = S.pedido;
-  const pixCode = '00020126580014br.gov.bcb.pix0136' + 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' + '5204000053039865406' + p.total.toFixed(2) + '5802BR5913AVIA MININU6009CIDADE62070503***6304AB12';
+  const pixCode = '00020126580014br.gov.bcb.pix0136' + 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' + '5204000053039865406' + p.total.toFixed(2) + '5802BR5913CF ASSESSORIA6009CIDADE62070503***6304AB12';
   return `<div class="phone">
     <section class="card">
       <div class="row between"><h2>Pagamento</h2><span class="pill pill-warn">Pedido #${p.id}</span></div>
@@ -534,28 +531,36 @@ function scrTransferir() {
 
 // ---------- Telas do organizador ----------
 function orgNav(cur) {
-  const tabs = [['org-eventos', 'Eventos'], ['org-inscritos', 'Inscritos'], ['org-editar', 'Editar evento'], ['org-cupons', 'Cupons'], ['org-socios', 'Sócios'], ['org-pagamento', 'Mercado Pago']];
+  const tabs = [['org-eventos', 'Eventos'], ['org-socios', 'Sócios'], ['org-pagamento', 'Mercado Pago']];
+  const top = ['org-inscritos', 'org-editar', 'org-cupons', 'org-novo'].includes(cur) ? 'org-eventos' : cur;
   return `<div class="row between"><div><span class="label">${EV.clube}</span><h2>Painel do organizador</h2></div><span class="small muted">organizador@exemplo.com</span></div>
-  <nav class="org-nav" aria-label="Seções do painel">${tabs.map(([k, l]) => `<button type="button" data-action="goto" data-to="${k}" ${k === cur ? 'aria-current="page"' : ''}>${l}</button>`).join('')}</nav>`;
+  <nav class="org-nav" aria-label="Seções do painel">${tabs.map(([k, l]) => `<button type="button" data-action="goto" data-to="${k}" ${k === top ? 'aria-current="page"' : ''}>${l}</button>`).join('')}</nav>`;
+}
+function evHeader(cur) {
+  const tabs = [['org-inscritos', 'Inscritos'], ['org-editar', 'Editar'], ['org-cupons', 'Cupons']];
+  return `<div class="stack" style="gap:8px">
+    <div class="crumb"><button class="link" type="button" data-action="goto" data-to="org-eventos">Eventos</button><span class="muted">›</span><b>${EV.nome}</b><span class="pill pill-ok">Inscrições abertas</span></div>
+    <nav class="ev-tabs" aria-label="Seções do evento">${tabs.map(([k, l]) => `<button type="button" data-action="goto" data-to="${k}" ${k === cur ? 'aria-current="page"' : ''}>${l}</button>`).join('')}</nav>
+  </div>`;
 }
 
 function scrOrgEventos() {
   const ins = S.org.inscritos.filter(x => x.status === 'paga');
   const arrec = ins.reduce((s, x) => s + x.valor, 0);
   return `<div class="wide">${orgNav('org-eventos')}
-    <div class="row between"><h3>Meus eventos</h3><button class="btn btn-primary btn-sm" type="button" data-action="goto" data-to="org-editar">+ Novo evento</button></div>
+    <div class="row between"><h3>Meus eventos</h3><button class="btn btn-primary btn-sm" type="button" data-action="goto" data-to="org-novo">+ Novo evento</button></div>
     <section class="card"><div class="ev-card">
       <div class="date-box"><b class="num">13</b><span>dez</span></div>
       <div class="stack" style="gap:4px"><div class="row"><h3>${EV.nome}</h3><span class="pill pill-ok">Inscrições abertas</span></div>
         <p class="small muted num">${ins.length} confirmados · ${brl(arrec)} recebidos · fecha ${EV.prazo}</p></div>
-      <div class="row ev-actions"><button class="btn btn-ghost btn-sm" type="button" data-action="goto" data-to="org-inscritos">Inscritos</button><button class="btn btn-ghost btn-sm" type="button" data-action="copy-link">Copiar link</button></div>
+      <div class="row ev-actions"><button class="btn btn-ghost btn-sm" type="button" data-action="goto" data-to="org-inscritos">Inscritos</button><button class="btn btn-ghost btn-sm" type="button" data-action="goto" data-to="org-editar">Editar</button><button class="btn btn-ghost btn-sm" type="button" data-action="copy-link">Copiar link</button></div>
     </div></section>
     <section class="card"><div class="ev-card">
       <div class="date-box"><b class="num">21</b><span>set</span></div>
       <div class="stack" style="gap:4px"><div class="row"><h3>Simulado 5K de Setembro</h3><span class="pill pill-muted">Realizado</span></div><p class="small muted num">64 participantes · R$ 2.880,00</p></div>
       <div class="row ev-actions"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria os inscritos do evento passado">Inscritos</button><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Cria um novo evento copiando distâncias e preços">Duplicar</button></div>
     </div></section>
-    ${note('eventos', ['"Duplicar" cria o próximo simulado copiando distâncias, preços e campos.', 'O link do evento é o que vai para o grupo do WhatsApp.'])}
+    ${note('eventos', ['Esta é a porta de entrada do painel: escolha o evento e depois Inscritos, Editar ou Cupons.', '"Duplicar" cria o próximo simulado copiando distâncias, preços e campos.', 'O link do evento é o que vai para o grupo do WhatsApp.'])}
   </div>`;
 }
 
@@ -574,8 +579,7 @@ function scrOrgInscritos() {
       <td>${d.nome}</td><td>${x.cat}</td><td>${x.camisa}</td><td class="num">${brl(x.valor)}</td><td>${pill(x.status)}</td>
       <td>${x.status === 'cancelada' ? '' : o.cancelConfirm === x.n ? `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-danger btn-sm" type="button" data-action="org-cancel-yes" data-n="${x.n}">Confirmar</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel-no">Voltar</button></span>` : `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria o formulário de transferência">Transferir</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel" data-n="${x.n}">Cancelar</button></span>`}</td>
     </tr>`; }).join('') || `<tr><td colspan="8" class="muted">Nenhum inscrito com esses filtros.</td></tr>`;
-  return `<div class="wide">${orgNav('org-inscritos')}
-    <h3>${EV.nome} · ${EV.data}</h3>
+  return `<div class="wide">${orgNav('org-inscritos')}${evHeader('org-inscritos')}
     <div class="tiles">
       <div class="tile"><span class="label">Confirmados</span><strong class="num">${pagos.length}</strong><span class="small muted">de ${vagas} vagas</span></div>
       <div class="tile"><span class="label">Aguardando Pix</span><strong class="num">${pend.length}</strong><span class="small muted">liberam em 30 min</span></div>
@@ -597,43 +601,52 @@ function scrOrgInscritos() {
   </div>`;
 }
 
-function scrOrgEditar() {
+function scrOrgNovo() { return scrOrgEditar(true); }
+function scrOrgEditar(novo) {
+  novo = novo === true;
   const o = S.org;
-  const dr = o.distEdit.map((d, i) => `<div class="dist-row">
-    <div class="field"><label for="de-n-${i}">Distância</label><input class="input" id="de-n-${i}" value="${esc(d.nome)}"></div>
-    <div class="field"><label for="de-p-${i}">Preço</label><input class="input num" id="de-p-${i}" inputmode="decimal" value="${d.preco}"></div>
-    <div class="field"><label for="de-s-${i}">Preço sócio</label><input class="input num" id="de-s-${i}" inputmode="decimal" value="${d.socio}"></div>
-    <div class="field"><label for="de-v-${i}">Vagas</label><input class="input num" id="de-v-${i}" inputmode="numeric" value="${d.vagas}"></div>
-    <button class="btn btn-ghost btn-sm" type="button" data-action="de-remove" data-i="${i}" aria-label="Remover ${esc(d.nome)}">Remover</button>
+  const list = novo ? o.distNovo : o.distEdit;
+  const v = (x) => novo ? '' : x;
+  const dr = list.map((d, i) => `<div class="dist-row">
+    <div class="field"><label for="de-n-${i}">Distância</label><input class="input" id="de-n-${i}" placeholder="Ex.: 10 km" value="${esc(d.nome)}"></div>
+    <div class="field"><label for="de-p-${i}">Preço</label><input class="input num" id="de-p-${i}" inputmode="decimal" placeholder="R$" value="${d.preco || ''}"></div>
+    <div class="field"><label for="de-s-${i}">Preço sócio</label><input class="input num" id="de-s-${i}" inputmode="decimal" placeholder="R$" value="${d.socio || ''}"></div>
+    <div class="field"><label for="de-v-${i}">Limite de vagas</label><input class="input num" id="de-v-${i}" inputmode="numeric" placeholder="Sem limite" value="${d.vagas || ''}"></div>
+    <button class="btn btn-ghost btn-sm" type="button" data-action="de-remove" data-i="${i}" data-novo="${novo}" aria-label="Remover distância">Remover</button>
   </div>`).join('');
-  return `<div class="wide">${orgNav('org-editar')}
+  const head = novo
+    ? `<div class="crumb"><button class="link" type="button" data-action="goto" data-to="org-eventos">Eventos</button><span class="muted">›</span><b>Novo evento</b></div>`
+    : evHeader('org-editar');
+  return `<div class="wide">${orgNav(novo ? 'org-novo' : 'org-editar')}${head}
     <section class="card"><h3>Informações</h3>
-      <div class="field"><label for="ev-nome">Nome do evento</label><input class="input" id="ev-nome" value="${EV.nome}"></div>
+      <div class="field"><label for="ev-nome">Nome do evento</label><input class="input" id="ev-nome" placeholder="Ex.: Simulado 10K de Janeiro" value="${v(EV.nome)}"></div>
       <div class="grid2">
-        <div class="field"><label for="ev-data">Data e largada</label><input class="input" id="ev-data" type="datetime-local" value="2026-12-13T05:30"></div>
-        <div class="field"><label for="ev-local">Local</label><input class="input" id="ev-local" value="${EV.local}"></div>
-        <div class="field"><label for="ev-fim">Inscrições até</label><input class="input" id="ev-fim" type="date" value="2026-12-10"></div>
-        <div class="field"><label for="ev-transf">Transferência até</label><input class="input" id="ev-transf" type="date" value="2026-12-06"></div>
+        <div class="field"><label for="ev-data">Data e largada</label><input class="input" id="ev-data" type="datetime-local" value="${v('2026-12-13T05:30')}"></div>
+        <div class="field"><label for="ev-local">Local</label><input class="input" id="ev-local" value="${v(EV.local)}"></div>
+        <div class="field"><label for="ev-fim">Inscrições até</label><input class="input" id="ev-fim" type="date" value="${v('2026-12-10')}"></div>
+        <div class="field"><label for="ev-transf">Transferência até</label><input class="input" id="ev-transf" type="date" value="${v('2026-12-06')}"></div>
       </div>
-      <div class="field"><label for="ev-kit">Kit e informações</label><textarea class="input" id="ev-kit" rows="3">${EV.kit}.</textarea></div>
+      <div class="field"><label for="ev-kit">Kit e informações</label><textarea class="input" id="ev-kit" rows="3">${v(EV.kit + '.')}</textarea></div>
       <div class="field"><label for="ev-reg">Regulamento (PDF)</label><input class="input" id="ev-reg" type="file" accept="application/pdf"></div>
     </section>
     <section class="card"><h3>Distâncias e preços</h3>${dr}
-      <button class="btn btn-ghost btn-sm" type="button" data-action="de-add" style="align-self:flex-start">+ Adicionar distância</button>
+      <button class="btn btn-ghost btn-sm" type="button" data-action="de-add" data-novo="${novo}" style="align-self:flex-start">+ Adicionar distância</button>
     </section>
     <section class="card"><h3>O que pedir no formulário</h3>
       <label class="toggle"><input type="checkbox" id="opt-camisa" ${o.camisa ? 'checked' : ''}><span><b>Tamanho de camisa</b><br><span class="small muted">PP, P, M, G, GG, XG</span></span></label>
       <label class="toggle"><input type="checkbox" id="opt-faixa" ${o.faixa ? 'checked' : ''}><span><b>Categoria por idade</b><br><span class="small muted">Calculada pelo nascimento: até 17, 18–29, 30–39, 40–49, 50–59, 60+</span></span></label>
       <p class="small muted">Nome, CPF, e-mail, nascimento, sexo, WhatsApp e contato de emergência são sempre pedidos.</p>
     </section>
-    <div class="row"><button class="btn btn-primary" type="button" data-action="toast" data-msg="Evento salvo">Salvar</button><button class="btn btn-ghost" type="button" data-action="toast" data-msg="Evento publicado: link pronto para o WhatsApp">Publicar</button><button class="btn btn-ghost" type="button" data-action="goto" data-to="evento">Ver como atleta</button></div>
-    ${note('cadastro do evento', ['Fica faltando algo que os simulados usam? Ex.: lote de preço por data, kit sem camisa mais barato.', 'Vagas por distância ou um total geral do evento?'])}
+    <div class="row">${novo
+      ? `<button class="btn btn-primary" type="button" data-action="toast" data-msg="Rascunho criado. Publique quando estiver pronto.">Criar rascunho</button><button class="btn btn-ghost" type="button" data-action="goto" data-to="org-eventos">Cancelar</button>`
+      : `<button class="btn btn-primary" type="button" data-action="toast" data-msg="Alterações salvas">Salvar</button><button class="btn btn-ghost" type="button" data-action="goto" data-to="evento">Ver como atleta</button>`}</div>
+    ${note('cadastro do evento', ['Fica faltando algo que os simulados usam? Ex.: lote de preço por data, kit sem camisa mais barato.', 'Limite de vagas é opcional e só o organizador vê.'])}
   </div>`;
 }
 
 function scrOrgCupons() {
   const rows = S.org.cupons.map(c => `<tr><td><b>${c.cod}</b></td><td>${c.desc}</td><td class="num">${c.usos} de ${c.max}</td><td><span class="pill pill-ok">Ativo</span></td></tr>`).join('');
-  return `<div class="wide">${orgNav('org-cupons')}
+  return `<div class="wide">${orgNav('org-cupons')}${evHeader('org-cupons')}
     <section class="card"><h3>Novo cupom</h3>
       <div class="grid2">
         <div class="field"><label for="cp-cod">Código</label><input class="input" id="cp-cod" placeholder="Ex.: CONVIDADO" style="text-transform:uppercase"></div>
@@ -683,7 +696,7 @@ function scrOrgPagamento() {
 }
 
 // ---------- Render ----------
-const RENDER = { evento: scrEvento, entrar: scrEntrar, participantes: scrParticipantes, pix: scrPix, confirmado: scrConfirmado, minhas: scrMinhas, transferir: scrTransferir, 'org-eventos': scrOrgEventos, 'org-inscritos': scrOrgInscritos, 'org-editar': scrOrgEditar, 'org-cupons': scrOrgCupons, 'org-socios': scrOrgSocios, 'org-pagamento': scrOrgPagamento };
+const RENDER = { evento: scrEvento, entrar: scrEntrar, participantes: scrParticipantes, pix: scrPix, confirmado: scrConfirmado, minhas: scrMinhas, transferir: scrTransferir, 'org-eventos': scrOrgEventos, 'org-inscritos': scrOrgInscritos, 'org-editar': scrOrgEditar, 'org-novo': scrOrgNovo, 'org-cupons': scrOrgCupons, 'org-socios': scrOrgSocios, 'org-pagamento': scrOrgPagamento };
 
 function current() { const h = location.hash.slice(1); return RENDER[h] ? h : 'evento'; }
 function render() {
@@ -781,8 +794,8 @@ document.addEventListener('click', ev => {
     case 'org-cancel': S.org.cancelConfirm = +b.dataset.n; render(); break;
     case 'org-cancel-no': S.org.cancelConfirm = null; render(); break;
     case 'org-cancel-yes': { const x = S.org.inscritos.find(y => y.n === +b.dataset.n); x.status = 'cancelada'; S.org.cancelConfirm = null; render(); toast('Inscrição ' + x.n + ' cancelada. A vaga voltou a ficar disponível.'); break; }
-    case 'de-add': S.org.distEdit.push({ id: 'n' + Date.now(), nome: '', preco: 0, socio: 0, vagas: 0 }); render(); break;
-    case 'de-remove': S.org.distEdit.splice(i, 1); render(); break;
+    case 'de-add': (b.dataset.novo === 'true' ? S.org.distNovo : S.org.distEdit).push({ id: 'n' + Date.now(), nome: '', preco: 0, socio: 0, vagas: 0 }); render(); break;
+    case 'de-remove': (b.dataset.novo === 'true' ? S.org.distNovo : S.org.distEdit).splice(i, 1); render(); break;
     case 'add-cupom': { const cod = $('#cp-cod').value.trim().toUpperCase(); if (!cod) { toast('Digite um código'); return; } S.org.cupons.push({ cod, desc: $('#cp-desc').value + ' de desconto', usos: 0, max: +$('#cp-max').value || 0 }); render(); toast('Cupom ' + cod + ' criado'); break; }
     case 'import-socios': {
       const lines = $('#soc-txt').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
