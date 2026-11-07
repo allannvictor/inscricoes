@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Visual do protótipo: fundo branco, uma cor de destaque (azul). Mude as cores aqui. */
+@theme {
+  --color-tinta: #1b1f24;
+  --color-suave: #5f6670;
+  --color-linha: #e2e5e9;
+  --color-fundo2: #f5f6f8;
+  --color-acao: #2563eb;
+  --color-ok: #157a46;
+  --color-ok-fundo: #e3f4ea;
+  --color-alerta: #9a5b00;
+  --color-alerta-fundo: #fff1d6;
+  --color-erro: #b42318;
+  --color-erro-fundo: #fde8e6;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: "Public Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root { color-scheme: light; }
+html, body { background: #fff; color: var(--color-tinta); }
+body { font-family: var(--font-sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; text-wrap: balance; }
+:focus-visible { outline: 3px solid var(--color-acao); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+@layer components {
+  .pagina { max-width: 440px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .cartao { background: #fff; border: 1px solid var(--color-linha); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .rotulo { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--color-suave); }
+  .titulo-1 { font-size: 2.3rem; font-weight: 800; text-transform: uppercase; }
+  .titulo-2 { font-size: 1.5rem; font-weight: 700; }
+  .titulo-3 { font-size: 1.15rem; font-weight: 700; }
+  .botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
+  .botao:disabled { opacity: .6; cursor: not-allowed; }
+  .botao-primario { background: var(--color-acao); color: #fff; }
+  .botao-borda { background: #fff; border-color: var(--color-linha); color: var(--color-tinta); }
+  .botao-pequeno { padding: 6px 10px; font-size: .85rem; border-radius: 8px; font-weight: 600; }
+  .link { color: var(--color-acao); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; cursor: pointer; }
+  .campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .campo > label, .campo > .rotulo-campo { font-size: .85rem; font-weight: 600; }
+  .entrada { width: 100%; border: 1px solid var(--color-linha); background: #fff; border-radius: 9px; padding: 10px 11px; font: inherit; color: inherit; }
+  .entrada:focus { border-color: var(--color-acao); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-acao) 25%, transparent); }
+  .dica { font-size: .78rem; color: var(--color-suave); }
+  .selo { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+  .selo-ok { background: var(--color-ok-fundo); color: var(--color-ok); }
+  .selo-alerta { background: var(--color-alerta-fundo); color: var(--color-alerta); }
+  .selo-erro { background: var(--color-erro-fundo); color: var(--color-erro); }
+  .selo-neutro { background: var(--color-fundo2); color: var(--color-suave); border: 1px solid var(--color-linha); }
+  .chip { border: 1.5px solid var(--color-linha); background: #fff; border-radius: 10px; padding: 8px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; min-width: 92px; }
+  .chip b { font-family: var(--font-display); font-size: 1.25rem; line-height: 1; }
+  .chip span { font-size: .78rem; color: var(--color-suave); }
+  .chip[aria-pressed="true"] { border-color: var(--color-acao); background: color-mix(in srgb, var(--color-acao) 10%, #fff); }
+  .erros { background: var(--color-erro-fundo); color: var(--color-erro); border-radius: 10px; padding: 10px 12px; font-size: .88rem; }
+  .fixo-baixo { position: sticky; bottom: 0; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, #fff 70%, transparent); }
+  .capa { aspect-ratio: 16 / 9; width: 100%; border-radius: 12px; overflow: hidden; background: var(--color-fundo2); border: 1px solid var(--color-linha); }
+  .capa img, .capa svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: var(--color-tinta); color: #fff; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; flex: none; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .numero-peito { background: var(--color-fundo2); border: 1px solid var(--color-linha); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center; }
+  .numero-peito .n { grid-row: span 2; font-family: var(--font-display); font-weight: 800; font-size: 2.4rem; line-height: 1; }
+}
