@@ -1,0 +1,812 @@
+<title>Protótipo Inscrições do Clube</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: barra do protótipo fixa no topo; atleta em coluna de celular, organizador em painel largo */
+:root {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fb;
+  --ink: #142038;
+  --muted: #5a6680;
+  --line: #d9dfe8;
+  --action: #1d4ed8;
+  --action-ink: #ffffff;
+  --bib: #ffd43b;
+  --bib-ink: #142038;
+  --ok: #157a46;
+  --ok-bg: #e3f4ea;
+  --warn: #9a5b00;
+  --warn-bg: #fff1d6;
+  --bad: #b42318;
+  --bad-bg: #fde8e6;
+  --note-bg: #eaf0ff;
+  --note-line: #b9c9f6;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Public Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1424; --surface: #151f35; --surface-2: #1b2741; --ink: #e8edf6; --muted: #9aa7c0;
+    --line: #2a3755; --action: #5b8cff; --action-ink: #0b1220; --bib: #ffd43b; --bib-ink: #142038;
+    --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
+    --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1424; --surface: #151f35; --surface-2: #1b2741; --ink: #e8edf6; --muted: #9aa7c0;
+  --line: #2a3755; --action: #5b8cff; --action-ink: #0b1220; --bib: #ffd43b; --bib-ink: #142038;
+  --ok: #5fd39a; --ok-bg: #12301f; --warn: #f3b44f; --warn-bg: #33270f; --bad: #ff8a7f; --bad-bg: #3a1714;
+  --note-bg: #17244a; --note-line: #2e4382; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+h1 { font-size: 2rem; font-weight: 800; text-transform: uppercase; }
+h2 { font-size: 1.5rem; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--action); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--muted); }
+
+/* Barra do protótipo */
+.proto {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--ink); color: var(--bg);
+  display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center;
+}
+:root .proto { color: #eef1f5; background: #142038; }
+.proto .tag { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .95rem; }
+.proto .tag b { background: var(--bib); color: var(--bib-ink); padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
+.seg { display: inline-flex; border: 1px solid #3a4a6e; border-radius: 999px; overflow: hidden; }
+.seg button { background: transparent; border: 0; color: #c9d3e6; padding: 5px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--bib); color: var(--bib-ink); }
+.proto select { background: #1e2c4b; color: #eef1f5; border: 1px solid #3a4a6e; border-radius: 8px; padding: 5px 8px; font-size: .85rem; max-width: 100%; }
+.proto .spacer { flex: 1; }
+.proto .reset { background: transparent; border: 1px solid #3a4a6e; color: #c9d3e6; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: .82rem; }
+
+/* Containers */
+.phone { max-width: 440px; margin: 20px auto 0; display: flex; flex-direction: column; gap: 14px; }
+.wide { max-width: 1040px; margin: 20px auto 0; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* Nota de discussão */
+.note { background: var(--note-bg); border: 1px dashed var(--note-line); border-radius: 10px; padding: 10px 12px; font-size: .86rem; }
+.note summary { cursor: pointer; font-weight: 600; }
+.note ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+
+/* Botões */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
+.btn-primary { background: var(--action); color: var(--action-ink); }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 6px 10px; font-size: .85rem; border-radius: 8px; font-weight: 600; }
+.btn-danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+.link { background: none; border: 0; color: var(--action); font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Campos */
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-size: .85rem; font-weight: 600; }
+.input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 10px 11px; }
+.input:focus { border-color: var(--action); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--action) 25%, transparent); }
+.hint { font-size: .78rem; color: var(--muted); }
+
+/* Evento */
+.hero { background: var(--ink); color: var(--bg); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+:root .hero { background: #142038; color: #eef1f5; }
+.hero .club { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--bib); font-weight: 700; }
+.hero h1 { color: #ffffff; font-size: 2.3rem; }
+.hero .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.hero .facts div { display: flex; flex-direction: column; }
+.hero .facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: #9fb0d0; }
+.hero .facts strong { font-weight: 600; color: #ffffff; }
+.hero .stripe { position: absolute; right: -30px; top: 18px; width: 140px; height: 26px; background: repeating-linear-gradient(90deg, var(--bib) 0 18px, transparent 18px 30px); transform: rotate(-35deg); opacity: .85; }
+.dist { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.dist:first-of-type { border-top: 0; padding-top: 0; }
+.dist .km { font-family: var(--display); font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.dist .price { text-align: right; font-weight: 700; font-size: 1.05rem; }
+.dist .socio { text-align: right; font-size: .8rem; color: var(--ok); font-weight: 600; }
+.bar { grid-column: 1 / -1; height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; background: var(--action); }
+.sticky-cta { position: sticky; bottom: 0; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, var(--bg) 70%, transparent); }
+
+/* Escolha de distância */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; min-width: 92px; }
+.chip b { font-family: var(--display); font-size: 1.25rem; line-height: 1; }
+.chip span { font-size: .78rem; color: var(--muted); }
+.chip[aria-pressed="true"] { border-color: var(--action); background: color-mix(in srgb, var(--action) 10%, var(--surface)); }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.pill-ok { background: var(--ok-bg); color: var(--ok); }
+.pill-warn { background: var(--warn-bg); color: var(--warn); }
+.pill-bad { background: var(--bad-bg); color: var(--bad); }
+.pill-muted { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.part-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.part-head h3 { display: flex; align-items: center; gap: 8px; }
+.part-num { background: var(--bib); color: var(--bib-ink); font-family: var(--display); font-weight: 800; border-radius: 6px; padding: 0 7px; }
+.errors { background: var(--bad-bg); color: var(--bad); border-radius: 10px; padding: 10px 12px; font-size: .88rem; }
+.errors ul { margin: 4px 0 0; padding-left: 18px; }
+.summary-line { display: flex; justify-content: space-between; gap: 8px; font-size: .92rem; }
+.total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 10px; }
+.total strong { font-family: var(--display); font-size: 1.9rem; font-weight: 800; }
+
+/* Pix */
+.qr { width: 220px; height: 220px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 10px; border: 1px solid var(--line); }
+.qr canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.copy { display: flex; gap: 8px; }
+.copy input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: .8rem; }
+.waiting { display: flex; align-items: center; gap: 10px; justify-content: center; font-weight: 600; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+.pay-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pay-tabs button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; }
+.pay-tabs button[aria-pressed="true"] { border-color: var(--action); }
+.pay-tabs button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Número de peito (confirmação) */
+.bib { background: var(--bib); color: var(--bib-ink); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center; position: relative; }
+.bib::before, .bib::after { content: ""; position: absolute; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--bg); }
+.bib::before { left: 8px; } .bib::after { right: 8px; }
+.bib .n { grid-row: span 2; font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1; padding-left: 8px; }
+.bib .who { font-weight: 700; }
+.bib .what { font-size: .85rem; }
+.success { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding-block: 6px; }
+.check { width: 54px; height: 54px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; font-size: 1.8rem; font-weight: 800; }
+
+/* Minhas inscrições */
+.reg { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.date-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; text-align: center; font-family: var(--display); line-height: 1; }
+.date-box b { display: block; font-size: 1.6rem; font-weight: 800; }
+.date-box span { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+
+/* Organizador */
+.org-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.org-nav button { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .88rem; }
+.org-nav button[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.tile strong { display: block; font-family: var(--display); font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+.hbar { display: grid; grid-template-columns: 70px 1fr 64px; gap: 8px; align-items: center; font-size: .88rem; }
+.hbar .track { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.hbar .track i { display: block; height: 100%; background: var(--action); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filters .input { width: auto; padding: 8px 10px; }
+.filters .search { flex: 1; min-width: 180px; }
+.ev-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+@media (max-width: 560px) { .ev-card { grid-template-columns: auto 1fr; } .ev-card .ev-actions { grid-column: 1 / -1; } }
+.dist-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+@media (max-width: 640px) { .dist-row { grid-template-columns: 1fr 1fr; } }
+.toggle { display: flex; gap: 10px; align-items: flex-start; }
+.toggle input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--action); }
+.radio-list { display: flex; flex-direction: column; gap: 8px; }
+.radio-list label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.radio-list input { margin-top: 4px; accent-color: var(--action); }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; z-index: 30; max-width: calc(100% - 32px); }
+.code-boxes { display: flex; gap: 8px; }
+.code-boxes input { width: 100%; text-align: center; font-family: var(--display); font-size: 1.6rem; font-weight: 700; letter-spacing: .3em; }
+</style>
+
+<div class="proto" role="navigation" aria-label="Navegação do protótipo">
+  <span class="tag"><b>Protótipo</b>Inscrições</span>
+  <div class="seg" role="group" aria-label="Ver como">
+    <button type="button" id="mode-atleta" data-action="mode" data-mode="atleta">Atleta</button>
+    <button type="button" id="mode-org" data-action="mode" data-mode="org">Organizador</button>
+  </div>
+  <label class="sr" for="screen-pick" hidden>Tela</label>
+  <select id="screen-pick" aria-label="Ir para a tela"></select>
+  <span class="spacer"></span>
+  <button type="button" class="reset" data-action="reset">Recomeçar</button>
+</div>
+
+<main id="app"></main>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+// ---------- Dados de exemplo ----------
+const EV = {
+  clube: 'Avia Mininu',
+  nome: 'Simulado 10K',
+  data: 'Dom, 13 dez 2026', hora: '5h30',
+  local: 'Parque da Cidade (exemplo)',
+  prazo: 'até 10/12', transf: 'até 06/12',
+  kit: 'Camisa, medalha, água e fruta na chegada',
+  dists: [
+    { id: '5', nome: '5 km', preco: 50, socio: 40, vagas: 80, ocup: 52 },
+    { id: '10', nome: '10 km', preco: 60, socio: 45, vagas: 100, ocup: 71 },
+    { id: '21', nome: '21 km', preco: 80, socio: 65, vagas: 40, ocup: 18 }
+  ],
+  tamanhos: ['PP', 'P', 'M', 'G', 'GG', 'XG'],
+  faixas: [[0, 17, 'Até 17'], [18, 29, '18–29'], [30, 39, '30–39'], [40, 49, '40–49'], [50, 59, '50–59'], [60, 120, '60+']]
+};
+const SOCIOS = { '11111111111': 'Marina Costa', '22222222222': 'Rafael Lima' };
+const CUPONS = { 'AMIGO10': { tipo: 'pct', valor: 10, desc: '10% de desconto' }, 'PARCEIRO': { tipo: 'val', valor: 10, desc: 'R$ 10 de desconto' } };
+const CONTA = { nome: 'Marina Costa', cpf: '111.111.111-11', email: 'marina@exemplo.com', nasc: '1988-04-12', sexo: 'F', tel: '(00) 98888-1234', camisa: 'M', emerg: 'Paulo Costa · (00) 97777-0000' };
+
+const SCREENS = {
+  atleta: [
+    ['evento', 'Página do evento'], ['entrar', 'Entrar com código'], ['participantes', 'Dados e participantes'],
+    ['pix', 'Pagamento Pix'], ['confirmado', 'Inscrição confirmada'], ['minhas', 'Minhas inscrições'], ['transferir', 'Transferir inscrição']
+  ],
+  org: [
+    ['org-eventos', 'Meus eventos'], ['org-inscritos', 'Inscritos e resumo'], ['org-editar', 'Criar/editar evento'],
+    ['org-cupons', 'Cupons'], ['org-socios', 'Sócios (CPFs)'], ['org-pagamento', 'Mercado Pago']
+  ]
+};
+
+const NOMES = ['Ana Beatriz Souza', 'Bruno Carvalho', 'Camila Rocha', 'Diego Martins', 'Elaine Pereira', 'Fábio Nunes', 'Gabriela Alves', 'Henrique Dias', 'Isabela Freitas', 'João Pedro Lima', 'Karina Melo', 'Lucas Barbosa', 'Mariana Teixeira', 'Nathan Cardoso', 'Otávio Ramos', 'Patrícia Gomes', 'Renata Moura', 'Sérgio Araújo', 'Tatiane Ribeiro', 'Vinícius Castro', 'Wesley Pinto', 'Yasmin Correia', 'Rafael Lima', 'Marina Costa'];
+
+function seedInscritos() {
+  const d = ['10', '5', '10', '21', '5', '10', '10', '5', '21', '10', '5', '10', '21', '10', '5', '10', '5', '10', '21', '10', '5', '10', '10', '10'];
+  const cam = ['M', 'P', 'G', 'M', 'PP', 'GG', 'M', 'P', 'G', 'M', 'P', 'M', 'G', 'GG', 'P', 'M', 'M', 'G', 'P', 'XG', 'G', 'P', 'G', 'M'];
+  const sx = ['F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F'];
+  const ida = ['30–39', '40–49', '18–29', '30–39', '50–59', '40–49', '30–39', '18–29', '40–49', '30–39', '30–39', '50–59', '30–39', '18–29', '60+', '40–49', '30–39', '40–49', '18–29', '30–39', '50–59', '18–29', '40–49', '30–39'];
+  return NOMES.map((n, i) => {
+    const dist = EV.dists.find(x => x.id === d[i]);
+    const socio = i % 3 === 0 || n === 'Marina Costa' || n === 'Rafael Lima';
+    const status = i === 4 || i === 15 ? 'pendente' : (i === 9 ? 'cancelada' : 'paga');
+    return { n: 101 + i, nome: n, dist: d[i], cat: (sx[i] === 'F' ? 'Fem ' : 'Masc ') + ida[i], camisa: cam[i], valor: socio ? dist.socio : dist.preco, socio, status, transf: i === 7 ? 'de Paulo Souza' : '' };
+  });
+}
+
+function freshState() {
+  return {
+    logged: false, email: '', codeSent: false, code: '',
+    parts: [], cupom: null, cupomTxt: '', cupomMsg: '', aceite: false, errors: [],
+    pedido: null, pay: 'pix',
+    minhas: [],
+    transferIdx: 0, transferDone: false,
+    org: {
+      inscritos: seedInscritos(), fDist: '', fStatus: '', busca: '', cancelConfirm: null,
+      socios: Object.entries(SOCIOS).map(([cpf, nome]) => ({ cpf, nome })).concat([{ cpf: '33333333333', nome: 'Diego Martins' }, { cpf: '44444444444', nome: 'Camila Rocha' }]),
+      sociosTxt: '', cupons: [{ cod: 'AMIGO10', desc: '10% de desconto', usos: 3, max: 20 }, { cod: 'PARCEIRO', desc: 'R$ 10 de desconto', usos: 1, max: 10 }],
+      distEdit: EV.dists.map(d => ({ ...d })), camisa: true, faixa: true, mp: true, taxa: 'clube'
+    }
+  };
+}
+let S = freshState();
+let timer = null;
+
+// ---------- Utilidades ----------
+const $ = (s, r = document) => r.querySelector(s);
+const brl = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+const digits = s => (s || '').replace(/\D/g, '');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function fmtCpf(v) { const d = digits(v).slice(0, 11); return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); }
+function fmtCpfDigits(d) { return fmtCpf(d); }
+function idade(nasc) { if (!nasc) return null; const b = new Date(nasc + 'T12:00:00'), ev = new Date('2026-12-13T12:00:00'); let a = ev.getFullYear() - b.getFullYear(); if (ev < new Date(ev.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
+function categoria(p) { const a = idade(p.nasc); if (a == null || !p.sexo) return null; const f = EV.faixas.find(([lo, hi]) => a >= lo && a <= hi); return (p.sexo === 'F' ? 'Feminino ' : 'Masculino ') + (f ? f[2] : ''); }
+function precoDe(p) { const d = EV.dists.find(x => x.id === p.dist); if (!d) return 0; return SOCIOS[digits(p.cpf)] ? d.socio : d.preco; }
+function totais() {
+  const sub = S.parts.reduce((s, p) => s + precoDe(p), 0);
+  let desc = 0;
+  if (S.cupom) desc = S.cupom.tipo === 'pct' ? sub * S.cupom.valor / 100 : Math.min(S.cupom.valor, sub);
+  return { sub, desc, total: sub - desc };
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
+function go(screen) { if (location.hash.slice(1) === screen) render(); else location.hash = screen; }
+function note(title, items) { return `<details class="note"><summary>Para discutir: ${title}</summary><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></details>`; }
+function emptyPart() { return { nome: '', cpf: '', email: '', nasc: '', sexo: '', tel: '', camisa: '', emerg: '', dist: '' }; }
+
+// ---------- Telas do atleta ----------
+function scrEvento() {
+  const rows = EV.dists.map(d => {
+    const rest = d.vagas - d.ocup;
+    return `<div class="dist">
+      <div><div class="km">${d.nome}</div><div class="small muted num">${rest} vagas restantes</div></div>
+      <div><div class="price num">${brl(d.preco)}</div><div class="socio num">sócio ${brl(d.socio)}</div></div>
+      <div class="bar" aria-hidden="true"><i style="width:${Math.round(d.ocup / d.vagas * 100)}%"></i></div>
+    </div>`;
+  }).join('');
+  return `<div class="phone">
+    <section class="hero">
+      <span class="stripe" aria-hidden="true"></span>
+      <span class="club">${EV.clube} · simulado</span>
+      <h1>${EV.nome}</h1>
+      <div class="facts">
+        <div><span>Data</span><strong>${EV.data}</strong></div>
+        <div><span>Largada</span><strong>${EV.hora}</strong></div>
+        <div><span>Local</span><strong>${EV.local}</strong></div>
+        <div><span>Inscrições</span><strong>${EV.prazo}</strong></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Distâncias</h2>
+      <div>${rows}</div>
+      <p class="small muted">Preço de sócio aplicado automaticamente pelo CPF.</p>
+    </section>
+    <section class="card">
+      <h3>Kit</h3><p>${EV.kit}.</p>
+      <h3>Transferência</h3><p>Não há reembolso, mas você pode transferir sua inscrição para outra pessoa ${EV.transf}.</p>
+      <div class="row"><button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento em PDF">Ver regulamento</button><span class="muted">·</span><button class="link" type="button" data-action="toast" data-msg="Abriria o WhatsApp do organizador">Falar com a organização</button></div>
+    </section>
+    ${note('página do evento', ['Só o essencial antes do botão: data, local, distâncias, preço e vagas.', 'Texto longo (regulamento, percurso) fica em links, não na página.', 'Mostrar o preço de sócio aqui ou só no formulário?'])}
+    <div class="sticky-cta"><button class="btn btn-primary btn-block" type="button" data-action="start">Inscrever-se</button></div>
+  </div>`;
+}
+
+function scrEntrar() {
+  const body = !S.codeSent ? `
+      <h2>Entre com seu e-mail</h2>
+      <p class="muted">Enviamos um código de 6 dígitos. Se for sua primeira vez, sua conta é criada agora.</p>
+      <div class="field"><label for="email">E-mail</label><input class="input" id="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com" value="${esc(S.email)}" data-bind="email"></div>
+      <button class="btn btn-primary btn-block" type="button" data-action="send-code">Receber código</button>
+      <p class="hint">No protótipo: <b>${CONTA.email}</b> simula alguém que já tem conta (dados vêm preenchidos). Qualquer outro e-mail é um cadastro novo.</p>`
+    : `
+      <h2>Digite o código</h2>
+      <p class="muted">Enviado para <b>${esc(S.email)}</b>. Vale por 10 minutos.</p>
+      <div class="field"><label for="code">Código</label><div class="code-boxes"><input class="input num" id="code" inputmode="numeric" maxlength="6" placeholder="000000" value="${esc(S.code)}" data-bind="code" autocomplete="one-time-code"></div></div>
+      <button class="btn btn-primary btn-block" type="button" data-action="verify">Entrar</button>
+      <div class="row between small"><button class="link" type="button" data-action="change-email">Trocar e-mail</button><button class="link" type="button" data-action="toast" data-msg="Novo código enviado">Reenviar código</button></div>
+      <p class="hint">No protótipo, qualquer código de 6 dígitos funciona.</p>`;
+  return `<div class="phone">
+    <button class="link small" type="button" data-action="goto" data-to="evento">← ${EV.nome}</button>
+    <section class="card">${body}</section>
+    ${note('login sem senha', ['Sem senha para esquecer: e-mail + código.', 'Quem já correu antes entra e encontra os dados preenchidos.', 'O login acontece dentro da inscrição, sem página de cadastro separada.'])}
+  </div>`;
+}
+
+function partCard(p, i) {
+  const d = EV.dists.find(x => x.id === p.dist);
+  const socio = SOCIOS[digits(p.cpf)];
+  const cat = categoria(p);
+  const dup = p.cpf && S.parts.some((q, j) => j !== i && digits(q.cpf) === digits(p.cpf) && digits(p.cpf).length === 11);
+  const chips = EV.dists.map(x => `<button type="button" class="chip" aria-pressed="${p.dist === x.id}" data-action="dist" data-i="${i}" data-d="${x.id}"><b>${x.nome}</b><span class="num">${brl(socio ? x.socio : x.preco)}</span></button>`).join('');
+  return `<section class="card" data-part="${i}">
+    <div class="part-head">
+      <h3><span class="part-num">${i + 1}</span>${i === 0 ? 'Você' : 'Participante ' + (i + 1)}</h3>
+      ${i > 0 ? `<button class="link small" type="button" data-action="remove-part" data-i="${i}">Remover</button>` : ''}
+    </div>
+    <div class="field"><span class="label">Distância</span><div class="chips">${chips}</div></div>
+    <div class="field"><label for="cpf-${i}">CPF</label><input class="input num" id="cpf-${i}" inputmode="numeric" placeholder="000.000.000-00" value="${esc(p.cpf)}" data-bind="cpf" data-i="${i}" data-mask="cpf">
+      <div id="cpf-info-${i}">${socio ? `<span class="pill pill-ok">Sócio do clube · preço de sócio</span>` : ''}${dup ? `<span class="pill pill-bad">CPF repetido neste pedido</span>` : ''}</div>
+    </div>
+    <div class="field"><label for="nome-${i}">Nome completo</label><input class="input" id="nome-${i}" value="${esc(p.nome)}" data-bind="nome" data-i="${i}" autocomplete="${i === 0 ? 'name' : 'off'}"></div>
+    ${i > 0 ? `<div class="field"><label for="email-${i}">E-mail do participante <span class="muted">(opcional)</span></label><input class="input" id="email-${i}" type="email" value="${esc(p.email)}" data-bind="email" data-i="${i}"><span class="hint">Se preencher, a pessoa também recebe a confirmação e vê a inscrição na conta dela.</span></div>` : ''}
+    <div class="grid2">
+      <div class="field"><label for="nasc-${i}">Nascimento</label><input class="input" id="nasc-${i}" type="date" value="${esc(p.nasc)}" data-bind="nasc" data-i="${i}"></div>
+      <div class="field"><label for="sexo-${i}">Sexo</label><select class="input" id="sexo-${i}" data-bind="sexo" data-i="${i}"><option value="">Selecione</option><option value="F" ${p.sexo === 'F' ? 'selected' : ''}>Feminino</option><option value="M" ${p.sexo === 'M' ? 'selected' : ''}>Masculino</option></select></div>
+    </div>
+    <div id="cat-${i}" class="small">${cat ? `Categoria: <b>${cat}</b>` : '<span class="muted">A categoria aparece depois de nascimento e sexo.</span>'}</div>
+    <div class="grid2">
+      <div class="field"><label for="tel-${i}">WhatsApp</label><input class="input" id="tel-${i}" inputmode="tel" value="${esc(p.tel)}" data-bind="tel" data-i="${i}"></div>
+      <div class="field"><label for="camisa-${i}">Camisa</label><select class="input" id="camisa-${i}" data-bind="camisa" data-i="${i}"><option value="">Tamanho</option>${EV.tamanhos.map(t => `<option ${p.camisa === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label for="emerg-${i}">Contato de emergência</label><input class="input" id="emerg-${i}" placeholder="Nome e telefone" value="${esc(p.emerg)}" data-bind="emerg" data-i="${i}"></div>
+  </section>`;
+}
+
+function summaryHtml() {
+  const t = totais();
+  const lines = S.parts.map((p, i) => {
+    const d = EV.dists.find(x => x.id === p.dist);
+    return `<div class="summary-line"><span>${esc(p.nome || 'Participante ' + (i + 1))} · ${d ? d.nome : '—'}${SOCIOS[digits(p.cpf)] ? ' · sócio' : ''}</span><span class="num">${d ? brl(precoDe(p)) : '—'}</span></div>`;
+  }).join('');
+  return `${lines}
+    ${t.desc ? `<div class="summary-line" style="color:var(--ok)"><span>Cupom ${esc(S.cupom.cod)}</span><span class="num">− ${brl(t.desc)}</span></div>` : ''}
+    <div class="total"><span class="label">Total</span><strong class="num">${brl(t.total)}</strong></div>`;
+}
+
+function scrParticipantes() {
+  if (!S.logged) return scrEntrar();
+  const errs = S.errors.length ? `<div class="errors" role="alert"><b>Falta pouco:</b><ul>${S.errors.map(e => `<li>${e}</li>`).join('')}</ul></div>` : '';
+  return `<div class="phone">
+    <div class="row between"><button class="link small" type="button" data-action="goto" data-to="evento">← ${EV.nome}</button><span class="small muted">${esc(S.email)}</span></div>
+    ${errs}
+    ${S.parts.map(partCard).join('')}
+    <button class="btn btn-ghost btn-block" type="button" data-action="add-part">+ Adicionar outro participante</button>
+    <section class="card">
+      <div class="field"><label for="cupom">Cupom</label><div class="row" style="flex-wrap:nowrap"><input class="input" id="cupom" placeholder="Ex.: AMIGO10" value="${esc(S.cupomTxt)}" data-bind="cupomTxt" style="text-transform:uppercase"><button class="btn btn-ghost btn-sm" type="button" data-action="cupom">Aplicar</button></div>
+      ${S.cupomMsg ? `<span class="hint">${S.cupomMsg}</span>` : '<span class="hint">No protótipo: AMIGO10 ou PARCEIRO.</span>'}</div>
+      <div id="summary" class="stack">${summaryHtml()}</div>
+      <label class="toggle"><input type="checkbox" id="aceite" data-bind="aceite" ${S.aceite ? 'checked' : ''}><span class="small">Li e aceito o <button class="link" type="button" data-action="toast" data-msg="Abriria o regulamento">regulamento</button> e autorizo o uso dos meus dados para esta inscrição.</span></label>
+    </section>
+    ${note('formulário', ['CPF primeiro: já aplica preço de sócio e evita inscrição duplicada no evento.', 'Teste os CPFs 111.111.111-11 e 222.222.222-22 (sócios na lista).', 'Categoria por idade é calculada sozinha (idade no dia da prova).', 'Quais campos são obrigatórios para o clube? Camisa e categoria podem ser desligadas por evento.'])}
+    <div class="sticky-cta"><button class="btn btn-primary btn-block" type="button" data-action="checkout">Pagar ${brl(totais().total)} com Pix</button></div>
+  </div>`;
+}
+
+function fakeQr(canvas, seed) {
+  const n = 29, ctx = canvas.getContext('2d'); canvas.width = n; canvas.height = n;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, n, n); ctx.fillStyle = '#000';
+  let s = seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rnd() > .52) ctx.fillRect(x, y, 1, 1);
+  const finder = (x, y) => { ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, y - 1, 9, 9); ctx.fillStyle = '#000'; ctx.fillRect(x, y, 7, 7); ctx.fillStyle = '#fff'; ctx.fillRect(x + 1, y + 1, 5, 5); ctx.fillStyle = '#000'; ctx.fillRect(x + 2, y + 2, 3, 3); };
+  finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+}
+
+function scrPix() {
+  if (!S.pedido) { S.parts = S.parts.length ? S.parts : [{ ...CONTA, dist: '10' }]; S.logged = true; S.email = S.email || CONTA.email; S.pedido = { id: 'A7K2', total: totais().total, status: 'pendente', secs: 30 * 60, parts: S.parts.map(p => ({ ...p })) }; }
+  const p = S.pedido;
+  const pixCode = '00020126580014br.gov.bcb.pix0136' + 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' + '5204000053039865406' + p.total.toFixed(2) + '5802BR5913AVIA MININU6009CIDADE62070503***6304AB12';
+  return `<div class="phone">
+    <section class="card">
+      <div class="row between"><h2>Pagamento</h2><span class="pill pill-warn">Pedido #${p.id}</span></div>
+      <div class="pay-tabs" role="group" aria-label="Forma de pagamento">
+        <button type="button" aria-pressed="true">Pix</button>
+        <button type="button" disabled title="Fica pronto para ativar depois">Cartão · em breve</button>
+      </div>
+      <div class="total"><span class="label">Total</span><strong class="num">${brl(p.total)}</strong></div>
+      <div class="qr"><canvas id="qr" aria-label="QR code Pix de exemplo"></canvas></div>
+      <p class="small muted" style="text-align:center">Abra o app do banco e escaneie, ou copie o código:</p>
+      <div class="copy"><input class="input" id="pix-code" readonly value="${pixCode}"><button class="btn btn-ghost btn-sm" type="button" data-action="copy">Copiar</button></div>
+      <div class="waiting"><span class="dot" aria-hidden="true"></span>Aguardando pagamento · <span id="countdown" class="num">30:00</span></div>
+      <p class="small muted" style="text-align:center">Esta tela atualiza sozinha quando o Pix cair. Pode fechar: o link do pedido vai para seu e-mail.</p>
+    </section>
+    <button class="btn btn-primary btn-block" type="button" data-action="simulate-paid">Simular: Pix recebido</button>
+    ${note('pagamento', ['As vagas ficam reservadas por 30 minutos. Se o Pix não cair, liberam sozinhas.', 'Cartão aparece desativado; ligamos quando você quiser, sem mudar o resto.', 'O dinheiro cai direto na conta Mercado Pago do clube.'])}
+  </div>`;
+}
+
+function scrConfirmado() {
+  if (!S.pedido) { scrPix(); }
+  const p = S.pedido;
+  if (p.status !== 'paga') { p.status = 'paga'; registerMinhas(); }
+  const bibs = p.parts.map((q, i) => { const d = EV.dists.find(x => x.id === q.dist); return `<div class="bib"><span class="n num">${125 + i}</span><span class="who">${esc(q.nome || 'Participante ' + (i + 1))}</span><span class="what">${d ? d.nome : ''} · ${categoria(q) || ''} · camisa ${q.camisa || '—'}</span></div>`; }).join('');
+  return `<div class="phone">
+    <section class="card">
+      <div class="success"><div class="check" aria-hidden="true">✓</div><h2>Inscrição confirmada</h2><p class="muted">Pix de ${brl(p.total)} recebido. Enviamos o comprovante para <b>${esc(S.email)}</b>.</p></div>
+      ${bibs}
+      <p class="small muted">Número provisório. A organização pode alterar até a entrega dos kits.</p>
+    </section>
+    <button class="btn btn-primary btn-block" type="button" data-action="goto" data-to="minhas">Ver minhas inscrições</button>
+    ${note('confirmação', ['O e-mail repete esta tela, com link para "Minhas inscrições".', 'Mostrar número de peito já na inscrição ou só na retirada do kit?'])}
+  </div>`;
+}
+
+function registerMinhas() {
+  if (S.minhas.some(m => m.pedido === S.pedido.id)) return;
+  S.pedido.parts.forEach((q, i) => S.minhas.unshift({ pedido: S.pedido.id, n: 125 + i, ev: EV.nome, dia: '13', mes: 'dez', dist: q.dist, nome: q.nome || 'Participante ' + (i + 1), status: 'paga', transf: '' }));
+}
+
+function scrMinhas() {
+  if (!S.minhas.length) { S.logged = true; S.email = S.email || CONTA.email; S.minhas = [{ pedido: 'A7K2', n: 125, ev: EV.nome, dia: '13', mes: 'dez', dist: '10', nome: CONTA.nome, status: 'paga', transf: '' }, { pedido: 'A7K2', n: 126, ev: EV.nome, dia: '13', mes: 'dez', dist: '5', nome: 'Pedro Costa', status: 'paga', transf: '' }]; }
+  const past = { ev: 'Simulado 5K de Setembro', dia: '21', mes: 'set', dist: '5 km', tempo: '27:41' };
+  const items = S.minhas.map((m, i) => { const d = EV.dists.find(x => x.id === m.dist); return `<section class="card"><div class="reg">
+      <div class="date-box"><b class="num">${m.dia}</b><span>${m.mes}</span></div>
+      <div class="stack" style="gap:6px">
+        <div class="row between"><h3>${m.ev}</h3><span class="pill pill-ok">Paga</span></div>
+        <p class="small"><b>${esc(m.nome)}</b> · ${d ? d.nome : ''} · nº <span class="num">${m.n}</span>${m.transf ? ` · <span class="muted">transferida de ${esc(m.transf)}</span>` : ''}</p>
+        <div class="row"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria o comprovante (também vai por e-mail)">Comprovante</button><button class="btn btn-ghost btn-sm" type="button" data-action="transfer" data-i="${i}">Transferir</button></div>
+      </div></div></section>`; }).join('');
+  return `<div class="phone">
+    <div class="row between"><h2>Minhas inscrições</h2><span class="small muted">${esc(S.email)}</span></div>
+    <span class="label">Próximas</span>
+    ${items}
+    <span class="label">Anteriores</span>
+    <section class="card"><div class="reg"><div class="date-box"><b class="num">${past.dia}</b><span>${past.mes}</span></div><div class="stack" style="gap:6px"><div class="row between"><h3>${past.ev}</h3><span class="pill pill-muted">Concluída</span></div><p class="small">${past.dist}</p></div></div></section>
+    <section class="card"><h3>Meus dados</h3><p class="small muted">Nome, CPF, nascimento, camisa e contato de emergência ficam salvos para as próximas provas.</p><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria a edição dos dados">Editar meus dados</button></section>
+    ${note('área do atleta', ['Aparecem as inscrições que você pagou e as feitas em seu CPF por outra pessoa.', 'Guardar o tempo do simulado aqui seria útil no futuro?'])}
+  </div>`;
+}
+
+function scrTransferir() {
+  if (!S.minhas.length) scrMinhas();
+  const m = S.minhas[S.transferIdx] || S.minhas[0];
+  const d = EV.dists.find(x => x.id === m.dist);
+  if (S.transferDone) return `<div class="phone"><section class="card"><div class="success"><div class="check" aria-hidden="true">✓</div><h2>Inscrição transferida</h2><p class="muted">O novo participante recebeu a confirmação por e-mail. A organização vê o histórico da troca.</p></div></section><button class="btn btn-primary btn-block" type="button" data-action="goto" data-to="minhas">Voltar para minhas inscrições</button></div>`;
+  return `<div class="phone">
+    <button class="link small" type="button" data-action="goto" data-to="minhas">← Minhas inscrições</button>
+    <section class="card">
+      <h2>Transferir inscrição</h2>
+      <p class="small">${EV.nome} · ${d ? d.nome : ''} · nº <span class="num">${m.n}</span>. Hoje em nome de <b>${esc(m.nome)}</b>.</p>
+      <p class="small muted">Permitido ${EV.transf}. O valor pago fica com a inscrição; acertos entre vocês são por fora.</p>
+      <div class="field"><label for="t-cpf">CPF do novo participante</label><input class="input num" id="t-cpf" inputmode="numeric" placeholder="000.000.000-00" data-mask="cpf"></div>
+      <div class="field"><label for="t-nome">Nome completo</label><input class="input" id="t-nome"></div>
+      <div class="field"><label for="t-email">E-mail</label><input class="input" id="t-email" type="email"></div>
+      <div class="grid2">
+        <div class="field"><label for="t-nasc">Nascimento</label><input class="input" id="t-nasc" type="date"></div>
+        <div class="field"><label for="t-camisa">Camisa</label><select class="input" id="t-camisa"><option value="">Tamanho</option>${EV.tamanhos.map(t => `<option>${t}</option>`).join('')}</select></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="button" data-action="do-transfer">Confirmar transferência</button>
+    </section>
+    ${note('transferência', ['Se o novo participante não for sócio e o original era, cobra a diferença? (sugestão: não, mantém simples).', 'Trocar de distância também entra aqui, ou só pela organização?'])}
+  </div>`;
+}
+
+// ---------- Telas do organizador ----------
+function orgNav(cur) {
+  const tabs = [['org-eventos', 'Eventos'], ['org-inscritos', 'Inscritos'], ['org-editar', 'Editar evento'], ['org-cupons', 'Cupons'], ['org-socios', 'Sócios'], ['org-pagamento', 'Mercado Pago']];
+  return `<div class="row between"><div><span class="label">${EV.clube}</span><h2>Painel do organizador</h2></div><span class="small muted">organizador@exemplo.com</span></div>
+  <nav class="org-nav" aria-label="Seções do painel">${tabs.map(([k, l]) => `<button type="button" data-action="goto" data-to="${k}" ${k === cur ? 'aria-current="page"' : ''}>${l}</button>`).join('')}</nav>`;
+}
+
+function scrOrgEventos() {
+  const ins = S.org.inscritos.filter(x => x.status === 'paga');
+  const arrec = ins.reduce((s, x) => s + x.valor, 0);
+  return `<div class="wide">${orgNav('org-eventos')}
+    <div class="row between"><h3>Meus eventos</h3><button class="btn btn-primary btn-sm" type="button" data-action="goto" data-to="org-editar">+ Novo evento</button></div>
+    <section class="card"><div class="ev-card">
+      <div class="date-box"><b class="num">13</b><span>dez</span></div>
+      <div class="stack" style="gap:4px"><div class="row"><h3>${EV.nome}</h3><span class="pill pill-ok">Inscrições abertas</span></div>
+        <p class="small muted num">${ins.length} confirmados · ${brl(arrec)} recebidos · fecha ${EV.prazo}</p></div>
+      <div class="row ev-actions"><button class="btn btn-ghost btn-sm" type="button" data-action="goto" data-to="org-inscritos">Inscritos</button><button class="btn btn-ghost btn-sm" type="button" data-action="copy-link">Copiar link</button></div>
+    </div></section>
+    <section class="card"><div class="ev-card">
+      <div class="date-box"><b class="num">21</b><span>set</span></div>
+      <div class="stack" style="gap:4px"><div class="row"><h3>Simulado 5K de Setembro</h3><span class="pill pill-muted">Realizado</span></div><p class="small muted num">64 participantes · R$ 2.880,00</p></div>
+      <div class="row ev-actions"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria os inscritos do evento passado">Inscritos</button><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Cria um novo evento copiando distâncias e preços">Duplicar</button></div>
+    </div></section>
+    ${note('eventos', ['"Duplicar" cria o próximo simulado copiando distâncias, preços e campos.', 'O link do evento é o que vai para o grupo do WhatsApp.'])}
+  </div>`;
+}
+
+function scrOrgInscritos() {
+  const o = S.org, all = o.inscritos;
+  const pagos = all.filter(x => x.status === 'paga'), pend = all.filter(x => x.status === 'pendente');
+  const arrec = pagos.reduce((s, x) => s + x.valor, 0);
+  const vagas = EV.dists.reduce((s, d) => s + d.vagas, 0);
+  const porDist = EV.dists.map(d => { const c = pagos.filter(x => x.dist === d.id).length; return `<div class="hbar"><span>${d.nome}</span><span class="track"><i style="width:${Math.round(c / Math.max(1, pagos.length) * 100)}%"></i></span><span class="num" style="text-align:right">${c}</span></div>`; }).join('');
+  const porCam = EV.tamanhos.map(t => { const c = pagos.filter(x => x.camisa === t).length; return `<div class="hbar"><span>${t}</span><span class="track"><i style="width:${Math.round(c / Math.max(1, pagos.length) * 100)}%"></i></span><span class="num" style="text-align:right">${c}</span></div>`; }).join('');
+  const q = o.busca.toLowerCase();
+  const rows = all.filter(x => (!o.fDist || x.dist === o.fDist) && (!o.fStatus || x.status === o.fStatus) && (!q || x.nome.toLowerCase().includes(q) || String(x.n).includes(q)));
+  const pill = s => s === 'paga' ? '<span class="pill pill-ok">Paga</span>' : s === 'pendente' ? '<span class="pill pill-warn">Aguardando Pix</span>' : '<span class="pill pill-bad">Cancelada</span>';
+  const tr = rows.map(x => { const d = EV.dists.find(y => y.id === x.dist); return `<tr>
+      <td class="num">${x.n}</td><td><b>${esc(x.nome)}</b>${x.socio ? ' <span class="pill pill-muted">sócio</span>' : ''}${x.transf ? `<div class="small muted">transferida ${esc(x.transf)}</div>` : ''}</td>
+      <td>${d.nome}</td><td>${x.cat}</td><td>${x.camisa}</td><td class="num">${brl(x.valor)}</td><td>${pill(x.status)}</td>
+      <td>${x.status === 'cancelada' ? '' : o.cancelConfirm === x.n ? `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-danger btn-sm" type="button" data-action="org-cancel-yes" data-n="${x.n}">Confirmar</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel-no">Voltar</button></span>` : `<span class="row" style="flex-wrap:nowrap"><button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Abriria o formulário de transferência">Transferir</button><button class="btn btn-ghost btn-sm" type="button" data-action="org-cancel" data-n="${x.n}">Cancelar</button></span>`}</td>
+    </tr>`; }).join('') || `<tr><td colspan="8" class="muted">Nenhum inscrito com esses filtros.</td></tr>`;
+  return `<div class="wide">${orgNav('org-inscritos')}
+    <h3>${EV.nome} · ${EV.data}</h3>
+    <div class="tiles">
+      <div class="tile"><span class="label">Confirmados</span><strong class="num">${pagos.length}</strong><span class="small muted">de ${vagas} vagas</span></div>
+      <div class="tile"><span class="label">Aguardando Pix</span><strong class="num">${pend.length}</strong><span class="small muted">liberam em 30 min</span></div>
+      <div class="tile"><span class="label">Recebido</span><strong class="num">${brl(arrec)}</strong><span class="small muted">na conta Mercado Pago</span></div>
+      <div class="tile"><span class="label">Sócios</span><strong class="num">${pagos.filter(x => x.socio).length}</strong><span class="small muted">com preço de sócio</span></div>
+    </div>
+    <div class="split">
+      <section class="card"><h3>Por distância</h3>${porDist}</section>
+      <section class="card"><h3>Camisas</h3>${porCam}</section>
+    </div>
+    <div class="filters">
+      <input class="input search" id="org-busca" placeholder="Buscar por nome ou nº" value="${esc(o.busca)}" data-bind="org-busca">
+      <select class="input" id="org-fdist" data-bind="org-fdist"><option value="">Todas distâncias</option>${EV.dists.map(d => `<option value="${d.id}" ${o.fDist === d.id ? 'selected' : ''}>${d.nome}</option>`).join('')}</select>
+      <select class="input" id="org-fstatus" data-bind="org-fstatus"><option value="">Todos status</option><option value="paga" ${o.fStatus === 'paga' ? 'selected' : ''}>Paga</option><option value="pendente" ${o.fStatus === 'pendente' ? 'selected' : ''}>Aguardando Pix</option><option value="cancelada" ${o.fStatus === 'cancelada' ? 'selected' : ''}>Cancelada</option></select>
+      <button class="btn btn-ghost btn-sm" type="button" data-action="toast" data-msg="Baixaria a planilha (Excel/CSV) com todos os dados">Baixar planilha</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Dist.</th><th>Categoria</th><th>Camisa</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="org-tbody">${tr}</tbody></table></div>
+    ${note('inscritos', ['A planilha baixada traz tudo: CPF, nascimento, contato de emergência, camisa, categoria.', 'Faltou algum resumo? Ex.: lista para entrega de kits, por ordem alfabética.', 'Check-in no dia da prova fica para uma próxima etapa.'])}
+  </div>`;
+}
+
+function scrOrgEditar() {
+  const o = S.org;
+  const dr = o.distEdit.map((d, i) => `<div class="dist-row">
+    <div class="field"><label for="de-n-${i}">Distância</label><input class="input" id="de-n-${i}" value="${esc(d.nome)}"></div>
+    <div class="field"><label for="de-p-${i}">Preço</label><input class="input num" id="de-p-${i}" inputmode="decimal" value="${d.preco}"></div>
+    <div class="field"><label for="de-s-${i}">Preço sócio</label><input class="input num" id="de-s-${i}" inputmode="decimal" value="${d.socio}"></div>
+    <div class="field"><label for="de-v-${i}">Vagas</label><input class="input num" id="de-v-${i}" inputmode="numeric" value="${d.vagas}"></div>
+    <button class="btn btn-ghost btn-sm" type="button" data-action="de-remove" data-i="${i}" aria-label="Remover ${esc(d.nome)}">Remover</button>
+  </div>`).join('');
+  return `<div class="wide">${orgNav('org-editar')}
+    <section class="card"><h3>Informações</h3>
+      <div class="field"><label for="ev-nome">Nome do evento</label><input class="input" id="ev-nome" value="${EV.nome}"></div>
+      <div class="grid2">
+        <div class="field"><label for="ev-data">Data e largada</label><input class="input" id="ev-data" type="datetime-local" value="2026-12-13T05:30"></div>
+        <div class="field"><label for="ev-local">Local</label><input class="input" id="ev-local" value="${EV.local}"></div>
+        <div class="field"><label for="ev-fim">Inscrições até</label><input class="input" id="ev-fim" type="date" value="2026-12-10"></div>
+        <div class="field"><label for="ev-transf">Transferência até</label><input class="input" id="ev-transf" type="date" value="2026-12-06"></div>
+      </div>
+      <div class="field"><label for="ev-kit">Kit e informações</label><textarea class="input" id="ev-kit" rows="3">${EV.kit}.</textarea></div>
+      <div class="field"><label for="ev-reg">Regulamento (PDF)</label><input class="input" id="ev-reg" type="file" accept="application/pdf"></div>
+    </section>
+    <section class="card"><h3>Distâncias e preços</h3>${dr}
+      <button class="btn btn-ghost btn-sm" type="button" data-action="de-add" style="align-self:flex-start">+ Adicionar distância</button>
+    </section>
+    <section class="card"><h3>O que pedir no formulário</h3>
+      <label class="toggle"><input type="checkbox" id="opt-camisa" ${o.camisa ? 'checked' : ''}><span><b>Tamanho de camisa</b><br><span class="small muted">PP, P, M, G, GG, XG</span></span></label>
+      <label class="toggle"><input type="checkbox" id="opt-faixa" ${o.faixa ? 'checked' : ''}><span><b>Categoria por idade</b><br><span class="small muted">Calculada pelo nascimento: até 17, 18–29, 30–39, 40–49, 50–59, 60+</span></span></label>
+      <p class="small muted">Nome, CPF, e-mail, nascimento, sexo, WhatsApp e contato de emergência são sempre pedidos.</p>
+    </section>
+    <div class="row"><button class="btn btn-primary" type="button" data-action="toast" data-msg="Evento salvo">Salvar</button><button class="btn btn-ghost" type="button" data-action="toast" data-msg="Evento publicado: link pronto para o WhatsApp">Publicar</button><button class="btn btn-ghost" type="button" data-action="goto" data-to="evento">Ver como atleta</button></div>
+    ${note('cadastro do evento', ['Fica faltando algo que os simulados usam? Ex.: lote de preço por data, kit sem camisa mais barato.', 'Vagas por distância ou um total geral do evento?'])}
+  </div>`;
+}
+
+function scrOrgCupons() {
+  const rows = S.org.cupons.map(c => `<tr><td><b>${c.cod}</b></td><td>${c.desc}</td><td class="num">${c.usos} de ${c.max}</td><td><span class="pill pill-ok">Ativo</span></td></tr>`).join('');
+  return `<div class="wide">${orgNav('org-cupons')}
+    <section class="card"><h3>Novo cupom</h3>
+      <div class="grid2">
+        <div class="field"><label for="cp-cod">Código</label><input class="input" id="cp-cod" placeholder="Ex.: CONVIDADO" style="text-transform:uppercase"></div>
+        <div class="field"><label for="cp-desc">Desconto</label><select class="input" id="cp-desc"><option>10%</option><option>20%</option><option>R$ 10</option><option>R$ 15</option></select></div>
+        <div class="field"><label for="cp-max">Limite de usos</label><input class="input num" id="cp-max" inputmode="numeric" value="10"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" type="button" data-action="add-cupom" style="align-self:flex-start">Criar cupom</button>
+    </section>
+    <div class="table-wrap"><table><thead><tr><th>Código</th><th>Desconto</th><th>Usos</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${note('cupons', ['Cupom serve para convidados, parceiros e promoções. Sócios usam a lista de CPFs.'])}
+  </div>`;
+}
+
+function scrOrgSocios() {
+  const rows = S.org.socios.map(s => `<tr><td class="num">${fmtCpfDigits(s.cpf)}</td><td>${esc(s.nome)}</td></tr>`).join('');
+  return `<div class="wide">${orgNav('org-socios')}
+    <section class="card"><h3>Sócios do clube</h3>
+      <p class="small muted">Quem estiver nesta lista paga o preço de sócio em qualquer evento do clube. A lista vale para todos os eventos.</p>
+      <div class="field"><label for="soc-txt">Colar da planilha (uma pessoa por linha: CPF e nome)</label><textarea class="input num" id="soc-txt" rows="4" placeholder="555.555.555-55; Fulano de Tal">${esc(S.org.sociosTxt)}</textarea></div>
+      <div class="row"><button class="btn btn-primary btn-sm" type="button" data-action="import-socios">Importar</button><span class="small muted num">${S.org.socios.length} sócios cadastrados</span></div>
+    </section>
+    <div class="table-wrap"><table><thead><tr><th>CPF</th><th>Nome</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${note('sócios', ['A lista tem validade? Ex.: sócio com mensalidade em dia. Dá para reimportar a cada mês.'])}
+  </div>`;
+}
+
+function scrOrgPagamento() {
+  const o = S.org;
+  return `<div class="wide">${orgNav('org-pagamento')}
+    <section class="card"><h3>Conta de recebimento</h3>
+      ${o.mp ? `<div class="row between"><div><span class="pill pill-ok">Conectado</span> <b>Mercado Pago</b> · conta do clube</div><button class="btn btn-ghost btn-sm" type="button" data-action="mp-toggle">Desconectar</button></div>
+        <p class="small muted">Os pagamentos caem direto nesta conta. A plataforma nunca segura o dinheiro.</p>`
+      : `<p>Conecte a conta Mercado Pago do clube para receber as inscrições.</p><button class="btn btn-primary btn-sm" type="button" data-action="mp-toggle" style="align-self:flex-start">Conectar Mercado Pago</button>`}
+    </section>
+    <section class="card"><h3>Formas de pagamento</h3>
+      <label class="toggle"><input type="checkbox" checked disabled><span><b>Pix</b><br><span class="small muted">Confirmação automática em segundos</span></span></label>
+      <label class="toggle"><input type="checkbox" disabled><span><b>Cartão de crédito</b> <span class="pill pill-muted">em breve</span></span></label>
+    </section>
+    <section class="card"><h3>Taxa do Mercado Pago</h3>
+      <div class="radio-list">
+        <label><input type="radio" name="taxa" value="clube" ${o.taxa === 'clube' ? 'checked' : ''} data-bind="org-taxa"><span><b>O clube absorve</b><br><span class="small muted">Atleta paga o preço anunciado (Pix custa cerca de 1%).</span></span></label>
+        <label><input type="radio" name="taxa" value="atleta" ${o.taxa === 'atleta' ? 'checked' : ''} data-bind="org-taxa"><span><b>Repassar ao atleta</b><br><span class="small muted">Soma uma taxa de serviço no total.</span></span></label>
+      </div>
+    </section>
+    ${note('pagamento', ['Etapa 1: só a conta do seu clube. Etapa futura: cada clube conecta a sua, com comissão automática da plataforma.'])}
+  </div>`;
+}
+
+// ---------- Render ----------
+const RENDER = { evento: scrEvento, entrar: scrEntrar, participantes: scrParticipantes, pix: scrPix, confirmado: scrConfirmado, minhas: scrMinhas, transferir: scrTransferir, 'org-eventos': scrOrgEventos, 'org-inscritos': scrOrgInscritos, 'org-editar': scrOrgEditar, 'org-cupons': scrOrgCupons, 'org-socios': scrOrgSocios, 'org-pagamento': scrOrgPagamento };
+
+function current() { const h = location.hash.slice(1); return RENDER[h] ? h : 'evento'; }
+function render() {
+  const scr = current();
+  clearInterval(timer);
+  const mode = scr.startsWith('org-') ? 'org' : 'atleta';
+  $('#mode-atleta').setAttribute('aria-pressed', mode === 'atleta');
+  $('#mode-org').setAttribute('aria-pressed', mode === 'org');
+  $('#screen-pick').innerHTML = SCREENS[mode].map(([k, l]) => `<option value="${k}" ${k === scr ? 'selected' : ''}>${l}</option>`).join('');
+  $('#app').innerHTML = RENDER[scr]();
+  if (scr === 'pix') {
+    fakeQr($('#qr'), 7 + Math.round(S.pedido.total));
+    timer = setInterval(() => { if (S.pedido.secs > 0) S.pedido.secs--; const el = $('#countdown'); if (el) el.textContent = String(Math.floor(S.pedido.secs / 60)).padStart(2, '0') + ':' + String(S.pedido.secs % 60).padStart(2, '0'); }, 1000);
+  }
+}
+
+function refreshPart(i) {
+  const p = S.parts[i]; if (!p) return;
+  const socio = SOCIOS[digits(p.cpf)];
+  const dup = digits(p.cpf).length === 11 && S.parts.some((q, j) => j !== i && digits(q.cpf) === digits(p.cpf));
+  const info = $('#cpf-info-' + i); if (info) info.innerHTML = (socio ? `<span class="pill pill-ok">Sócio do clube · preço de sócio</span>` : '') + (dup ? `<span class="pill pill-bad">CPF repetido neste pedido</span>` : '');
+  const card = $(`[data-part="${i}"]`);
+  if (card) card.querySelectorAll('.chip').forEach(c => { const d = EV.dists.find(x => x.id === c.dataset.d); c.querySelector('span').textContent = brl(socio ? d.socio : d.preco); });
+  const cat = $('#cat-' + i); if (cat) { const c = categoria(p); cat.innerHTML = c ? `Categoria: <b>${c}</b>` : '<span class="muted">A categoria aparece depois de nascimento e sexo.</span>'; }
+  const sm = $('#summary'); if (sm) sm.innerHTML = summaryHtml();
+  const cta = $('[data-action="checkout"]'); if (cta) cta.textContent = 'Pagar ' + brl(totais().total) + ' com Pix';
+}
+
+function validate() {
+  const e = [];
+  S.parts.forEach((p, i) => {
+    const who = i === 0 ? 'Você' : 'Participante ' + (i + 1);
+    const miss = [];
+    if (!p.dist) miss.push('distância');
+    if (digits(p.cpf).length !== 11) miss.push('CPF');
+    if (!p.nome.trim()) miss.push('nome');
+    if (!p.nasc) miss.push('nascimento');
+    if (!p.sexo) miss.push('sexo');
+    if (!p.camisa) miss.push('camisa');
+    if (miss.length) e.push(`${who}: ${miss.join(', ')}`);
+  });
+  const cpfs = S.parts.map(p => digits(p.cpf)).filter(c => c.length === 11);
+  if (new Set(cpfs).size !== cpfs.length) e.push('Há CPF repetido no pedido.');
+  if (!S.aceite) e.push('Aceite o regulamento.');
+  return e;
+}
+
+// ---------- Eventos ----------
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-action]'); if (!b) return;
+  const a = b.dataset.action, i = +b.dataset.i;
+  switch (a) {
+    case 'mode': go(b.dataset.mode === 'org' ? 'org-eventos' : 'evento'); break;
+    case 'reset': S = freshState(); go('evento'); toast('Protótipo reiniciado'); break;
+    case 'goto': go(b.dataset.to); break;
+    case 'toast': toast(b.dataset.msg); break;
+    case 'start': if (!S.parts.length) S.parts = [emptyPart()]; S.codeSent = false; go(S.logged ? 'participantes' : 'participantes'); break;
+    case 'send-code': if (!/\S+@\S+\.\S+/.test(S.email)) { toast('Digite um e-mail válido'); return; } S.codeSent = true; render(); toast('Código enviado para ' + S.email); break;
+    case 'change-email': S.codeSent = false; S.code = ''; render(); break;
+    case 'verify': {
+      if (digits(S.code).length !== 6) { toast('O código tem 6 dígitos'); return; }
+      S.logged = true;
+      const returning = S.email.toLowerCase() === CONTA.email;
+      if (!S.parts.length) S.parts = [emptyPart()];
+      if (returning) { const d = S.parts[0].dist; S.parts[0] = { ...CONTA, dist: d }; }
+      else S.parts[0].email = S.email;
+      if (current() !== 'participantes') go('participantes'); else render();
+      toast(returning ? 'Bem-vinda de volta! Seus dados foram preenchidos.' : 'Conta criada. Complete seus dados.');
+      break;
+    }
+    case 'dist': S.parts[i].dist = b.dataset.d; b.closest('.chips').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === b)); refreshPart(i); break;
+    case 'add-part': S.parts.push(emptyPart()); render(); setTimeout(() => { const el = $(`[data-part="${S.parts.length - 1}"]`); el && el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); break;
+    case 'remove-part': S.parts.splice(i, 1); render(); break;
+    case 'cupom': {
+      const c = CUPONS[(S.cupomTxt || '').trim().toUpperCase()];
+      if (c) { S.cupom = { ...c, cod: S.cupomTxt.trim().toUpperCase() }; S.cupomMsg = 'Cupom aplicado: ' + c.desc + '.'; }
+      else { S.cupom = null; S.cupomMsg = 'Cupom não encontrado ou esgotado.'; }
+      render(); break;
+    }
+    case 'checkout': {
+      S.errors = validate();
+      if (S.errors.length) { render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      S.pedido = { id: 'A' + Math.floor(1000 + Math.random() * 9000), total: totais().total, status: 'pendente', secs: 30 * 60, parts: S.parts.map(p => ({ ...p })) };
+      go('pix'); break;
+    }
+    case 'copy': { const inp = $('#pix-code'); const done = () => toast('Código Pix copiado'); if (navigator.clipboard) navigator.clipboard.writeText(inp.value).then(done, () => { inp.select(); toast('Selecionado: use Copiar do celular'); }); else { inp.select(); toast('Selecionado: use Copiar do celular'); } break; }
+    case 'copy-link': { const link = 'seusite.vercel.app/eventos/simulado-10k-dezembro'; const done = () => toast('Link copiado: ' + link); if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, () => toast(link)); else toast(link); break; }
+    case 'simulate-paid': go('confirmado'); break;
+    case 'transfer': S.transferIdx = i; S.transferDone = false; go('transferir'); break;
+    case 'do-transfer': {
+      const nome = $('#t-nome').value.trim();
+      if (digits($('#t-cpf').value).length !== 11 || !nome) { toast('Preencha CPF e nome do novo participante'); return; }
+      const m = S.minhas[S.transferIdx]; m.transf = m.nome; m.nome = nome; S.transferDone = true; render(); break;
+    }
+    case 'org-cancel': S.org.cancelConfirm = +b.dataset.n; render(); break;
+    case 'org-cancel-no': S.org.cancelConfirm = null; render(); break;
+    case 'org-cancel-yes': { const x = S.org.inscritos.find(y => y.n === +b.dataset.n); x.status = 'cancelada'; S.org.cancelConfirm = null; render(); toast('Inscrição ' + x.n + ' cancelada. A vaga voltou a ficar disponível.'); break; }
+    case 'de-add': S.org.distEdit.push({ id: 'n' + Date.now(), nome: '', preco: 0, socio: 0, vagas: 0 }); render(); break;
+    case 'de-remove': S.org.distEdit.splice(i, 1); render(); break;
+    case 'add-cupom': { const cod = $('#cp-cod').value.trim().toUpperCase(); if (!cod) { toast('Digite um código'); return; } S.org.cupons.push({ cod, desc: $('#cp-desc').value + ' de desconto', usos: 0, max: +$('#cp-max').value || 0 }); render(); toast('Cupom ' + cod + ' criado'); break; }
+    case 'import-socios': {
+      const lines = $('#soc-txt').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
+      lines.forEach(l => { const [c, ...rest] = l.split(/[;,\t]/); const cpf = digits(c); if (cpf.length === 11 && !S.org.socios.some(s => s.cpf === cpf)) { S.org.socios.push({ cpf, nome: rest.join(' ').trim() || '—' }); n++; } });
+      S.org.sociosTxt = ''; render(); toast(n + ' sócio(s) importado(s)'); break;
+    }
+    case 'mp-toggle': S.org.mp = !S.org.mp; render(); toast(S.org.mp ? 'Mercado Pago conectado' : 'Conta desconectada'); break;
+  }
+});
+
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.dataset.mask === 'cpf') { t.value = fmtCpf(t.value); }
+  const k = t.dataset.bind; if (!k) return;
+  const val = t.type === 'checkbox' ? t.checked : t.value;
+  if (t.dataset.i !== undefined && S.parts[+t.dataset.i]) { S.parts[+t.dataset.i][k] = val; refreshPart(+t.dataset.i); return; }
+  if (k === 'org-busca') { S.org.busca = val; const pos = t.selectionStart; render(); const nb = $('#org-busca'); nb.focus(); nb.setSelectionRange(pos, pos); return; }
+  if (k === 'org-fdist') { S.org.fDist = val; render(); return; }
+  if (k === 'org-fstatus') { S.org.fStatus = val; render(); return; }
+  if (k === 'org-taxa') { S.org.taxa = val; return; }
+  S[k] = val;
+});
+document.addEventListener('change', ev => { const t = ev.target; if (t.dataset.bind && t.tagName === 'SELECT' && t.dataset.i !== undefined) { S.parts[+t.dataset.i][t.dataset.bind] = t.value; refreshPart(+t.dataset.i); } });
+$('#screen-pick').addEventListener('change', e => go(e.target.value));
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+render();
+</script>
