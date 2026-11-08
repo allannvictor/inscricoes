@@ -109,3 +109,19 @@ Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver 
 Antes de abrir inscrições de verdade:
 - **remova** `PERMITIR_SIMULADO`;
 - remova `RODAR_SEED` (ou o evento de exemplo).
+
+### Prévias (branches que não são o `main`)
+
+Cada branch enviado ao GitHub vira uma **prévia** na Vercel. Prévias **nunca** usam o banco de produção:
+- Elas leem só `DATABASE_URL_PREVIEW`, que é um branch do Neon chamado, por exemplo, `preview`.
+- Sem essa variável, o build da prévia falha de propósito.
+
+Configuração, uma vez só:
+1. No Neon (**Open in Neon → Branches → New branch**), crie o branch `preview` a partir do `main` e copie a connection string.
+2. Na Vercel, em **Environment Variables**, marque **só Preview** e adicione:
+   - `DATABASE_URL_PREVIEW` com a connection string;
+   - `SESSION_SECRET` com outro texto aleatório;
+   - `PERMITIR_SIMULADO=1`;
+   - `RODAR_SEED=1`.
+3. Não coloque `MP_ACCESS_TOKEN` em Preview. Assim as prévias usam o Pix simulado e nunca cobram de verdade.
+
