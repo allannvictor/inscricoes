@@ -125,3 +125,15 @@ Configuração, uma vez só:
    - `RODAR_SEED=1`.
 3. Não coloque `MP_ACCESS_TOKEN` em Preview. Assim as prévias usam o Pix simulado e nunca cobram de verdade.
 
+### Site fechado até o lançamento ("em breve")
+
+Na Vercel, em **Production**, adicione:
+- `PRE_LANCAMENTO=1`;
+- `CHAVE_PRE_LANCAMENTO`, com uma palavra secreta longa.
+
+Com isso:
+- O público vê só "Inscrições em breve".
+- Você entra abrindo `https://SEU-SITE/?acesso=SUA-CHAVE`, e o navegador fica liberado por 90 dias.
+- O webhook do Mercado Pago e o `/api/status` continuam funcionando.
+- No lançamento, apague `PRE_LANCAMENTO` e faça Redeploy.
+
