@@ -16,5 +16,6 @@ export function GET() {
     email: process.env.RESEND_API_KEY ? 'resend' : 'simulado (só nos logs)',
     simuladoPermitido: process.env.PERMITIR_SIMULADO === '1',
     appUrl: process.env.APP_URL ?? null,
+    emBreve: process.env.PRE_LANCAMENTO === '1',
   });
 }
