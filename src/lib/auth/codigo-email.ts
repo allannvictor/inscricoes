@@ -1,0 +1,76 @@
+import 'server-only';
+import { and, count, desc, eq, gt, isNull } from 'drizzle-orm';
+import { db } from '@/db';
+import { codigosLogin, usuarios } from '@/db/schema';
+import { enviarEmail } from '@/lib/email/enviar';
+import { emailCodigo } from '@/lib/email/modelos';
+import { codigoSeisDigitos, hmac, iguais } from './cripto';
+import { criarSessao } from './sessao';
+
+/**
+ * Login por código de 6 dígitos enviado ao e-mail.
+ * - O código é guardado só como hash, vale 10 minutos e aceita até 5 tentativas.
+ * - No máximo 5 códigos por e-mail por hora.
+ * - A conta é criada no primeiro login.
+ */
+
+const VALIDADE_MS = 10 * 60 * 1000;
+const MAX_TENTATIVAS = 5;
+const MAX_CODIGOS_HORA = 5;
+
+export function normalizarEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+const hashCodigo = (email: string, codigo: string) => hmac(`login:${email}:${codigo}`);
+
+export async function solicitarCodigo(emailBruto: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const email = normalizarEmail(emailBruto);
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(codigosLogin)
+    .where(and(eq(codigosLogin.email, email), gt(codigosLogin.criadoEm, new Date(Date.now() - 60 * 60 * 1000))));
+  if (total >= MAX_CODIGOS_HORA) return { ok: false, erro: 'Muitos códigos pedidos. Espere alguns minutos e tente de novo.' };
+
+  const codigo = codigoSeisDigitos();
+  await db.insert(codigosLogin).values({ email, codigoHash: hashCodigo(email, codigo), expiraEm: new Date(Date.now() + VALIDADE_MS) });
+  const msg = emailCodigo(codigo);
+  await enviarEmail({ para: email, ...msg });
+  return { ok: true };
+}
+
+/** Código fixo só para testes automáticos e desenvolvimento. Nunca vale em produção. */
+function codigoDeTeste(codigo: string): boolean {
+  const fixo = process.env.LOGIN_CODIGO_TESTE;
+  return process.env.NODE_ENV !== 'production' && !!fixo && codigo === fixo;
+}
+
+export async function verificarCodigo(emailBruto: string, codigoBruto: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const email = normalizarEmail(emailBruto);
+  const codigo = codigoBruto.replace(/\D/g, '');
+  if (codigo.length !== 6) return { ok: false, erro: 'O código tem 6 dígitos.' };
+
+  if (!codigoDeTeste(codigo)) {
+    const [ultimo] = await db
+      .select()
+      .from(codigosLogin)
+      .where(and(eq(codigosLogin.email, email), isNull(codigosLogin.usadoEm), gt(codigosLogin.expiraEm, new Date())))
+      .orderBy(desc(codigosLogin.criadoEm))
+      .limit(1);
+    if (!ultimo) return { ok: false, erro: 'Código expirado. Peça um novo.' };
+    if (ultimo.tentativas >= MAX_TENTATIVAS) return { ok: false, erro: 'Muitas tentativas. Peça um novo código.' };
+    if (!iguais(ultimo.codigoHash, hashCodigo(email, codigo))) {
+      await db.update(codigosLogin).set({ tentativas: ultimo.tentativas + 1 }).where(eq(codigosLogin.id, ultimo.id));
+      return { ok: false, erro: 'Código incorreto. Confira e tente de novo.' };
+    }
+    await db.update(codigosLogin).set({ usadoEm: new Date() }).where(eq(codigosLogin.id, ultimo.id));
+  }
+
+  const [usuario] = await db
+    .insert(usuarios)
+    .values({ email })
+    .onConflictDoUpdate({ target: usuarios.email, set: { email } })
+    .returning({ id: usuarios.id });
+  await criarSessao(usuario.id);
+  return { ok: true };
+}

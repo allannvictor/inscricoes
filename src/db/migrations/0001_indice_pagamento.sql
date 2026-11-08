@@ -1,0 +1,1 @@
+CREATE INDEX "pedidos_pagamento_idx" ON "pedidos" USING btree ("pagamento_id");
