@@ -4,12 +4,13 @@ import { cache } from 'react';
 import { db } from '@/db';
 import { clubes, distancias, eventos, inscricoes, pedidos } from '@/db/schema';
 
-export const eventoPorSlug = cache(async (slug: string) => {
+/** Evento pelo link. Rascunhos só aparecem com `incluirRascunho` (organizador conferindo antes de publicar). */
+export const eventoPorSlug = cache(async (slug: string, incluirRascunho = false) => {
   const [linha] = await db
     .select({ evento: eventos, clube: clubes })
     .from(eventos)
     .innerJoin(clubes, eq(clubes.id, eventos.clubeId))
-    .where(and(eq(eventos.slug, slug), inArray(eventos.status, ['publicado', 'encerrado'])));
+    .where(and(eq(eventos.slug, slug), inArray(eventos.status, incluirRascunho ? ['publicado', 'encerrado', 'rascunho'] : ['publicado', 'encerrado'])));
   if (!linha) return null;
   const lista = await db.select().from(distancias).where(eq(distancias.eventoId, linha.evento.id)).orderBy(asc(distancias.ordem), asc(distancias.precoCentavos));
   return { ...linha, distancias: lista };

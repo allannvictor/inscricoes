@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Avatar, Capa } from '@/components/Capa';
+import { ehOrganizadorDoClube } from '@/lib/auth/permissoes';
+import { paraPermissao, usuarioAtual } from '@/lib/auth/sessao';
 import { eventoPorSlug, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { formatarDataHora, formatarDiaMes, formatarHora } from '@/lib/regras/datas';
 import { formatarReais } from '@/lib/regras/preco';
@@ -24,13 +26,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PaginaEvento({ params }: Props) {
-  const dados = await eventoPorSlug((await params).slug);
+  const { slug } = await params;
+  let dados = await eventoPorSlug(slug);
+  if (!dados) {
+    // Rascunho: só organizadores do clube (ou master) conseguem ver, para conferir antes de publicar.
+    const rascunho = await eventoPorSlug(slug, true);
+    if (rascunho && ehOrganizadorDoClube(paraPermissao(await usuarioAtual()), rascunho.clube.id)) dados = rascunho;
+  }
   if (!dados) notFound();
   const { evento, clube, distancias } = dados;
   const aberto = inscricoesAbertas(evento);
 
   return (
     <div className="pagina">
+      {evento.status === 'rascunho' && (
+        <div className="erros"><b>Rascunho.</b> Só organizadores veem esta página. Publique no painel para abrir as inscrições.</div>
+      )}
       <Capa src={evento.capaUrl} alt={`Imagem do ${evento.nome}`} />
       <section className="flex flex-col gap-2.5 rounded-xl bg-fundo2 p-[18px]">
         <span className="text-xs font-bold uppercase tracking-[.1em] text-acao">{clube.nome}</span>

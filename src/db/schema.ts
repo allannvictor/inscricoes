@@ -190,6 +190,8 @@ export const inscricoes = pgTable(
     // 'pendente' | 'confirmada' | 'expirada' | 'cancelada'
     status: text('status').notNull().default('pendente'),
     numero: integer('numero'),
+    canceladaEm: timestamp('cancelada_em', { withTimezone: true }),
+    canceladaPor: uuid('cancelada_por').references(() => usuarios.id),
     criadoEm: criadoEm(),
   },
   (t) => [

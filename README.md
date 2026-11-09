@@ -11,8 +11,8 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 
 | Etapa | Estado |
 |---|---|
-| 1. Inscrição com Pix | **Pronta para teste**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
-| 2. Painel do organizador | A fazer. Por enquanto o evento é criado pelo `npm run db:seed` |
+| 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
+| 2. Painel do organizador | **Pronta para teste**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
 | 3. Área do atleta | A fazer |
 | 4. Versão para computador | A fazer |
 | 5 a 7 | A fazer (uso real, extras, outros clubes) |
@@ -80,6 +80,10 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
 | Tela do Pix e confirmação | `src/app/pedidos/[id]/page.tsx` e `src/components/PixPagamento.tsx` |
+| Quem acessa o painel (organizador, master) | `src/lib/auth/permissoes.ts` e `src/lib/painel/acesso.ts` |
+| Ações do painel (salvar evento, cancelar, cupons, sócios…) | `src/app/painel/acoes.ts` |
+| Telas do painel | `src/app/painel/` e `src/components/painel/` |
+| Colunas da planilha de inscritos | `src/app/painel/c/[clube]/eventos/[id]/planilha/route.ts` |
 | Tabelas do banco | `src/db/schema.ts`, depois `npm run db:generate` e `npm run db:migrate` |
 
 Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver erro de arredondamento.
@@ -136,4 +140,18 @@ Com isso:
 - Você entra abrindo `https://SEU-SITE/?acesso=SUA-CHAVE`, e o navegador fica liberado por 90 dias.
 - O webhook do Mercado Pago e o `/api/status` continuam funcionando.
 - No lançamento, apague `PRE_LANCAMENTO` e faça Redeploy.
+
+## Painel do organizador
+
+Fica em **`/painel`**, com o mesmo login por código.
+- **Organizador:** quem está na lista de organizadores de um clube (Perfil do clube → Organizadores). Pode tudo nos eventos do clube.
+- **Master:** os e-mails em `ADMIN_EMAILS` acessam o painel de qualquer clube. Não existe senha master: o acesso é pelo código enviado ao e-mail.
+
+### Arquivos (imagem do evento, foto do clube, regulamento)
+
+Na Vercel:
+1. Abra **Storage → Create → Blob** e conecte ao projeto (Production e Preview). Isso cria `BLOB_READ_WRITE_TOKEN`.
+2. Faça Redeploy.
+
+O navegador reduz as imagens antes de enviar. Limite: 4 MB por arquivo.
 

@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+import { gerarSlug } from '@/lib/regras/slug';
+import { lerListaSocios } from './socios-lista';
+import { gerarCsv } from './planilha';
+import { conferirEvento, dataHoraBrasilia, eventoFormSchema, paraCentavos, paraInputDataHora } from './evento-form';
+
+describe('Slug do evento', () => {
+  it('tira acentos e símbolos', () => {
+    expect(gerarSlug('Simulado 10K de Dezembro!')).toBe('simulado-10k-de-dezembro');
+    expect(gerarSlug('Corrida São João — 2027')).toBe('corrida-sao-joao-2027');
+    expect(gerarSlug('!!!')).toBe('evento');
+  });
+});
+
+describe('Lista de sócios colada', () => {
+  it('aceita ; tab e vírgula, ignora cabeçalho, junta repetidos e aponta inválidos', () => {
+    const r = lerListaSocios('CPF;Nome\n529.982.247-25;Marina Costa\n11144477735\tRafael Lima\n111.444.777-35, Rafael L.\n123.456.789-00;Errado\n\n');
+    expect(r.validos).toEqual([
+      { cpf: '52998224725', nome: 'Marina Costa' },
+      { cpf: '11144477735', nome: 'Rafael L.' },
+    ]);
+    expect(r.invalidas).toEqual(['123.456.789-00;Errado']);
+  });
+});
+
+describe('Planilha CSV', () => {
+  it('usa ; tem BOM, aspas quando preciso e neutraliza fórmulas', () => {
+    const csv = gerarCsv(['Nome', 'Obs'], [['Ana; Maria', '=1+1'], ['João "Jota"', null]]);
+    expect(csv.startsWith('﻿')).toBe(true);
+    expect(csv).toContain('"Ana; Maria";\'=1+1');
+    expect(csv).toContain('"João ""Jota""";');
+  });
+});
+
+describe('Formulário de evento', () => {
+  const base = {
+    nome: 'Simulado 5K',
+    dataHora: '2027-01-17T06:00',
+    local: 'Orla',
+    inscricoesAte: '2027-01-14',
+    transferenciaAte: '2027-01-10',
+    precoSocioAtivo: true,
+    pedeCamisa: true,
+    usaCategoria: true,
+    distancias: [{ nome: '5 km', preco: '50,00', precoSocio: '40', vagas: '' }],
+  };
+  it('aceita preços com vírgula e converte para centavos', () => {
+    const r = eventoFormSchema.parse(base);
+    expect(paraCentavos(r.distancias[0].preco)).toBe(5000);
+    expect(paraCentavos(r.distancias[0].precoSocio)).toBe(4000);
+    expect(conferirEvento(r)).toEqual([]);
+  });
+  it('aceita R$ e milhar', () => {
+    const r = eventoFormSchema.parse({ ...base, distancias: [{ nome: 'Maratona', preco: 'R$ 1.250,50', precoSocio: '', vagas: '100' }] });
+    expect(paraCentavos(r.distancias[0].preco)).toBe(125050);
+  });
+  it('recusa inscrição depois da largada e sócio mais caro', () => {
+    const r = eventoFormSchema.parse({ ...base, inscricoesAte: '2027-01-18', distancias: [{ nome: '5 km', preco: '50', precoSocio: '60', vagas: '' }] });
+    const erros = conferirEvento(r);
+    expect(erros).toContain('As inscrições precisam terminar antes da largada.');
+    expect(erros.some((e) => e.includes('preço de sócio'))).toBe(true);
+  });
+  it('datas em Brasília ida e volta', () => {
+    const d = dataHoraBrasilia('2027-01-17T06:00');
+    expect(d.toISOString()).toBe('2027-01-17T09:00:00.000Z');
+    expect(paraInputDataHora(d)).toBe('2027-01-17T06:00');
+  });
+});
