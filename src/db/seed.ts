@@ -56,6 +56,42 @@ if (!evento) {
   ]);
 }
 
+// Modelo real: o último simulado da CF (originalmente em 11/10/2026), com data futura para testar.
+// "Alunos CF" = preço de sócio (pela lista de CPFs); visitantes pagam o preço normal.
+const slugCf = 'simuladao-run-da-cf-maratona-de-aracaju';
+const [jaExisteCf] = await db.select({ id: eventos.id }).from(eventos).where(eq(eventos.slug, slugCf));
+if (!jaExisteCf) {
+  const [cf] = await db
+    .insert(eventos)
+    .values({
+      clubeId: clube.id,
+      slug: slugCf,
+      nome: 'Simuladão Run da CF – Para a Maratona de Aracaju',
+      dataHora: new Date('2027-10-10T04:00:00-03:00'),
+      local: 'Pulse Centro de Treinamento – Aracaju/SE',
+      descricao: [
+        'Está se preparando para a Maratona de Aracaju? O Simuladão Run da CF é a oportunidade de colocar o treinamento à prova: percurso, ritmo e gel da prova.',
+        '',
+        'Escolha 5 km, 10 km, 18 km ou 30 km e teste sua estratégia, ritmo, resistência e alimentação durante o percurso.',
+        '',
+        'Concentração às 4h no Pulse Centro de Treinamento.',
+        'Alunos da CF: R$ 30 (preço aplicado automaticamente pelo CPF). Atletas externos: R$ 50.',
+        '',
+        'Termo de responsabilidade: ao se inscrever, o participante declara que leu e concorda com o regulamento, participa por vontade própria, está ciente de que é um esporte de risco, está em condições de saúde segundo avaliação médica e devidamente treinado, e assume os riscos de participar do evento.',
+      ].join('\n'),
+      inscricoesAte: new Date('2027-10-07T23:59:59-03:00'),
+      transferenciaAte: new Date('2027-10-04T23:59:59-03:00'),
+      status: 'publicado',
+      precoSocioAtivo: true,
+      pedeCamisa: false,
+      usaCategoria: true,
+    })
+    .returning();
+  await db.insert(distancias).values(
+    ['5 km', '10 km', '18 km', '30 km'].map((nome, i) => ({ eventoId: cf.id, nome, precoCentavos: 5000, precoSocioCentavos: 3000, ordem: i + 1 })),
+  );
+}
+
 // CPFs fictícios válidos, usados como sócios de exemplo.
 await db
   .insert(socios)
@@ -65,5 +101,5 @@ await db
   ])
   .onConflictDoNothing();
 
-console.log(`Pronto. Evento: /eventos/${slug} · organizador: ${emailOrg}`);
+console.log(`Pronto. Eventos: /eventos/${slug} e /eventos/${slugCf} · organizador: ${emailOrg}`);
 process.exit(0);
