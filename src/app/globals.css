@@ -25,6 +25,19 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; text-wrap: bala
 .num { font-variant-numeric: tabular-nums; }
 
 @layer components {
+  /* Painel do organizador: pensado para computador, funciona no celular. */
+  .painel { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+  .abas { display: flex; gap: 4px; border-bottom: 1px solid var(--color-linha); overflow-x: auto; }
+  .abas a { padding: 8px 12px; font-weight: 600; color: var(--color-suave); border-bottom: 2px solid transparent; white-space: nowrap; text-decoration: none; }
+  .abas a[aria-current="page"] { color: var(--color-tinta); border-bottom-color: var(--color-acao); }
+  .tabela-wrap { overflow-x: auto; border: 1px solid var(--color-linha); border-radius: 12px; background: #fff; }
+  .tabela { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  .tabela th, .tabela td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--color-linha); white-space: nowrap; vertical-align: middle; }
+  .tabela th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--color-suave); background: var(--color-fundo2); }
+  .tabela tr:last-child td { border-bottom: 0; }
+  .numero-grande { font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1.1; }
+  .barra { height: 10px; background: var(--color-fundo2); border: 1px solid var(--color-linha); border-radius: 99px; overflow: hidden; }
+  .barra > i { display: block; height: 100%; background: var(--color-acao); }
   .pagina { max-width: 440px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
   .cartao { background: #fff; border: 1px solid var(--color-linha); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .rotulo { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--color-suave); }

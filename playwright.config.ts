@@ -16,6 +16,6 @@ export default defineConfig({
     url: 'http://localhost:3100',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { LOGIN_CODIGO_TESTE: '123456', MP_ACCESS_TOKEN: '' },
+    env: { LOGIN_CODIGO_TESTE: '123456', MP_ACCESS_TOKEN: '', ADMIN_EMAILS: 'master@exemplo.com', PRE_LANCAMENTO: '' },
   },
 });

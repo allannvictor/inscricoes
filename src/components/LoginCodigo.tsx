@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import { solicitarCodigoAcao, verificarCodigoAcao } from '@/app/acoes';
 
 /** Entrar com e-mail + código de 6 dígitos. A conta é criada no primeiro acesso. */
-export function LoginCodigo({ destino }: { destino: string }) {
+export function LoginCodigo({ destino, modoTeste = false }: { destino: string; modoTeste?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [codigo, setCodigo] = useState('');
@@ -20,7 +20,7 @@ export function LoginCodigo({ destino }: { destino: string }) {
       const r = await solicitarCodigoAcao(email);
       if (!r.ok) return setErro(r.erro ?? 'Não foi possível enviar o código.');
       setEnviado(true);
-      setAviso(`Enviamos um código para ${email.trim()}.`);
+      setAviso(modoTeste ? `Ambiente de teste: digite o código de teste que você recebeu junto com o link (nenhum e-mail é enviado).` : `Enviamos um código para ${email.trim()}.`);
     });
 
   const entrar = () =>
@@ -60,7 +60,7 @@ export function LoginCodigo({ destino }: { destino: string }) {
           }}
         >
           <h1 className="titulo-2">Digite o código</h1>
-          <p className="text-suave">{aviso} Ele vale por 10 minutos. Confira também o spam.</p>
+          <p className="text-suave">{modoTeste ? aviso : `${aviso} Ele vale por 10 minutos. Confira também o spam.`}</p>
           <div className="campo">
             <label htmlFor="codigo">Código</label>
             <input

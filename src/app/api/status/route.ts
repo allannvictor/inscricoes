@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { codigoTesteAtivo, ehHomologacao } from '@/lib/ambiente';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,5 +18,7 @@ export function GET() {
     simuladoPermitido: process.env.PERMITIR_SIMULADO === '1',
     appUrl: process.env.APP_URL ?? null,
     emBreve: process.env.PRE_LANCAMENTO === '1',
+    homologacao: ehHomologacao(),
+    codigoDeTesteLigado: !!codigoTesteAtivo(),
   });
 }

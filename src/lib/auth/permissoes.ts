@@ -8,10 +8,24 @@ export interface UsuarioLogado {
   email: string;
   cpf: string | null;
   clubesOrganizados: string[]; // ids de clubes em que é organizador
+  /** Usuário master da plataforma (e-mail em ADMIN_EMAILS): acessa o painel de qualquer clube. */
+  admin?: boolean;
 }
 
+/** Lista de e-mails master, vinda da variável ADMIN_EMAILS (separados por vírgula). */
+export function ehEmailAdmin(email: string, adminEmails: string | undefined): boolean {
+  const lista = (adminEmails ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  return lista.includes(email.trim().toLowerCase());
+}
+
+/** Organizador do clube (pode tudo nos eventos dele) ou master. */
 export function ehOrganizadorDoClube(usuario: UsuarioLogado | null, clubeId: string): boolean {
-  return !!usuario && usuario.clubesOrganizados.includes(clubeId);
+  return !!usuario && (usuario.admin === true || usuario.clubesOrganizados.includes(clubeId));
+}
+
+/** Pode abrir o painel (organizador de algum clube ou master)? */
+export function podeAbrirPainel(usuario: UsuarioLogado | null): boolean {
+  return !!usuario && (usuario.admin === true || usuario.clubesOrganizados.length > 0);
 }
 
 /** Pedido: só o comprador ou um organizador do clube dono do evento. */

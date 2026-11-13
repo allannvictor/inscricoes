@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { codigosLogin, usuarios } from '@/db/schema';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailCodigo } from '@/lib/email/modelos';
+import { codigoTesteAtivo } from '@/lib/ambiente';
 import { codigoSeisDigitos, hmac, iguais } from './cripto';
 import { criarSessao } from './sessao';
 
@@ -32,6 +33,12 @@ export async function solicitarCodigo(emailBruto: string): Promise<{ ok: true } 
     .where(and(eq(codigosLogin.email, email), gt(codigosLogin.criadoEm, new Date(Date.now() - 60 * 60 * 1000))));
   if (total >= MAX_CODIGOS_HORA) return { ok: false, erro: 'Muitos códigos pedidos. Espere alguns minutos e tente de novo.' };
 
+  // Homologação/desenvolvimento com código fixo: não envia e-mail (testadores usam o código combinado).
+  if (codigoTesteAtivo()) {
+    console.log(`[código de teste] login solicitado para ${email}`);
+    return { ok: true };
+  }
+
   const codigo = codigoSeisDigitos();
   await db.insert(codigosLogin).values({ email, codigoHash: hashCodigo(email, codigo), expiraEm: new Date(Date.now() + VALIDADE_MS) });
   const msg = emailCodigo(codigo);
@@ -39,10 +46,10 @@ export async function solicitarCodigo(emailBruto: string): Promise<{ ok: true } 
   return { ok: true };
 }
 
-/** Código fixo só para testes automáticos e desenvolvimento. Nunca vale em produção. */
+/** Código fixo de teste (desenvolvimento e homologação). Nunca vale em produção: veja lib/ambiente. */
 function codigoDeTeste(codigo: string): boolean {
-  const fixo = process.env.LOGIN_CODIGO_TESTE;
-  return process.env.NODE_ENV !== 'production' && !!fixo && codigo === fixo;
+  const fixo = codigoTesteAtivo();
+  return !!fixo && iguais(codigo, fixo);
 }
 
 export async function verificarCodigo(emailBruto: string, codigoBruto: string): Promise<{ ok: true } | { ok: false; erro: string }> {

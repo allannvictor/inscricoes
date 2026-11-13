@@ -5,7 +5,7 @@ import { cache } from 'react';
 import { db } from '@/db';
 import { organizadores, sessoes, usuarios, type Usuario } from '@/db/schema';
 import { hmac, tokenAleatorio } from './cripto';
-import type { UsuarioLogado } from './permissoes';
+import { ehEmailAdmin, type UsuarioLogado } from './permissoes';
 
 const COOKIE = 'sessao';
 const DURACAO_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
@@ -30,7 +30,7 @@ export async function encerrarSessao(): Promise<void> {
   jar.delete(COOKIE);
 }
 
-export type UsuarioAtual = Usuario & { clubesOrganizados: string[] };
+export type UsuarioAtual = Usuario & { clubesOrganizados: string[]; admin: boolean };
 
 /** Usuário logado (ou null). Cacheado por requisição. */
 export const usuarioAtual = cache(async (): Promise<UsuarioAtual | null> => {
@@ -44,9 +44,9 @@ export const usuarioAtual = cache(async (): Promise<UsuarioAtual | null> => {
     .limit(1);
   if (!linha) return null;
   const clubes = await db.select({ clubeId: organizadores.clubeId }).from(organizadores).where(eq(organizadores.usuarioId, linha.usuario.id));
-  return { ...linha.usuario, clubesOrganizados: clubes.map((c) => c.clubeId) };
+  return { ...linha.usuario, clubesOrganizados: clubes.map((c) => c.clubeId), admin: ehEmailAdmin(linha.usuario.email, process.env.ADMIN_EMAILS) };
 });
 
 export function paraPermissao(u: UsuarioAtual | null): UsuarioLogado | null {
-  return u ? { id: u.id, email: u.email, cpf: u.cpf, clubesOrganizados: u.clubesOrganizados } : null;
+  return u ? { id: u.id, email: u.email, cpf: u.cpf, clubesOrganizados: u.clubesOrganizados, admin: u.admin } : null;
 }

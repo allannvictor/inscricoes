@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { FormularioInscricao } from '@/components/FormularioInscricao';
 import { LoginCodigo } from '@/components/LoginCodigo';
+import { codigoTesteAtivo } from '@/lib/ambiente';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { eventoPorSlug, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { dataLocal } from '@/lib/regras/datas';
@@ -36,7 +37,7 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
     return (
       <div className="pagina">
         {voltar}
-        <LoginCodigo destino={`/eventos/${slug}/inscricao`} />
+        <LoginCodigo destino={`/eventos/${slug}/inscricao`} modoTeste={!!codigoTesteAtivo()} />
       </div>
     );
   }

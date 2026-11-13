@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { LoginCodigo } from '@/components/LoginCodigo';
+import { codigoTesteAtivo } from '@/lib/ambiente';
 import { usuarioAtual } from '@/lib/auth/sessao';
 
 export const metadata = { title: 'Entrar' };
@@ -10,7 +11,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
   if (await usuarioAtual()) redirect(destino);
   return (
     <div className="pagina">
-      <LoginCodigo destino={destino} />
+      <LoginCodigo destino={destino} modoTeste={!!codigoTesteAtivo()} />
     </div>
   );
 }
