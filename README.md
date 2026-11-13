@@ -5,6 +5,7 @@ Site de inscrições para simulados e provas de corrida. O primeiro clube é a C
 O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6 dígitos → preenche os participantes → paga com Pix → recebe a confirmação.
 
 - **Plano completo e etapas:** [`docs/PLANO.md`](docs/PLANO.md)
+- **Onde paramos / como continuar:** [`docs/CONTINUACAO.md`](docs/CONTINUACAO.md)
 - **Protótipo clicável:** [`docs/prototipo.html`](docs/prototipo.html), que abre direto no navegador.
 
 ## Situação
@@ -14,8 +15,9 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 | 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
 | 2. Painel do organizador | **Concluída**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
 | 3. Área do atleta | **Pronta para teste**: minhas inscrições, comprovante, transferência pelo atleta, meus dados |
-| 4. Versão para computador | A fazer |
-| 5 a 7 | A fazer (uso real, extras, outros clubes) |
+| 4. Identidade visual (layout novo) | A fazer |
+| 5. Versão para computador | A fazer |
+| 6 a 8 | A fazer (uso real, extras, outros clubes) |
 
 ## Stack
 
