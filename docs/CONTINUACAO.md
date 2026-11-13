@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 13/11/2026, durante a etapa 3, com a homologação sendo aberta ao público e o PR #6 (que substitui o #5) aguardando teste e merge.
+> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e o PR #6 teve merge no `staging`, mas o domínio `hml` ainda mostra o branch antigo (ver seção 5).
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -81,7 +81,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 0. Protótipo | ✅ `docs/prototipo.html` |
 | 1. Inscrição com Pix | ✅ em produção; Pix real de R$ 1 confirmado sozinho |
 | 2. Painel do organizador | ✅ em produção (PR #4) |
-| **3. Área do atleta** | 🟡 **PR #6 aberto para o `staging`** (substitui o #5, mesmo código). Depois do merge no `staging`, o Allan testa na homologação. Aprovado, abro o PR `staging` → `main` |
+| **3. Área do atleta** | 🟡 **PR #6 com merge no `staging`** (substitui o #5, mesmo código). Falta o Allan testar na homologação. Aprovado, abro o PR `staging` → `main` |
 | 4. Identidade visual (layout novo) | ⏳ nova, ver seção 6 |
 | 5. Versão para computador (páginas do atleta) | ⏳ |
 | 6. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
@@ -94,13 +94,13 @@ PRs anteriores, todos com merge feito:
 - [#3](https://github.com/allannvictor/inscricoes/pull/3): modo "em breve".
 - [#4](https://github.com/allannvictor/inscricoes/pull/4): etapa 2.
 
-PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch `claude/confident-thompson-3i2277`) foi **substituído** pelo [#6](https://github.com/allannvictor/inscricoes/pull/6) (branch `claude/inscricoes-fast-etapa-3-hum6h2` → `staging`), com o mesmo código mais estes docs. Motivo: a sessão nova só consegue enviar para o próprio branch. Fechar o #5 sem merge.
+PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch `claude/confident-thompson-3i2277`) foi **substituído** pelo [#6](https://github.com/allannvictor/inscricoes/pull/6) (branch `claude/inscricoes-fast-etapa-3-hum6h2` → `staging`), com o mesmo código mais estes docs. Motivo: a sessão nova só consegue enviar para o próprio branch. Fechar o #5 sem merge. O branch antigo ganhou depois um `CLAUDE.md` (instruções para toda sessão), que foi trazido para o `staging` e ajustado ao fluxo novo.
 
 **Branch e homologação:** o branch `staging` foi criado em 13/11 a partir do `main`. Na Vercel, o domínio `hml.inscricoesfast.com.br` deve ficar fixo nele (Settings → Domains → Git Branch = `staging`).
 
 ## 5. Próximo passo imediato
 
-1. **Abrir a homologação ao público** (decidido em 13/11). Passo a passo para o Allan, na Vercel:
+1. **Abrir a homologação ao público** (decidido em 13/11). Conferido pelo `/api/status` em 13/11: abre sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado ✅. **Pendente:** a versão publicada (`16dcc1a`) ainda é do branch antigo `claude/confident-thompson-3i2277`, e não do `staging`. Conferir o Git Branch do domínio `hml` e o deploy do `staging` na Vercel. Passo a passo original, na Vercel:
    - Settings → Deployment Protection → Vercel Authentication: **Disabled** → Save;
    - Settings → Environment Variables, só em Preview: **apagar** `LOGIN_CODIGO_TESTE` e `ADMIN_EMAILS`; **conferir** `EMAIL_FROM` e `RESEND_API_KEY`; conferir que **não** há `MP_ACCESS_TOKEN` nem `PRE_LANCAMENTO`; **adicionar** `SEED_ORGANIZADOR_EMAIL` com o e-mail do Allan (para ele continuar acessando o painel como organizador da CF);
    - Settings → Domains → `hml.inscricoesfast.com.br` → Git Branch = `staging`;
@@ -143,7 +143,7 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
   - desligar o modo "em breve" (apagar `PRE_LANCAMENTO`) no dia do lançamento;
   - conferir se a **URL do webhook de produção no Mercado Pago** foi trocada para `https://www.inscricoesfast.com.br/api/webhooks/mercadopago`, tópico **Order**. Foi pedido ao Allan, mas não está confirmado;
   - desativar o cupom de teste `TESTE1REAL` em produção, se ainda não foi (`update cupons set ativo=false where codigo='TESTE1REAL'`).
-- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Falta o Allan aplicar na Vercel e confirmar pelo `/api/status`.
+- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`. Falta só o domínio apontar para o `staging`.
 - **"Aluno CF" em vez de "sócio":** deixar o nome do preço especial configurável por clube. Pequeno; pode entrar na etapa 4.
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
 - **Página inicial:** hoje é só uma lista de eventos. Melhorar na etapa 4 ou 5.
