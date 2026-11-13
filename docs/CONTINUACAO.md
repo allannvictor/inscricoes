@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e o PR #6 teve merge no `staging`, mas o domínio `hml` ainda mostra o branch antigo (ver seção 5).
+> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6 e #7 com merge). Falta o Allan testar a etapa 3 lá.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -100,7 +100,7 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 
 ## 5. Próximo passo imediato
 
-1. **Abrir a homologação ao público** (decidido em 13/11). Conferido pelo `/api/status` em 13/11: abre sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado ✅. **Pendente:** a versão publicada (`16dcc1a`) ainda é do branch antigo `claude/confident-thompson-3i2277`, e não do `staging`. Conferir o Git Branch do domínio `hml` e o deploy do `staging` na Vercel. Passo a passo original, na Vercel:
+1. **Abrir a homologação ao público** (decidido em 13/11). Conferido pelo `/api/status` em 13/11: abre sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado ✅. Domínio `hml` com Git Branch = `staging` ✅ (conferido: `/api/status` mostra a versão do `staging`). Passo a passo original, na Vercel:
    - Settings → Deployment Protection → Vercel Authentication: **Disabled** → Save;
    - Settings → Environment Variables, só em Preview: **apagar** `LOGIN_CODIGO_TESTE` e `ADMIN_EMAILS`; **conferir** `EMAIL_FROM` e `RESEND_API_KEY`; conferir que **não** há `MP_ACCESS_TOKEN` nem `PRE_LANCAMENTO`; **adicionar** `SEED_ORGANIZADOR_EMAIL` com o e-mail do Allan (para ele continuar acessando o painel como organizador da CF);
    - Settings → Domains → `hml.inscricoesfast.com.br` → Git Branch = `staging`;
@@ -143,7 +143,7 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
   - desligar o modo "em breve" (apagar `PRE_LANCAMENTO`) no dia do lançamento;
   - conferir se a **URL do webhook de produção no Mercado Pago** foi trocada para `https://www.inscricoesfast.com.br/api/webhooks/mercadopago`, tópico **Order**. Foi pedido ao Allan, mas não está confirmado;
   - desativar o cupom de teste `TESTE1REAL` em produção, se ainda não foi (`update cupons set ativo=false where codigo='TESTE1REAL'`).
-- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`. Falta só o domínio apontar para o `staging`.
+- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`, e o domínio já publica o `staging` ✅.
 - **"Aluno CF" em vez de "sócio":** deixar o nome do preço especial configurável por clube. Pequeno; pode entrar na etapa 4.
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
 - **Página inicial:** hoje é só uma lista de eventos. Melhorar na etapa 4 ou 5.
