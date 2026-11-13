@@ -65,6 +65,13 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   await expect(page.getByRole('heading', { name: 'Minhas inscrições' })).toBeVisible();
   await expect(page.getByText('Ana Atleta')).toBeVisible();
   await expect(page.getByText('Bruno Atleta')).toBeVisible();
+  // As duas ficam na aba Inscrito, no mesmo cartão da prova.
+  await expect(page.getByRole('link', { name: /^Inscrito\s*2$/ })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('article', { hasText: 'Ana Atleta' }).filter({ hasText: 'Bruno Atleta' })).toHaveCount(1);
+  await page.getByRole('link', { name: /^Cancelados/ }).click();
+  await expect(page.getByText('Nenhuma inscrição cancelada.')).toBeVisible();
+  await page.getByRole('link', { name: /^Inscrito/ }).click();
+  await expect(page.getByText('Ana Atleta')).toBeVisible();
 
   // Comprovante da Ana
   const cartaoAna = page.locator('section', { hasText: 'Ana Atleta' });

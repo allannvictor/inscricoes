@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e o PR #6 teve merge no `staging`, mas o domínio `hml` ainda mostra o branch antigo (ver seção 5).
+> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6 e #7 com merge). O Allan está testando a etapa 3 lá; as abas de "Minhas inscrições" foram o primeiro ajuste pedido.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -100,15 +100,17 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 
 ## 5. Próximo passo imediato
 
-1. **Abrir a homologação ao público** (decidido em 13/11). Conferido pelo `/api/status` em 13/11: abre sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado ✅. **Pendente:** a versão publicada (`16dcc1a`) ainda é do branch antigo `claude/confident-thompson-3i2277`, e não do `staging`. Conferir o Git Branch do domínio `hml` e o deploy do `staging` na Vercel. Passo a passo original, na Vercel:
-   - Settings → Deployment Protection → Vercel Authentication: **Disabled** → Save;
-   - Settings → Environment Variables, só em Preview: **apagar** `LOGIN_CODIGO_TESTE` e `ADMIN_EMAILS`; **conferir** `EMAIL_FROM` e `RESEND_API_KEY`; conferir que **não** há `MP_ACCESS_TOKEN` nem `PRE_LANCAMENTO`; **adicionar** `SEED_ORGANIZADOR_EMAIL` com o e-mail do Allan (para ele continuar acessando o painel como organizador da CF);
-   - Settings → Domains → `hml.inscricoesfast.com.br` → Git Branch = `staging`;
-   - merge do PR #6 no `staging` (isso publica a etapa 3 na homologação);
-   - conferir `https://hml.inscricoesfast.com.br/api/status`: `homologacao: true`, sem código de teste, e-mail ligado, pagamento simulado.
-2. Esperar o Allan terminar os testes da **etapa 3** em `hml.inscricoesfast.com.br`. O roteiro de teste está na descrição do PR.
-2. Corrigir o que ele apontar. Quando ele aprovar, dizer "pode fazer o merge".
-3. Depois do merge, recomeçar o branch de trabalho do `main` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
+1. ✅ **Homologação aberta ao público** (13/11):
+   - sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado;
+   - domínio `hml` com Git Branch = `staging`;
+   - variáveis da Preview ajustadas (sem `LOGIN_CODIGO_TESTE` e sem `ADMIN_EMAILS`; com `SEED_ORGANIZADOR_EMAIL`).
+2. 🟡 **Ajuste pedido pelo Allan nos testes da etapa 3** (13/11): "Minhas inscrições" estava misturada.
+   - Agora tem 3 abas: **Inscrito** (provas futuras, confirmadas ou aguardando Pix; Pix pendente no topo), **Cancelados** (qualquer data, sem botões) e **Passadas** (provas que já aconteceram, com comprovante).
+   - Cada prova vira **um cartão** com os participantes dentro. "Pagar com Pix" aparece uma vez por pedido.
+   - Regras em `src/lib/atleta/abas.ts`, com testes.
+   - Está num PR para o `staging`. Falta o merge e o teste do Allan no hml.
+3. Continuar os testes da **etapa 3** no hml e corrigir o que o Allan apontar.
+4. Aprovada a etapa 3, abrir o PR **`staging` → `main`**. Depois do merge, recomeçar o branch de trabalho do `staging` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
 
 ## 6. Etapa 4: identidade visual (nova)
 
@@ -143,7 +145,7 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
   - desligar o modo "em breve" (apagar `PRE_LANCAMENTO`) no dia do lançamento;
   - conferir se a **URL do webhook de produção no Mercado Pago** foi trocada para `https://www.inscricoesfast.com.br/api/webhooks/mercadopago`, tópico **Order**. Foi pedido ao Allan, mas não está confirmado;
   - desativar o cupom de teste `TESTE1REAL` em produção, se ainda não foi (`update cupons set ativo=false where codigo='TESTE1REAL'`).
-- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`. Falta só o domínio apontar para o `staging`.
+- **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`, e o domínio já publica o `staging` ✅.
 - **"Aluno CF" em vez de "sócio":** deixar o nome do preço especial configurável por clube. Pequeno; pode entrar na etapa 4.
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
 - **Página inicial:** hoje é só uma lista de eventos. Melhorar na etapa 4 ou 5.
@@ -153,7 +155,7 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (unitários, 56);
+  - `npm test` (unitários, 62);
   - `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (5 de ponta a ponta);
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.
