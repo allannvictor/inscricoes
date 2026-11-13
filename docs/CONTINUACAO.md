@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6 e #7 com merge). O Allan está testando a etapa 3 lá; as abas de "Minhas inscrições" foram o primeiro ajuste pedido.
+> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6, #7 e #8 com merge). O Allan está testando a etapa 3 lá; as abas de "Minhas inscrições" foram o primeiro ajuste pedido.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -108,7 +108,7 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - Agora tem 3 abas: **Inscrito** (provas futuras, confirmadas ou aguardando Pix; Pix pendente no topo), **Cancelados** (qualquer data, sem botões) e **Passadas** (provas que já aconteceram, com comprovante).
    - Cada prova vira **um cartão** com os participantes dentro. "Pagar com Pix" aparece uma vez por pedido.
    - Regras em `src/lib/atleta/abas.ts`, com testes.
-   - Está num PR para o `staging`. Falta o merge e o teste do Allan no hml.
+   - [PR #8](https://github.com/allannvictor/inscricoes/pull/8) com merge no `staging` e publicado no hml (versão `6053d46`). Falta o Allan conferir.
 3. Continuar os testes da **etapa 3** no hml e corrigir o que o Allan apontar.
 4. Aprovada a etapa 3, abrir o PR **`staging` → `main`**. Depois do merge, recomeçar o branch de trabalho do `staging` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
 
