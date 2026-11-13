@@ -13,8 +13,9 @@ export async function Cabecalho() {
         </Link>
         {usuario ? (
           <form action={sairAcao} className="flex items-center gap-3 text-sm">
+            <Link href="/minhas-inscricoes" className="link">Minhas inscrições</Link>
             {podeAbrirPainel(paraPermissao(usuario)) && <Link href="/painel" className="link">Painel</Link>}
-            <span className="hidden max-w-[220px] truncate text-suave sm:inline">{usuario.email}</span>
+            <Link href="/minha-conta" className="hidden max-w-[220px] truncate text-suave no-underline sm:inline" title="Meus dados">{usuario.email}</Link>
             <button type="submit" className="link">Sair</button>
           </form>
         ) : (

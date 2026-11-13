@@ -43,3 +43,28 @@ export function emailConfirmacao(args: {
     ),
   };
 }
+
+export function emailTransferenciaRecebida(args: { evento: string; data: string; nome: string; distancia: string; numero: number | null; link: string }) {
+  return {
+    assunto: `Você recebeu uma inscrição: ${args.evento}`,
+    texto: `Olá, ${args.nome}! Uma inscrição foi transferida para você.\n${args.evento} · ${args.data}\n${args.distancia}${args.numero ? ` · nº ${args.numero}` : ''}\n\nVer inscrição: ${args.link}`,
+    html: layout(
+      'Inscrição transferida para você',
+      `<p style="margin:0 0 12px">Olá, <b>${esc(args.nome)}</b>! Uma inscrição foi transferida para você.</p>
+<p style="margin:0 0 12px"><b>${esc(args.evento)}</b><br>${esc(args.data)}<br>${esc(args.distancia)}${args.numero ? ` · nº ${args.numero}` : ''}</p>
+<a href="${esc(args.link)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:bold">Ver minha inscrição</a>`,
+    ),
+  };
+}
+
+export function emailTransferenciaEnviada(args: { evento: string; nomeAnterior: string; nomeNovo: string }) {
+  return {
+    assunto: `Inscrição transferida: ${args.evento}`,
+    texto: `Olá, ${args.nomeAnterior}. A sua inscrição em ${args.evento} foi transferida para ${args.nomeNovo}. Se não reconhece esta transferência, fale com a organização.`,
+    html: layout(
+      'Inscrição transferida',
+      `<p style="margin:0 0 12px">Olá, <b>${esc(args.nomeAnterior)}</b>. A sua inscrição em <b>${esc(args.evento)}</b> foi transferida para <b>${esc(args.nomeNovo)}</b>.</p>
+<p style="margin:0;color:#5f6670">Se você não reconhece esta transferência, fale com a organização do evento.</p>`,
+    ),
+  };
+}

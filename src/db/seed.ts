@@ -28,6 +28,11 @@ const [org] = await db.insert(usuarios).values({ email: emailOrg }).onConflictDo
 await db.insert(organizadores).values({ clubeId: clube.id, usuarioId: org.id }).onConflictDoNothing();
 
 const slug = 'simulado-10k-dezembro';
+// Datas relativas a hoje: o evento de exemplo está sempre com inscrições abertas em um banco novo (CI, homologação).
+const diasAFrente = (dias: number, hora: string) => {
+  const d = new Date(Date.now() + dias * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date(`${d}T${hora}-03:00`);
+};
 let [evento] = await db.select().from(eventos).where(eq(eventos.slug, slug));
 if (!evento) {
   [evento] = await db
@@ -36,11 +41,11 @@ if (!evento) {
       clubeId: clube.id,
       slug,
       nome: 'Simulado 10K',
-      dataHora: new Date('2026-12-13T05:30:00-03:00'),
+      dataHora: diasAFrente(60, '05:30:00'),
       local: 'Parque da Cidade (exemplo)',
       descricao: 'Kit: camisa, medalha, água e fruta na chegada.',
-      inscricoesAte: new Date('2026-12-10T23:59:59-03:00'),
-      transferenciaAte: new Date('2026-12-06T23:59:59-03:00'),
+      inscricoesAte: diasAFrente(57, '23:59:59'),
+      transferenciaAte: diasAFrente(53, '23:59:59'),
       status: 'publicado',
       precoSocioAtivo: true,
     })

@@ -46,3 +46,13 @@ export function podeVerInscricao(
   if (usuario.cpf && usuario.cpf === inscricao.cpf) return true;
   return !!inscricao.email && inscricao.email.toLowerCase() === usuario.email.toLowerCase();
 }
+
+/** Transferir: quem pode ver a inscrição (comprador, o próprio participante ou organizador do clube). O prazo é conferido à parte. */
+export function podeTransferirInscricao(
+  usuario: UsuarioLogado | null,
+  inscricao: { cpf: string; email: string | null },
+  pedido: { compradorId: string },
+  clubeIdDoEvento: string,
+): boolean {
+  return podeVerInscricao(usuario, inscricao, pedido, clubeIdDoEvento);
+}

@@ -152,6 +152,7 @@ export default async function Inscritos({
                   <td>
                     <b>{l.inscricao.nome}</b>
                     {motivo && <span className="selo selo-neutro ml-1.5">{NOME_MOTIVO[motivo]}</span>}
+                    {l.transferidaDe && <div className="text-xs text-suave">transferida de {l.transferidaDe}</div>}
                   </td>
                   <td className="num">{formatarCpf(l.inscricao.cpf)}</td>
                   <td>{l.distancia}</td>

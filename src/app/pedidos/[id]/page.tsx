@@ -67,6 +67,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           ))}
           <p className="text-sm text-suave">Número de inscrição. O número de peito é entregue na retirada do kit.</p>
         </section>
+        <Link href="/minhas-inscricoes" className="botao botao-primario w-full">Ver minhas inscrições</Link>
         <Link href={`/eventos/${evento.slug}`} className="botao botao-borda w-full">Voltar ao evento</Link>
       </div>
     );

@@ -19,7 +19,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ clube: str
   const linhas = await listarInscritos(evento.id, { status: 'todas' });
   const diaProva = dataLocal(evento.dataHora);
   const csv = gerarCsv(
-    ['Nº', 'Situação', 'Nome', 'CPF', 'E-mail', 'Nascimento', 'Idade na prova', 'Sexo', 'Categoria', 'Distância', 'Camisa', 'WhatsApp', 'Contato de emergência', 'Valor pago (R$)', 'Desconto', 'Comprador (conta)', 'Inscrito em', 'Pago em'],
+    ['Nº', 'Situação', 'Nome', 'CPF', 'E-mail', 'Nascimento', 'Idade na prova', 'Sexo', 'Categoria', 'Distância', 'Camisa', 'WhatsApp', 'Contato de emergência', 'Valor pago (R$)', 'Desconto', 'Comprador (conta)', 'Transferida de', 'Inscrito em', 'Pago em'],
     linhas.map((l) => [
       l.inscricao.numero,
       SITUACAO[statusVisivel(l)] ?? statusVisivel(l),
@@ -37,6 +37,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ clube: str
       centavosParaPlanilha(l.inscricao.precoCentavos),
       l.inscricao.motivoDesconto ? NOME_MOTIVO[l.inscricao.motivoDesconto as Exclude<MotivoDesconto, null>] : '',
       l.comprador,
+      l.transferidaDe,
       dataHora(l.inscricao.criadoEm),
       dataHora(l.pagoEm),
     ]),
