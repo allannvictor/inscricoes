@@ -7,8 +7,8 @@ import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { nascimentoValido } from '@/lib/regras/datas';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { NOME_MOTIVO, ehIdoso, formatarReais, precoParticipante } from '@/lib/regras/preco';
+import { TAMANHOS_CAMISA as TAMANHOS, mascaraTelefone } from '@/lib/mascaras';
 
-const TAMANHOS = ['PP', 'P', 'M', 'G', 'GG', 'XG'];
 
 type Sexo = 'F' | 'M' | '';
 interface Participante {
@@ -35,14 +35,6 @@ interface Props {
 }
 
 const vazio = (): Participante => ({ distanciaId: '', nome: '', cpf: '', email: '', nascimento: '', sexo: '', telefone: '', camisa: '', contatoEmergencia: '' });
-
-function mascaraTelefone(v: string): string {
-  const d = v.replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
 
 export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito }: Props) {
   const router = useRouter();

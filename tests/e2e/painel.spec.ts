@@ -54,6 +54,9 @@ test('master vê todos os clubes', async ({ page }) => {
   await expect(page.getByText('Painel · acesso master')).toBeVisible();
 });
 
+/** Data (AAAA-MM-DD) daqui a `dias` dias, para o teste não envelhecer. */
+const daqui = (dias: number) => new Date(Date.now() + dias * 86_400_000).toISOString().slice(0, 10);
+
 test('organizador cria, publica e acompanha um evento', async ({ page, browser }) => {
   const nome = `Simulado E2E ${Date.now()}`;
   const cpfSocio = cpfAleatorio();
@@ -73,10 +76,10 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   await page.getByRole('link', { name: 'Eventos' }).click();
   await page.getByRole('link', { name: '+ Novo evento' }).click();
   await page.getByLabel('Nome do evento').fill(nome);
-  await page.getByLabel('Data e hora da largada').fill('2027-03-14T06:00');
+  await page.getByLabel('Data e hora da largada').fill(`${daqui(120)}T06:00`);
   await page.getByLabel('Local', { exact: true }).fill('Orla (teste)');
-  await page.getByLabel('Inscrições até (dia, inclusive)').fill('2027-03-10');
-  await page.getByLabel(/Transferência até/).fill('2027-03-07');
+  await page.getByLabel('Inscrições até (dia, inclusive)').fill(daqui(116));
+  await page.getByLabel(/Transferência até/).fill(daqui(110));
   await page.getByLabel(/Informações para o atleta/).fill('Kit: camisa e medalha.');
   await page.getByLabel(/Preço diferenciado para sócio/).check();
   await page.getByLabel('Distância', { exact: true }).first().fill('5 km');

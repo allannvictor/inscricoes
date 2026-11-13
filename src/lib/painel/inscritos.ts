@@ -28,6 +28,8 @@ export async function listarInscritos(eventoId: string, filtros: { busca?: strin
       pagoEm: pedidos.pagoEm,
       pedidoId: pedidos.id,
       comprador: usuarios.email,
+      // Nome de quem tinha a inscrição antes da última transferência (se houve).
+      transferidaDe: sql<string | null>`(select t.dados_anteriores->>'nome' from transferencias t where t.inscricao_id = "inscricoes"."id" order by t.criado_em desc limit 1)`,
     })
     .from(inscricoes)
     .innerJoin(distancias, eq(distancias.id, inscricoes.distanciaId))

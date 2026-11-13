@@ -286,7 +286,7 @@ async function enviarConfirmacao(pedidoId: string) {
   // Cada participante com e-mail diferente do comprador recebe só a própria inscrição.
   for (const p of lista) {
     if (p.email && p.email !== linha.comprador.email) {
-      await enviarEmail({ para: p.email, ...emailConfirmacao({ ...base, total: 0, participantes: [p], link: `${appUrl}/eventos/${linha.evento.slug}` }) });
+      await enviarEmail({ para: p.email, ...emailConfirmacao({ ...base, total: 0, participantes: [p], link: `${appUrl}/minhas-inscricoes` }) });
     }
   }
 }

@@ -12,8 +12,8 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 | Etapa | Estado |
 |---|---|
 | 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
-| 2. Painel do organizador | **Pronta para teste**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
-| 3. Área do atleta | A fazer |
+| 2. Painel do organizador | **Concluída**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
+| 3. Área do atleta | **Pronta para teste**: minhas inscrições, comprovante, transferência pelo atleta, meus dados |
 | 4. Versão para computador | A fazer |
 | 5 a 7 | A fazer (uso real, extras, outros clubes) |
 
@@ -84,6 +84,8 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Ações do painel (salvar evento, cancelar, cupons, sócios…) | `src/app/painel/acoes.ts` |
 | Telas do painel | `src/app/painel/` e `src/components/painel/` |
 | Colunas da planilha de inscritos | `src/app/painel/c/[clube]/eventos/[id]/planilha/route.ts` |
+| Minhas inscrições e comprovante | `src/app/minhas-inscricoes/`, `src/app/inscricoes/[id]/` e `src/lib/atleta/consultas.ts` |
+| Regras da transferência | `src/lib/atleta/transferencia.ts` (prazo em `src/lib/regras/transferencia.ts`) |
 | Tabelas do banco | `src/db/schema.ts`, depois `npm run db:generate` e `npm run db:migrate` |
 
 Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver erro de arredondamento.
