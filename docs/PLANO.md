@@ -141,6 +141,11 @@ Toda página e API confere a permissão no servidor. Esconder um botão não bas
 
 **Como vamos andar:** aprovar este plano autoriza **só a etapa 1**. No fim de cada etapa eu paro e mostro o resultado: o que foi feito, como testar, o link da prévia e o que ficou pendente. A etapa seguinte só começa quando você autorizar explicitamente. Se algo no plano precisar mudar no meio de uma etapa, eu pergunto antes.
 
+**Caminho de cada mudança (desde 13/11/2026):**
+1. Branch de trabalho `claude/…`, com PR para o **`staging`**.
+2. O merge no `staging` publica na homologação (hml.inscricoesfast.com.br), onde a mudança é testada.
+3. Aprovada, ela segue num PR **`staging` → `main`**, que publica em produção.
+
 ### Etapa 1: Inscrição com Pix
 1. Base do projeto: Next.js, Tailwind, Drizzle, Zod, ESLint e Vitest. Migrações iniciais e dados de exemplo (o clube CF e um Simulado 10K).
 2. Regras de negócio, com testes unitários.

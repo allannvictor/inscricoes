@@ -118,6 +118,16 @@ Antes de abrir inscrições de verdade:
 - **remova** `PERMITIR_SIMULADO`;
 - remova `RODAR_SEED` (ou o evento de exemplo).
 
+### Fluxo de branches
+
+| Branch | Ambiente | Endereço |
+|---|---|---|
+| `claude/…` (trabalho) | prévia avulsa da Vercel | `*.vercel.app` |
+| `staging` | **homologação** | https://hml.inscricoesfast.com.br |
+| `main` | **produção** | https://www.inscricoesfast.com.br |
+
+O PR do branch de trabalho vai para o `staging`. Depois de testado na homologação, sai um PR `staging` → `main`.
+
 ### Prévias (branches que não são o `main`)
 
 Cada branch enviado ao GitHub vira uma **prévia** na Vercel. Prévias **nunca** usam o banco de produção:

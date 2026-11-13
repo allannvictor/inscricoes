@@ -22,7 +22,18 @@ Site de inscrições para simulados e provas de corrida, chamado **Inscrições 
 - **Testar na homologação antes do merge.** Avisar claramente quando um PR está "pronto para o merge" e quando ainda não está.
 - **Antes de mudar algo do plano no meio de uma etapa, perguntar.**
 - **Nunca pedir segredos no chat** (tokens, senhas, chaves). Eles vão direto nas variáveis da Vercel.
-- O merge é ele que faz. Depois do merge, o branch de trabalho recomeça do `main`.
+- O merge é ele que faz. Depois do merge, o branch de trabalho recomeça do `staging`.
+
+### Fluxo de branches (desde 13/11/2026)
+
+```
+claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──▶ main (= produção)
+```
+
+1. Cada etapa ou correção sai de um branch `claude/…` criado a partir do `staging`, e o PR vai **para o `staging`**.
+2. O Allan faz o merge no `staging`, e a homologação (`hml.inscricoesfast.com.br`) passa a mostrar a mudança.
+3. Testado e aprovado na homologação, abro um PR **`staging` → `main`**. O merge desse PR publica em produção.
+4. Nunca fazer PR de `claude/…` direto para o `main`.
 
 ## 3. Ambientes e endereços
 
@@ -30,7 +41,7 @@ Site de inscrições para simulados e provas de corrida, chamado **Inscrições 
 |---|---|---|
 | Site | **https://www.inscricoesfast.com.br** (`inscricoesfast.com.br` redireciona) | **https://hml.inscricoesfast.com.br** |
 | Também | `inscricoes-black.vercel.app` | `inscricoes-hml.vercel.app` |
-| Publica a partir de | branch `main` (merge de PR) | branch de trabalho (`claude/…`), a cada push |
+| Publica a partir de | branch `main` (merge do PR `staging` → `main`) | branch **`staging`** (domínio `hml` fixo nele na Vercel), a cada merge |
 | Banco (Neon) | branch `main` | branch `homologacao` (só via `DATABASE_URL_PREVIEW`) |
 | Pix | Mercado Pago **real** (credencial de produção, API de **Orders**) | **simulado** (sem `MP_ACCESS_TOKEN` em Preview) |
 | E-mail | Resend com domínio verificado (`nao-responda@inscricoesfast.com.br`) | Resend (se `EMAIL_FROM` estiver em Preview) |
@@ -70,7 +81,7 @@ Site de inscrições para simulados e provas de corrida, chamado **Inscrições 
 | 0. Protótipo | ✅ `docs/prototipo.html` |
 | 1. Inscrição com Pix | ✅ em produção; Pix real de R$ 1 confirmado sozinho |
 | 2. Painel do organizador | ✅ em produção (PR #4) |
-| **3. Área do atleta** | 🟡 **PR #6 aberto** (substitui o #5, mesmo código): Allan vai testar na homologação. **Não fazer merge sem ele aprovar** |
+| **3. Área do atleta** | 🟡 **PR #6 aberto para o `staging`** (substitui o #5, mesmo código). Depois do merge no `staging`, o Allan testa na homologação. Aprovado, abro o PR `staging` → `main` |
 | 4. Identidade visual (layout novo) | ⏳ nova, ver seção 6 |
 | 5. Versão para computador (páginas do atleta) | ⏳ |
 | 6. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
@@ -83,17 +94,17 @@ PRs anteriores, todos com merge feito:
 - [#3](https://github.com/allannvictor/inscricoes/pull/3): modo "em breve".
 - [#4](https://github.com/allannvictor/inscricoes/pull/4): etapa 2.
 
-PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch `claude/confident-thompson-3i2277`) foi **substituído** por um PR novo do branch `claude/inscricoes-fast-etapa-3-hum6h2`, com o mesmo código mais estes docs. Motivo: a sessão nova só consegue enviar para o próprio branch. Fechar o #5 sem merge.
+PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch `claude/confident-thompson-3i2277`) foi **substituído** pelo [#6](https://github.com/allannvictor/inscricoes/pull/6) (branch `claude/inscricoes-fast-etapa-3-hum6h2` → `staging`), com o mesmo código mais estes docs. Motivo: a sessão nova só consegue enviar para o próprio branch. Fechar o #5 sem merge.
 
-**Branch e homologação:** se o domínio `hml.inscricoesfast.com.br` estiver preso a um branch na Vercel (Settings → Domains → Git Branch), apontá-lo para o branch de trabalho atual.
+**Branch e homologação:** o branch `staging` foi criado em 13/11 a partir do `main`. Na Vercel, o domínio `hml.inscricoesfast.com.br` deve ficar fixo nele (Settings → Domains → Git Branch = `staging`).
 
 ## 5. Próximo passo imediato
 
 1. **Abrir a homologação ao público** (decidido em 13/11). Passo a passo para o Allan, na Vercel:
    - Settings → Deployment Protection → Vercel Authentication: **Disabled** → Save;
    - Settings → Environment Variables, só em Preview: **apagar** `LOGIN_CODIGO_TESTE` e `ADMIN_EMAILS`; **conferir** `EMAIL_FROM` e `RESEND_API_KEY`; conferir que **não** há `MP_ACCESS_TOKEN` nem `PRE_LANCAMENTO`; **adicionar** `SEED_ORGANIZADOR_EMAIL` com o e-mail do Allan (para ele continuar acessando o painel como organizador da CF);
-   - Settings → Domains → `hml.inscricoesfast.com.br` → Git Branch = branch de trabalho atual;
-   - Redeploy do último deploy de Preview;
+   - Settings → Domains → `hml.inscricoesfast.com.br` → Git Branch = `staging`;
+   - merge do PR #6 no `staging` (isso publica a etapa 3 na homologação);
    - conferir `https://hml.inscricoesfast.com.br/api/status`: `homologacao: true`, sem código de teste, e-mail ligado, pagamento simulado.
 2. Esperar o Allan terminar os testes da **etapa 3** em `hml.inscricoesfast.com.br`. O roteiro de teste está na descrição do PR.
 2. Corrigir o que ele apontar. Quando ele aprovar, dizer "pode fazer o merge".
