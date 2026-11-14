@@ -6,6 +6,7 @@ import type { ContaGoogle } from './google';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { criarSessao } from './sessao';
+import { resumoDoErro } from '@/lib/log';
 
 /**
  * Liga a conta Google à conta do site e abre a sessão.
@@ -31,7 +32,7 @@ export async function entrarComGoogle(conta: ContaGoogle): Promise<{ ok: true } 
       linhas: [`A conta Google ${conta.email} foi usada para entrar e agora está ligada à sua conta no Inscrições Fast.`],
       seNaoFoiVoce: 'Alguém pode ter acesso à sua conta Google. Troque a senha do Google e fale com a organização.',
     });
-    await enviarEmail({ para: conta.email, ...aviso }).catch((e) => console.error('Aviso de Google não enviado', e));
+    await enviarEmail({ para: conta.email, ...aviso }).catch((e) => console.error('Aviso de Google não enviado', resumoDoErro(e)));
     if (!porEmail.nome && conta.nome) await db.update(usuarios).set({ nome: conta.nome }).where(eq(usuarios.id, porEmail.id));
     await criarSessao(porEmail.id);
     return { ok: true };

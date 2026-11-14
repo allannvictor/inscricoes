@@ -12,7 +12,7 @@ import { clubes, cupons, distancias, eventos, inscricoes, organizadores, socios,
 import { salvarArquivo } from '@/lib/arquivos';
 import { verificarClube, verificarEvento } from '@/lib/painel/acesso';
 import { conferirEvento, dataHoraBrasilia, eventoFormSchema, fimDoDiaBrasilia, paraCentavos, type EventoForm } from '@/lib/painel/evento-form';
-import { lerListaSocios } from '@/lib/painel/socios-lista';
+import { LIMITE_TEXTO_SOCIOS, lerListaSocios } from '@/lib/painel/socios-lista';
 import { limparCpf } from '@/lib/regras/cpf';
 import { gerarSlug } from '@/lib/regras/slug';
 import { usuarioAtual } from '@/lib/auth/sessao';
@@ -22,6 +22,7 @@ import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { podePublicarEventos } from '@/lib/pagamento/situacao';
 import { normalizarCor } from '@/lib/regras/cores';
 import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
+import { resumoDoErro } from '@/lib/log';
 
 type Resultado<T = object> = ({ ok: true } & T) | { ok: false; erros: string[] };
 const negado = { ok: false as const, erros: ['Você não tem acesso a isto.'] };
@@ -205,8 +206,8 @@ export async function cancelarInscricaoAcao(inscricaoId: string): Promise<Result
 const cupomSchema = z.object({
   codigo: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,30}$/, 'Código: de 3 a 30 letras, números, - ou _ (sem espaços)'),
   tipo: z.enum(['percentual', 'valor']),
-  valor: z.string().trim(),
-  limite: z.string().trim().refine((v) => v === '' || /^\d+$/.test(v), 'Limite deve ser um número'),
+  valor: z.string().trim().max(15),
+  limite: z.string().trim().refine((v) => v === '' || /^\d{1,6}$/.test(v), 'Limite deve ser um número (até 999.999)'),
 });
 
 export async function criarCupomAcao(eventoId: string, dados: z.input<typeof cupomSchema>): Promise<Resultado> {
@@ -243,7 +244,10 @@ export async function alternarCupomAcao(cupomId: string): Promise<Resultado> {
 export async function importarSociosAcao(clubeId: string, texto: string, substituir: boolean): Promise<Resultado<{ importados: number; invalidas: string[] }>> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
+  if (typeof texto !== 'string') return { ok: false, erros: ['Lista inválida.'] };
+  if (texto.length > LIMITE_TEXTO_SOCIOS) return { ok: false, erros: ['Lista grande demais: envie no máximo 5.000 pessoas por vez.'] };
   const { validos, invalidas } = lerListaSocios(texto);
+  if (validos.length > 5000) return { ok: false, erros: ['Lista grande demais: envie no máximo 5.000 pessoas por vez.'] };
   if (!validos.length) return { ok: false, erros: ['Nenhum CPF válido encontrado. Cole uma pessoa por linha: CPF e nome.'] };
   await db.transaction(async (tx) => {
     if (substituir) await tx.delete(socios).where(eq(socios.clubeId, clubeId));
@@ -270,7 +274,7 @@ const perfilSchema = z.object({
   nome: z.string().trim().min(2, 'Informe o nome do clube').max(120),
   whatsapp: z.string().trim().max(30),
   instagram: z.string().trim().max(60),
-  email: z.union([z.literal(''), z.string().trim().email('E-mail inválido')]),
+  email: z.union([z.literal(''), z.string().trim().max(254, 'E-mail longo demais').email('E-mail inválido')]),
   cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
   nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
 });
@@ -316,8 +320,8 @@ export async function enviarFotoClubeAcao(clubeId: string, formulario: FormData)
 export async function adicionarOrganizadorAcao(clubeId: string, emailBruto: string): Promise<Resultado> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
-  const email = emailBruto.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erros: ['Digite um e-mail válido.'] };
+  const email = typeof emailBruto === 'string' ? emailBruto.trim().toLowerCase() : '';
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erros: ['Digite um e-mail válido.'] };
   await convidarOrganizador(acesso.clube, email);
   atualizarPainel();
   return { ok: true };
@@ -329,7 +333,7 @@ async function convidarOrganizador(clube: { id: string; nome: string; slug: stri
   const novo = await db.insert(organizadores).values({ clubeId: clube.id, usuarioId: usuario.id }).onConflictDoNothing().returning();
   if (novo.length) {
     const link = `${process.env.APP_URL ?? ''}/entrar?voltar=${encodeURIComponent(`/painel/c/${clube.slug}`)}`;
-    await enviarEmail({ para: email, ...emailConviteOrganizador({ clube: clube.nome, link }) }).catch((e) => console.error('Convite de organizador não enviado', e));
+    await enviarEmail({ para: email, ...emailConviteOrganizador({ clube: clube.nome, link }) }).catch((e) => console.error('Convite de organizador não enviado', resumoDoErro(e)));
   }
 }
 
@@ -340,7 +344,7 @@ const RESERVADOS = new Set(['novo', 'clubes', 'admin', 'painel', 'api']);
 const novoClubeSchema = z.object({
   nome: z.string().trim().min(2, 'Informe o nome do clube').max(120),
   slug: z.string().trim().max(60),
-  emailOrganizador: z.string().trim().toLowerCase().email('Informe o e-mail do organizador'),
+  emailOrganizador: z.string().trim().toLowerCase().max(254, 'E-mail longo demais').email('Informe o e-mail do organizador'),
   cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
   nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
 });

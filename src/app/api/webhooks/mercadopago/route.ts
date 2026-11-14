@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { pedidos } from '@/db/schema';
 import { assinaturaValida } from '@/lib/pagamento/assinatura';
 import { sincronizarPagamento } from '@/lib/pedidos/servico';
+import { resumoDoErro } from '@/lib/log';
 
 /**
  * Webhook do Mercado Pago (Suas integrações > Webhooks > tópico "Order").
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     try {
       await sincronizarPagamento(pedido.id);
     } catch (e) {
-      console.error('Webhook: falha ao confirmar', e);
+      console.error('Webhook: falha ao confirmar', resumoDoErro(e));
       return NextResponse.json({ erro: 'tente de novo' }, { status: 500 }); // o Mercado Pago reenvia
     }
   }

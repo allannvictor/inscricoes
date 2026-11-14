@@ -7,14 +7,15 @@ const reais = z
   .string()
   .trim()
   .transform((v) => v.replace(/\s|R\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'))
-  .refine((v) => v === '' || /^\d+(\.\d{1,2})?$/.test(v), 'Valor inválido');
+  // No máximo R$ 9.999.999,99 (números enormes não cabem no banco e davam erro 500).
+  .refine((v) => v === '' || /^\d{1,7}(\.\d{1,2})?$/.test(v), 'Valor inválido');
 
 export const distanciaFormSchema = z.object({
   id: z.string().optional(),
   nome: z.string().trim().min(1, 'Dê um nome para cada distância').max(40),
   preco: reais.refine((v) => v !== '', 'Informe o preço de cada distância'),
   precoSocio: reais,
-  vagas: z.string().trim().refine((v) => v === '' || /^\d+$/.test(v), 'Vagas deve ser um número'),
+  vagas: z.string().trim().refine((v) => v === '' || /^\d{1,6}$/.test(v), 'Vagas deve ser um número (até 999.999)'),
 });
 
 export const eventoFormSchema = z.object({

@@ -7,6 +7,7 @@ import { cifrar, iguais } from '@/lib/auth/cripto';
 import { verificarClube } from '@/lib/painel/acesso';
 import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { credenciaisApp, trocarCodigo, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
+import { resumoDoErro } from '@/lib/log';
 
 const COOKIE_OAUTH_MP = 'mp_oauth';
 
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
       })
       .where(eq(clubes.id, salvo.clubeId));
   } catch (e) {
-    console.error('Mercado Pago OAuth: falha ao conectar', e);
+    console.error('Mercado Pago OAuth: falha ao conectar', resumoDoErro(e));
     return NextResponse.redirect(`${voltar}?erro=falhou`);
   }
   await avisarMudancaContaMp({

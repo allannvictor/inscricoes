@@ -30,6 +30,8 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   const cpfCheio = cpfAleatorio();
   const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
   await sql`insert into socios (clube_id, cpf, nome) select id, ${cpfSocio}, 'Sócio E2E' from clubes where slug = 'cf-assessoria'`;
+  // O cupom de exemplo tem limite de usos; no banco local, muitas rodadas de teste esgotariam o cupom.
+  await sql`update cupons set limite = null where codigo = 'AMIGO10'`;
   await sql.end();
 
   await page.goto('/eventos/simulado-10k-dezembro');

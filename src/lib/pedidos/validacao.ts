@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { semCaractereNulo } from '@/lib/regras/texto';
 
 const texto = (min: number, msg: string) => z.string().trim().min(min, msg).max(200);
 
@@ -15,7 +16,7 @@ export const participanteSchema = z.object({
   telefone: z.string().trim().max(20, 'WhatsApp inválido').refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
   camisa: z.string().trim().max(5, 'Tamanho de camisa inválido').optional(),
   contatoEmergencia: texto(3, 'Informe o contato de emergência'),
-});
+}).superRefine(semCaractereNulo);
 
 export const pedidoSchema = z.object({
   eventoId: z.string().uuid(),

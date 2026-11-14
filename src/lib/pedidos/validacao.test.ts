@@ -30,4 +30,7 @@ describe('tamanho máximo dos campos (não dá para encher o banco)', () => {
     expect(novoParticipanteSchema.safeParse({ ...t, telefone: '9'.repeat(400_000) }).success).toBe(false);
     expect(novoParticipanteSchema.safeParse({ ...t, email: 'a'.repeat(300) + '@x.com' }).success).toBe(false);
   });
+  it('recusa o caractere nulo (o erro do banco levaria dados ao log)', () => {
+    expect(participanteSchema.safeParse({ ...base, nome: 'Ana\u0000' }).success).toBe(false);
+  });
 });

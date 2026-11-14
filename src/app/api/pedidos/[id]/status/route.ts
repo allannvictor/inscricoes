@@ -4,6 +4,7 @@ import { podeVerPedido } from '@/lib/auth/permissoes';
 import { paraPermissao, usuarioAtual } from '@/lib/auth/sessao';
 import { pedidoCompleto } from '@/lib/pedidos/consultas';
 import { expirarPendentes, sincronizarPagamento } from '@/lib/pedidos/servico';
+import { resumoDoErro } from '@/lib/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     return NextResponse.json({ erro: 'não encontrado' }, { status: 404 });
   }
   if (dados.pedido.status === 'pendente') {
-    await sincronizarPagamento(id).catch((e) => console.error('Falha ao consultar pagamento', e));
+    await sincronizarPagamento(id).catch((e) => console.error('Falha ao consultar pagamento', resumoDoErro(e)));
     await expirarPendentes(db, dados.evento.id);
     dados = (await pedidoCompleto(id))!;
   }

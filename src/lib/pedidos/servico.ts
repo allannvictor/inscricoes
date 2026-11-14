@@ -12,6 +12,7 @@ import { bloqueioDePedido } from '@/lib/regras/limites-pedido';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { ErroNegocio } from './erros';
 import { pedidoSchema } from './validacao';
+import { resumoDoErro } from '@/lib/log';
 
 /** Tempo que as vagas ficam reservadas esperando o Pix. */
 export const MINUTOS_RESERVA = 30;
@@ -229,7 +230,7 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
       .set({ provedor: provedor.nome, pagamentoId: pix.pagamentoId, pixCopiaECola: pix.copiaECola, pixQrBase64: pix.qrBase64 })
       .where(eq(pedidos.id, pedidoId));
   } catch (e) {
-    console.error('Falha ao criar Pix', e);
+    console.error('Falha ao criar Pix', resumoDoErro(e));
     await cancelarPedido(pedidoId);
     return { ok: false, erros: [e instanceof Error ? e.message : 'Não foi possível gerar o Pix. Tente de novo.'] };
   }
@@ -297,7 +298,7 @@ export async function confirmarPagamento(pedidoId: string, taxaGatewayCentavos: 
   });
 
   if (confirmado) {
-    await enviarConfirmacao(pedidoId).catch((e) => console.error('Falha ao enviar confirmação', e));
+    await enviarConfirmacao(pedidoId).catch((e) => console.error('Falha ao enviar confirmação', resumoDoErro(e)));
   }
   return confirmado;
 }

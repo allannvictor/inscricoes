@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { organizadores, usuarios } from '@/db/schema';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailAvisoSeguranca } from '@/lib/email/modelos';
+import { resumoDoErro } from '@/lib/log';
 
 /**
  * A conta que recebe o dinheiro de um clube mudou: avisa TODOS os organizadores do clube e os masters.
@@ -35,5 +36,5 @@ export async function avisarMudancaContaMp(args: {
     linhas,
     seNaoFoiVoce: 'Se essa mudança não foi combinada, entre no painel, conecte a conta certa e remova o organizador que fez a troca. Depois, fale com a plataforma.',
   });
-  await Promise.all(destinos.map((para) => enviarEmail({ para, ...msg }).catch((e) => console.error('Aviso de conta Mercado Pago não enviado', e))));
+  await Promise.all(destinos.map((para) => enviarEmail({ para, ...msg }).catch((e) => console.error('Aviso de conta Mercado Pago não enviado', resumoDoErro(e)))));
 }

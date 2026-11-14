@@ -20,6 +20,7 @@ import { inscricaoCompleta } from './consultas';
 
 export { novoParticipanteSchema, type NovoParticipante } from './transferencia-schema';
 import { novoParticipanteSchema } from './transferencia-schema';
+import { resumoDoErro } from '@/lib/log';
 
 export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: string, entrada: unknown): Promise<{ ok: true } | { ok: false; erros: string[] }> {
   const dados = await inscricaoCompleta(inscricaoId);
@@ -110,6 +111,6 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
   if (anteriores.email && anteriores.email !== novo.email) {
     envios.push(enviarEmail({ para: anteriores.email, ...emailTransferenciaEnviada({ evento: evento.nome, nomeAnterior: anteriores.nome, nomeNovo: novo.nome }) }));
   }
-  await Promise.allSettled(envios).then((r) => r.forEach((x) => x.status === 'rejected' && console.error('Falha ao enviar e-mail de transferência', x.reason)));
+  await Promise.allSettled(envios).then((r) => r.forEach((x) => x.status === 'rejected' && console.error('Falha ao enviar e-mail de transferência', resumoDoErro(x.reason))));
   return { ok: true };
 }

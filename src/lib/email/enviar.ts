@@ -28,7 +28,8 @@ export async function enviarEmail(email: Email): Promise<void> {
     }),
   });
   if (!resposta.ok) {
-    console.error('Falha ao enviar e-mail', resposta.status, await resposta.text());
+    // Só o status: a resposta do serviço de e-mail pode repetir o endereço de quem recebe.
+    console.error('Falha ao enviar e-mail', resposta.status);
     throw new Error('Não foi possível enviar o e-mail agora.');
   }
 }

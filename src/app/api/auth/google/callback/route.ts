@@ -4,6 +4,7 @@ import { iguais } from '@/lib/auth/cripto';
 import { credenciaisGoogle, trocarCodigoGoogle, urlRetornoGoogle } from '@/lib/auth/google';
 import { entrarComGoogle } from '@/lib/auth/google-login';
 import { destinoInterno } from '@/lib/regras/redirecionamento';
+import { resumoDoErro } from '@/lib/log';
 
 /** Volta do Google: confere o state, troca o código e entra (ou cria a conta). */
 export async function GET(req: Request) {
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
     const r = await entrarComGoogle(conta);
     if (!r.ok) return falhou('google-email');
   } catch (e) {
-    console.error('Entrar com Google: falhou', e);
+    console.error('Entrar com Google: falhou', resumoDoErro(e));
     return falhou('google');
   }
   return NextResponse.redirect(`${base}${voltar}`);

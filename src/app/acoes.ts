@@ -14,31 +14,39 @@ import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { dentroDoLimite } from '@/lib/limites';
+import { acaoLiberadaNoPreLancamento } from '@/lib/pre-lancamento-acoes';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
+import { resumoDoErro } from '@/lib/log';
 
 const ehUuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
 // E-mail com no máximo 254 caracteres (limite do padrão; também evita gravar textos gigantes no banco).
-const emailValido = (e: string) => e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+const emailValido = (e: unknown): e is string => typeof e === 'string' && e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+// As ações podem ser chamadas direto, com qualquer tipo de valor: tipo errado vira resposta neutra, sem erro 500.
+const ehTexto = (v: unknown, max = 500): v is string => typeof v === 'string' && v.length <= max;
 
 export async function solicitarCodigoAcao(email: string): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erro: 'Inscrições em breve.' };
   if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };
   try {
     return await solicitarCodigo(email);
   } catch (e) {
-    console.error(e);
+    console.error('Falha ao pedir código', resumoDoErro(e));
     return { ok: false, erro: 'Não conseguimos enviar o código agora. Tente de novo.' };
   }
 }
 
 export async function verificarCodigoAcao(email: string, codigo: string): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erro: 'Inscrições em breve.' };
   if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };
+  if (!ehTexto(codigo, 20)) return { ok: false, erro: 'O código tem 6 dígitos.' };
   return verificarCodigo(email, codigo);
 }
 
 export async function entrarComSenhaAcao(email: string, senha: string): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erro: 'Inscrições em breve.' };
   if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };
-  if (!senha) return { ok: false, erro: 'Digite a senha.' };
+  if (!ehTexto(senha, 10_000) || !senha) return { ok: false, erro: 'Digite a senha.' };
   return entrarComSenha(email, senha.slice(0, SENHA_MAXIMO));
 }
 
@@ -46,6 +54,7 @@ export async function entrarComSenhaAcao(email: string, senha: string): Promise<
 export async function definirSenhaAcao(senha: string): Promise<{ ok: boolean; erro?: string }> {
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
+  if (!ehTexto(senha, 10_000)) return { ok: false, erro: 'Senha inválida.' };
   const problema = problemaDaSenha(senha, usuario.email);
   if (problema) return { ok: false, erro: problema };
   await db.update(usuarios).set({ senhaHash: await gerarHashSenha(senha) }).where(eq(usuarios.id, usuario.id));
@@ -65,7 +74,7 @@ async function avisarSenha(email: string, acao: 'criada' | 'trocada' | 'removida
     ],
     seNaoFoiVoce: 'Entre com o código enviado a este e-mail, vá em Meus dados → Acesso e crie uma nova senha (ou remova a senha).',
   });
-  await enviarEmail({ para: email, ...msg }).catch((e) => console.error('Aviso de senha não enviado', e));
+  await enviarEmail({ para: email, ...msg }).catch((e) => console.error('Aviso de senha não enviado', resumoDoErro(e)));
 }
 
 export async function removerSenhaAcao(): Promise<{ ok: boolean; erro?: string }> {
@@ -87,9 +96,10 @@ export async function sairAcao(): Promise<void> {
  * Já tem inscrição ativa neste evento? (o servidor bloqueia de novo ao pagar)
  */
 export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{ socio: boolean; jaInscrito: boolean }> {
+  if (!(await acaoLiberadaNoPreLancamento())) return { socio: false, jaInscrito: false };
   const nada = { socio: false, jaInscrito: false };
   const usuario = await usuarioAtual();
-  if (!usuario || !ehUuid(eventoId)) return nada;
+  if (!usuario || !ehUuid(eventoId) || !ehTexto(cpf, 20)) return nada;
   const limpo = limparCpf(cpf);
   if (!validarCpf(limpo)) return nada;
   // Limite por conta: a consulta revela se um CPF é sócio ou está inscrito (dado pessoal, LGPD).
@@ -112,7 +122,9 @@ export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{
 export type CupomValidado = { ok: true; codigo: string; tipo: 'percentual' | 'valor'; valor: number } | { ok: false; erro: string };
 
 export async function validarCupomAcao(eventoId: string, codigo: string): Promise<CupomValidado> {
-  const c = codigo.trim().toUpperCase().slice(0, 40);
+  if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erro: 'Inscrições em breve.' };
+  if (!ehTexto(codigo, 40)) return { ok: false, erro: 'Cupom não encontrado.' };
+  const c = codigo.trim().toUpperCase();
   if (!c) return { ok: false, erro: 'Digite o código do cupom.' };
   if (!ehUuid(eventoId)) return { ok: false, erro: 'Cupom não encontrado.' };
   // Exige login e limita as tentativas, para ninguém adivinhar cupons testando códigos.
@@ -125,12 +137,13 @@ export async function validarCupomAcao(eventoId: string, codigo: string): Promis
 }
 
 export async function criarPedidoAcao(entrada: unknown): Promise<ResultadoCriacao> {
+  if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erros: ['Inscrições em breve.'] };
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erros: ['Sua sessão expirou. Entre de novo com seu e-mail.'] };
   try {
     return await criarPedido(usuario, entrada);
   } catch (e) {
-    console.error(e);
+    console.error('Falha ao criar pedido', resumoDoErro(e));
     return { ok: false, erros: ['Algo deu errado ao criar seu pedido. Tente de novo.'] };
   }
 }

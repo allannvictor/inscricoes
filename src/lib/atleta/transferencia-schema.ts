@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { semCaractereNulo } from '@/lib/regras/texto';
 
 /** Dados do novo participante numa transferência (validados no servidor). */
 export const novoParticipanteSchema = z.object({
@@ -11,6 +12,6 @@ export const novoParticipanteSchema = z.object({
   telefone: z.string().trim().max(20, 'WhatsApp inválido.').refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
   camisa: z.string().trim().max(5, 'Tamanho de camisa inválido.').optional(),
   contatoEmergencia: z.string().trim().min(3, 'Informe o contato de emergência').max(200),
-});
+}).superRefine(semCaractereNulo);
 
 export type NovoParticipante = z.input<typeof novoParticipanteSchema>;

@@ -229,6 +229,20 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - 🟡 **Inscrição cancelada voltava a valer** se o Pix fosse pago depois. Agora o pagamento só confirma as não canceladas; se todas estiverem canceladas, o pedido vira `pago_conflito` para a organização resolver. Teste de banco em `src/lib/pedidos/confirmacao.db.test.ts`, que falha no código antigo.
   - 🟡 **Códigos de evento ou usuário inválidos** em ações davam erro 500; agora dão uma resposta limpa.
   - **Decisão do Allan:** depois de uma transferência, quem comprou continua vendo o nome, o CPF mascarado e a categoria de quem recebeu. Os dados completos nunca aparecem.
+- **Quarta varredura (14/11): LIBERADO COM RESSALVAS** (só baixos). O Allan pediu para corrigir e fazer nova varredura. Correções no PR #11:
+  - **Modo "em breve" com duas travas:**
+    - o middleware usa o caminho **bruto**, passa por quase tudo (`matcher` só exclui `/_next/static/`) e só libera o webhook para `POST` sem cabeçalho `next-action`;
+    - como o Next "limpa" alguns endereços antes do middleware (ex.: `/_next/data/<build>/...`), as ações públicas de `src/app/acoes.ts` também conferem a chave (`src/lib/pre-lancamento-acoes.ts`).
+    - **Provado com servidor real:** POST com a ação de login por 12 caminhos diferentes, sem a chave, gravou 0 códigos; com a chave, funciona.
+  - **Logs sem dados pessoais:** `resumoDoErro` (`src/lib/log.ts`) no lugar do objeto do erro, que levava os valores da consulta (nome, CPF, telefone) para os logs da Vercel. As respostas do Mercado Pago e do Resend também não vão mais inteiras para o log.
+  - O caractere nulo é recusado nos formulários do atleta (`src/lib/regras/texto.ts`).
+  - **Painel com limites:**
+    - e-mail do perfil e dos organizadores com até 254 caracteres;
+    - lista de sócios com até 5.000 pessoas, e nome do sócio cortado em 200 caracteres;
+    - vagas e limite do cupom com até 6 dígitos;
+    - preço com até 7 dígitos.
+  - **Ações públicas** conferem o tipo dos valores: tipo errado vira uma resposta neutra, sem erro 500.
+  - O teste ponta a ponta de inscrição tira o limite do cupom `AMIGO10`, para não esgotar no banco local.
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
@@ -254,7 +268,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (118 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (123 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.

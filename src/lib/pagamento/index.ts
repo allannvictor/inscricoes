@@ -8,6 +8,7 @@ import { credenciaisApp, precisaRenovar, renovarToken } from './oauth-mercadopag
 import { provedorSimulado } from './simulado';
 import { situacaoDoPagamento, type ClubePagamento, type SituacaoPagamento } from './situacao';
 import type { ProvedorPagamento } from './tipos';
+import { resumoDoErro } from '@/lib/log';
 
 export { podePublicarEventos, situacaoDoPagamento, simuladoPermitido } from './situacao';
 export type { SituacaoPagamento } from './situacao';
@@ -35,7 +36,7 @@ async function tokenDoClube(clube: ClubeComTokens): Promise<string | undefined> 
           .where(eq(clubes.id, clube.id));
         token = novo.accessToken;
       } catch (e) {
-        console.error('Mercado Pago: falha ao renovar o token do clube', clube.id, e);
+        console.error('Mercado Pago: falha ao renovar o token do clube', clube.id, resumoDoErro(e));
       }
     }
     return token ?? undefined;
