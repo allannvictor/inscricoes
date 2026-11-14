@@ -1,6 +1,6 @@
 # Backlog de oportunidades de produto
 
-> Memória do agente `especialista-produto`. Versão inicial: 14/11/2026.
+> Memória do agente `especialista-produto`. Versão inicial: 14/11/2026. Última atualização: 14/11/2026 ([radar](radar/2026-11-14.md)).
 > **Situação:** Ideia → Proposta ao Allan → **Aprovada** (vira etapa ou ajuste no `docs/PLANO.md`) → Feita · ou Descartada (com o motivo, para não voltar).
 > Só o Allan muda um item para "Aprovada" ou "Descartada".
 
@@ -16,11 +16,12 @@
 | OP-03 | E-mail de véspera da prova | 🔁 🧰 | 3 | 2 | 80% | P | **4,8** | Ideia |
 | OP-09 | Resultados do simulado e certificado | 🔁 📣 | 3 | 3 | 80% | M | **3,6** | Ideia |
 | OP-13 | Aguentar o pico de abertura das inscrições | 🛡️ | 2 | 3 | 50% | P | **3,0** | Ideia |
+| OP-08 | Equipes e assessorias | 📣 🧰 | 2 | 3 | 80% | M | **2,4** | Ideia (depende da etapa 6) |
 | OP-05 | Lotes de preço por data | 💰 🏃 | 3 | 2 | 80% | M | **2,4** | No plano (Extras) |
 | OP-06 | Check-in e retirada de kit com QR | 🧰 | 3 | 2 | 80% | M | **2,4** | No plano (Extras) |
 | OP-04 | Card "Eu vou!" para stories e WhatsApp | 📣 | 2 | 2 | 50% | P | **2,0** | Ideia |
 | OP-10 | Painel: vendas por dia e aviso aos inscritos | 🧰 | 2 | 2 | 80% | M | **1,6** | Ideia |
-| OP-08 | Equipes e assessorias | 📣 🧰 | 2 | 3 | 50% | M | **1,5** | Ideia |
+| OP-19 | Inscrição de última hora, no local da prova | 🏃 🛡️ | 1 | 2 | 50% | P | **1,0** | Ideia |
 | OP-12 | Página do clube com "avise-me quando abrir" | 📣 🔁 | 2 | 2 | 50% | M | **1,0** | No plano (Plataforma aberta) |
 | OP-07 | Lista de espera quando esgota | 🏃 | 1 | 2 | 80% | M | **0,8** | Ideia |
 | OP-14 | Cartão de crédito e parcelamento | 🏃 | 1 | 2 | 80% | M | **0,8** | No plano (Extras) |
@@ -55,10 +56,11 @@
 - **Menor versão útil:** o organizador sobe a planilha da cronometragem (número e tempo). O site mostra a classificação geral e por categoria, e cada atleta vê o próprio resultado em Minhas inscrições, com um **certificado compartilhável** (imagem para stories, com a marca do clube).
 - **Por que importa:** faz o atleta voltar ao site depois da prova e divulga o clube (ciclo de aquisição). Pode ser o diferencial para outras assessorias.
 - **Validar:** perguntar ao Allan como a CF divulga os tempos hoje e o que os alunos pedem.
+- **Evidência nova (radar de 14/11/2026):** o mercado aponta a retenção do corredor como o desafio de 2027 (Fato, Máquina do Esporte, out/2026), e a RunSignup lançou a busca por nome ou número nos resultados (Fato, nov/2026). Menor versão útil ajustada: resultados com busca na página do evento e o tempo em "Minhas inscrições"; o certificado em imagem fica para depois.
 
 ### OP-13 · Aguentar o pico de abertura das inscrições
 - **Problema:** em provas concorridas, todo mundo entra na mesma hora. Concorrentes recebem reclamações de sistema fora do ar justamente nessa hora.
-- **Evidência:** Sinal: reclamações no Reclame Aqui (ver `MERCADO.md`).
+- **Evidência:** Sinal: reclamações no Reclame Aqui (ver `MERCADO.md`). Novas em nov/2026: servidor sobrecarregado na abertura e "vagas indisponíveis" apesar das anunciadas (Minhas Inscrições e Central da Corrida).
 - **Menor versão útil:** um teste de carga na homologação antes de abrir um evento grande, e uma página de espera amigável se o banco ficar lento. Ligar com a decisão de hospedagem comercial (etapa de uso real).
 
 ### OP-05 · Lotes de preço por data
@@ -77,8 +79,15 @@
 
 ### OP-08 · Equipes e assessorias
 - **Hipótese estratégica:** a assessoria é a porta de entrada do corredor.
+- **Evidência nova (radar de 14/11/2026):** 24% dos corredores participam de assessorias ou grupos (Fato), e a Ticket Sports tem uma área própria para grupos (Fato). Confiança sobe de 50% para 80%; nota de 1,5 para 2,4. Só vale depois da etapa 6 (vários clubes).
 - **Menor versão útil:** um campo "equipe" opcional na inscrição, um filtro e um total por equipe no painel e na planilha.
 - **Depois:** um link de convite do clube, e a assessoria inscrevendo os alunos em provas de outros clubes da plataforma.
+
+### OP-19 · Inscrição de última hora, no local da prova
+- **Problema:** em prova barata, parte das pessoas corre sem se inscrever ("pipoca"). Para o organizador, é risco (sem cadastro numa emergência) e receita perdida.
+- **Evidência:** cerca de 36% dos corredores já correram como pipoca, e metade cita o preço (Fato, pesquisa da Ticket Sports, jul/2026). Não sabemos se acontece nos simulados da CF (Hipótese).
+- **Menor versão útil:** sem código. Um cartaz com o QR da página do evento na largada e as inscrições abertas até a hora da prova. Se funcionar, uma 2ª versão: o organizador inscreve alguém pelo painel.
+- **Validar:** perguntar ao Allan se há pipocas nos simulados e se ele aceita inscrição no dia. Origem: [radar de 14/11/2026](radar/2026-11-14.md).
 
 ### OP-12 · Página do clube com "avise-me quando abrir"
 - Já no plano (Plataforma aberta), com a página do clube. Somar um "Me avise quando abrir a próxima prova" (e-mail), que cria uma lista de interessados para o clube.
@@ -88,6 +97,7 @@
 
 ### OP-14 · Cartão de crédito e parcelamento
 - Já no plano (Extras). Nos simulados, que são baratos, o Pix resolve; o cartão pesa mais em provas caras ou em pacotes.
+- **Nov/2026:** as regras do Pix Parcelado no Banco Central seguem indefinidas (fontes se contradizem). Esperar antes de decidir entre cartão e Pix Parcelado.
 
 ### OP-11 · Formulário em etapas
 - Ficou de fora da etapa 4. Decidir com os números da OP-01: se a desistência estiver no formulário, ele sobe na lista.
@@ -103,3 +113,8 @@
 
 ### OP-17 · Ligação com o Strava
 - Por exemplo, ligar a atividade do dia ao resultado, ou criar desafios do clube. Só observar por enquanto.
+
+## Só observar (radar)
+
+- **Inscrição feita por assistentes de IA do atleta:** a RunSignup diz estar pronta para isso (set/2026). Longe da nossa realidade; rever em 2027.
+- **Nome impróprio no número de peito:** reclamação na Minhas Inscrições (nov/2026). Lembrar quando houver número de peito com nome.

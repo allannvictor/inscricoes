@@ -171,7 +171,9 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Agente de produto (14/11):** criado o `especialista-produto` (`.claude/agents/especialista-produto.md`), com a memória em `docs/produto/` (estratégia, mercado, backlog de 18 oportunidades pontuadas e radares semanais).
   - Ele só propõe; nada do backlog entra no plano sem o Allan aprovar.
   - **Rotina semanal (decidida em 14/11):** toda **segunda às 7h40** (horário de Brasília), uma tarefa agendada ("Radar semanal de produto") abre uma sessão nova, roda o agente no modo radar e abre um **PR para o `staging`** só com `docs/produto/`. Também avisa por notificação no celular.
-    - **Atenção:** a tarefa foi criada sem os conectores (GitHub). Se a sessão da segunda não conseguir enviar o branch ou abrir o PR, recriar a tarefa pela tela de tarefas agendadas do claude.ai, com o repositório `allannvictor/inscricoes` e o GitHub marcados.
+    - **PR #12 com merge no `staging` (14/11).** Na mesma hora, o Allan pediu uma rodada extra da rotina: ela pesquisou e escreveu o 1º radar (`docs/produto/radar/2026-11-14.md`), mas **não conseguiu enviar o branch** (erro 403: a tarefa foi criada sem o repositório e sem o GitHub). O radar foi recuperado e enviado pela sessão principal, num PR para o `staging`.
+    - **Pendente:** recriar a tarefa pela tela de tarefas agendadas do claude.ai, com o repositório `allannvictor/inscricoes` e o conector do GitHub marcados, e desligar a tarefa antiga. Sem isso, o radar de segunda vai travar no mesmo ponto.
+    - **Rede:** o radar indicou outros sites úteis ainda bloqueados (`reclameaqui.com.br`, `raceroster.com`, `mundodomarketing.com.br`, `endurancesportswire.com`, `timesbrasil.com.br`) e a API do GitHub (`api.github.com`).
   - **Rede do ambiente (14/11):** os sites dos concorrentes foram liberados no ambiente "Projetos" (ticketsports, sympla, minhasinscricoes, centraldacorrida, haid e runsignup, com e sem `www`), e o agente consegue abrir as páginas deles. Para pesquisar outro site, é preciso liberar o endereço do mesmo jeito.
 
 ## 8. Dicas técnicas para a próxima sessão
