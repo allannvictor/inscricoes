@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo novo e 1 observação técnica). **Aguardando o Allan decidir** (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
+> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo e 1 observação técnica), e o Allan **aceitou os dois** para rever na próxima etapa. **PR #14 pronto para o merge no `staging`** (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -86,7 +86,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
 | **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 9ª varredura: LIBERADO COM RESSALVAS (1 baixo); aguardando a decisão do Allan (seção 5) |
+| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 9ª varredura: LIBERADO COM RESSALVAS (ressalvas aceitas pelo Allan). **Pronto para o merge no `staging`** |
 | 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
 | 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
@@ -151,9 +151,12 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
      - Teste: com 60 usos, um pedido com 1 CPF inscrito não revela nada.
   2. **Observação técnica (não é de segurança):** na versão compilada, o `.ics` sai com quebras `\n` em vez de `\r\n` (o minificador mexe no `join('\r\n')`). Algum aplicativo de agenda mais rígido pode recusar o arquivo.
      - Correção: trocar para `\r\n` na rota, na hora de responder, com teste.
-- **Próximo passo:** o Allan decide entre:
-  - **A)** corrigir os 2 e rodar a 10ª varredura;
-  - **B)** aceitar e fazer o merge do PR #14 no `staging`.
+- ✅ **Decisão do Allan (14/11):** deixar os 2 itens da 9ª como estão e rodar a próxima varredura mais à frente, na próxima etapa. **PR #14 pronto para o merge no `staging`.**
+- **Depois do merge do PR #14:**
+  - fechar o #11 sem merge;
+  - recomeçar o branch de trabalho a partir do `staging`;
+  - seguir as pendências logo abaixo (variáveis da Preview e teste da etapa 6 no hml).
+- **Na próxima etapa:** corrigir os 2 itens da 9ª (ver "Já aceito pelo Allan") e rodar a 10ª varredura.
 
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
 1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
@@ -211,6 +214,12 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 - enviar uma imagem pelo painel, para conferir o `@vercel/blob` com o override do `zod`.
 
 **Já aceito pelo Allan (não corrigir):** depois de uma transferência, quem comprou continua vendo o nome, o CPF mascarado e a categoria de quem recebeu.
+
+**Aceito pelo Allan por enquanto (14/11), para rever na próxima etapa** (9ª varredura):
+- **BAIXO:** com o limite de CPF esgotado, um pedido com um CPF só ainda confirma se ele está inscrito.
+  - Correção futura: cobrar o limite **antes** de procurar os CPFs, em `criarPedido` e na transferência.
+- **Técnico:** o `.ics` compilado sai com `\n` em vez de `\r\n`.
+  - Correção futura: converter na rota `agenda.ics`.
 
 1. ✅ **Homologação aberta ao público** (13/11):
    - sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado;
