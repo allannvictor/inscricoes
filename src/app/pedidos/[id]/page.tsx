@@ -7,7 +7,8 @@ import { pedidoCompleto } from '@/lib/pedidos/consultas';
 import { expirarPendentes } from '@/lib/pedidos/servico';
 import { db } from '@/db';
 import { formatarDataHora } from '@/lib/regras/datas';
-import { NOME_MOTIVO, formatarReais, type MotivoDesconto } from '@/lib/regras/preco';
+import { formatarReais, nomeMotivo, type MotivoDesconto } from '@/lib/regras/preco';
+import { TemaClube } from '@/components/TemaClube';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pedido', robots: { index: false } };
@@ -21,7 +22,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
   const dados = await pedidoCompleto(id);
   // Não dizemos se o pedido existe: quem não tem permissão vê "não encontrado".
   if (!dados || !podeVerPedido(paraPermissao(usuario), dados.pedido, dados.clube.id)) notFound();
-  const { pedido, evento, inscricoes } = dados;
+  const { pedido, evento, clube, inscricoes } = dados;
   const codigoCurto = pedido.id.slice(0, 8).toUpperCase();
 
   const resumo = (
@@ -30,7 +31,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         <div key={inscricao.id} className="flex justify-between gap-2 text-sm">
           <span>
             {inscricao.nome} · {distancia}
-            {inscricao.motivoDesconto ? ` · ${NOME_MOTIVO[inscricao.motivoDesconto as Exclude<MotivoDesconto, null>]}` : ''}
+            {inscricao.motivoDesconto ? ` · ${nomeMotivo(inscricao.motivoDesconto as Exclude<MotivoDesconto, null>, clube.nomePrecoEspecial)}` : ''}
           </span>
           <span className="num">{formatarReais(inscricao.precoCentavos)}</span>
         </div>
@@ -44,6 +45,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
 
   if (pedido.status === 'pago') {
     return (
+      <TemaClube cor={clube.cor}>
       <div className="pagina">
         <section className="cartao">
           <div className="flex flex-col items-center gap-1.5 py-1.5 text-center">
@@ -70,12 +72,14 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
         <Link href="/minhas-inscricoes" className="botao botao-primario w-full">Ver minhas inscrições</Link>
         <Link href={`/eventos/${evento.slug}`} className="botao botao-borda w-full">Voltar ao evento</Link>
       </div>
+      </TemaClube>
     );
   }
 
   if (pedido.status === 'pendente') {
     return (
-      <div className="pagina">
+      <TemaClube cor={clube.cor}>
+      <div className="pagina lg:max-w-[880px]">
         <section className="cartao">
           <div className="flex items-center justify-between">
             <h1 className="titulo-2">Pagamento</h1>
@@ -92,6 +96,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
           />
         </section>
       </div>
+      </TemaClube>
     );
   }
 

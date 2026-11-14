@@ -42,7 +42,7 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   const p1 = page.getByRole('region', { name: 'Seus dados' });
   await p1.getByRole('button', { name: /10 km/ }).click();
   await p1.getByLabel('CPF').fill(cpfSocio);
-  await expect(p1.getByText('Sócio do clube · preço de sócio')).toBeVisible();
+  await expect(p1.getByText(/^Preço /)).toBeVisible(); // preço especial do clube (padrão: "Preço Sócio")
   await p1.getByLabel('Nome completo').fill('Marina Teste');
   await p1.getByLabel('Nascimento').fill('1988-04-12');
   await p1.getByLabel('Sexo').selectOption('F');

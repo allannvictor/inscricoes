@@ -6,7 +6,7 @@ import { BotaoCancelarInscricao } from '@/components/painel/BotaoCancelarInscric
 import { exigirEvento } from '@/lib/painel/acesso';
 import { listarInscritos, statusVisivel } from '@/lib/painel/inscritos';
 import { formatarCpf } from '@/lib/regras/cpf';
-import { NOME_MOTIVO, formatarReais, type MotivoDesconto } from '@/lib/regras/preco';
+import { formatarReais, nomeMotivo, nomePrecoEspecial, type MotivoDesconto } from '@/lib/regras/preco';
 
 export const metadata = { title: 'Inscritos', robots: { index: false } };
 
@@ -63,7 +63,7 @@ export default async function Inscritos({
           <span className="rotulo">Com desconto</span>
           <span className="numero-grande num">{confirmadas.filter((l) => l.inscricao.motivoDesconto).length}</span>
           <span className="dica num">
-            {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'socio').length} sócio · {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'meia60').length} meia 60+ · {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'cupom').length} cupom
+            {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'socio').length} {nomePrecoEspecial(clube.nomePrecoEspecial).toLowerCase()} · {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'meia60').length} meia 60+ · {confirmadas.filter((l) => l.inscricao.motivoDesconto === 'cupom').length} cupom
           </span>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default async function Inscritos({
                   <td className="num">{l.inscricao.numero ?? '—'}</td>
                   <td>
                     <b>{l.inscricao.nome}</b>
-                    {motivo && <span className="selo selo-neutro ml-1.5">{NOME_MOTIVO[motivo]}</span>}
+                    {motivo && <span className="selo selo-neutro ml-1.5">{nomeMotivo(motivo, clube.nomePrecoEspecial)}</span>}
                     {l.transferidaDe && <div className="text-xs text-suave">transferida de {l.transferidaDe}</div>}
                   </td>
                   <td className="num">{formatarCpf(l.inscricao.cpf)}</td>

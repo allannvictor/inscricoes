@@ -17,9 +17,9 @@ export function Capa({ src, alt }: { src: string | null; alt: string }) {
   );
 }
 
-export function Avatar({ src, nome }: { src: string | null; nome: string }) {
+export function Avatar({ src, nome, pequeno }: { src: string | null; nome: string; pequeno?: boolean }) {
   const palavras = nome.split(/\s+/).filter(Boolean);
   // Siglas curtas (ex.: "CF Assessoria") viram as iniciais; senão, primeira letra das duas primeiras palavras.
   const iniciais = palavras[0] && palavras[0].length <= 3 && palavras[0] === palavras[0].toUpperCase() ? palavras[0] : palavras.slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
-  return <div className="avatar">{src ? <img src={src} alt={`Foto de ${nome}`} /> : iniciais}</div>;
+  return <div className={pequeno ? 'avatar h-8 w-8 text-xs' : 'avatar'}>{src ? <img src={src} alt={`Foto de ${nome}`} /> : iniciais}</div>;
 }

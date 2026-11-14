@@ -4,6 +4,8 @@
  * Ações do painel do organizador. TODAS conferem a permissão no servidor
  * (verificarClube / verificarEvento) antes de ler ou gravar qualquer coisa.
  */
+import { normalizarCor } from '@/lib/regras/cores';
+import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
 import { and, count, eq, inArray, ne, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -261,6 +263,8 @@ const perfilSchema = z.object({
   whatsapp: z.string().trim().max(30),
   instagram: z.string().trim().max(60),
   email: z.union([z.literal(''), z.string().trim().email('E-mail inválido')]),
+  cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
+  nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
 });
 
 export async function salvarPerfilAcao(clubeId: string, dados: z.input<typeof perfilSchema>): Promise<Resultado> {
@@ -278,6 +282,8 @@ export async function salvarPerfilAcao(clubeId: string, dados: z.input<typeof pe
       whatsapp: whats ? (whats.length <= 11 ? `55${whats}` : whats) : null,
       instagram: p.instagram ? (p.instagram.startsWith('@') ? p.instagram : `@${p.instagram}`) : null,
       email: p.email || null,
+      cor: normalizarCor(p.cor),
+      nomePrecoEspecial: p.nomePrecoEspecial || null,
     })
     .where(eq(clubes.id, clubeId));
   atualizarPainel();

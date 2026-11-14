@@ -6,7 +6,8 @@ import { podeVerInscricao } from '@/lib/auth/permissoes';
 import { paraPermissao, usuarioAtual } from '@/lib/auth/sessao';
 import { mascararCpf } from '@/lib/regras/cpf';
 import { FUSO, formatarDataHora, formatarHora } from '@/lib/regras/datas';
-import { NOME_MOTIVO, formatarReais, type MotivoDesconto } from '@/lib/regras/preco';
+import { formatarReais, nomeMotivo, type MotivoDesconto } from '@/lib/regras/preco';
+import { TemaClube } from '@/components/TemaClube';
 import { podeTransferir } from '@/lib/regras/transferencia';
 
 export const dynamic = 'force-dynamic';
@@ -29,12 +30,13 @@ export default async function Comprovante({ params }: { params: Promise<{ id: st
     ['Distância', distancia],
     ...(inscricao.categoria ? [['Categoria', inscricao.categoria] as [string, string]] : []),
     ...(inscricao.camisa ? [['Camisa', inscricao.camisa] as [string, string]] : []),
-    ['Valor pago', `${formatarReais(inscricao.precoCentavos)}${motivo ? ` (${NOME_MOTIVO[motivo]})` : ''}`],
+    ['Valor pago', `${formatarReais(inscricao.precoCentavos)}${motivo ? ` (${nomeMotivo(motivo, clube.nomePrecoEspecial)})` : ''}`],
     ...(pedido.pagoEm ? [['Pago em', dataHora(pedido.pagoEm)] as [string, string]] : []),
     ['Pedido', pedido.id.slice(0, 8).toUpperCase()],
   ];
 
   return (
+    <TemaClube cor={clube.cor}>
     <div className="pagina">
       <Link href="/minhas-inscricoes" className="link text-sm print:hidden">← Minhas inscrições</Link>
       <section className="cartao">
@@ -67,5 +69,6 @@ export default async function Comprovante({ params }: { params: Promise<{ id: st
         <Link href={`/inscricoes/${inscricao.id}/transferir`} className="botao botao-borda w-full print:hidden">Transferir para outra pessoa</Link>
       )}
     </div>
+    </TemaClube>
   );
 }

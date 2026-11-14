@@ -3,8 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { adicionarOrganizadorAcao, removerOrganizadorAcao, salvarPerfilAcao } from '@/app/painel/acoes';
+import { COR_PADRAO, estiloDoTema, normalizarCor, temaDoClube } from '@/lib/regras/cores';
+import { LIMITE_NOME_PRECO_ESPECIAL, nomePrecoEspecial } from '@/lib/regras/preco';
 
-export function FormularioPerfil({ clubeId, inicial }: { clubeId: string; inicial: { nome: string; whatsapp: string; instagram: string; email: string } }) {
+export function FormularioPerfil({ clubeId, inicial }: { clubeId: string; inicial: { nome: string; whatsapp: string; instagram: string; email: string; cor: string; nomePrecoEspecial: string } }) {
   const router = useRouter();
   const [f, setF] = useState(inicial);
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -27,6 +29,44 @@ export function FormularioPerfil({ clubeId, inicial }: { clubeId: string; inicia
         <div className="campo"><label htmlFor="pf-whats">WhatsApp para dúvidas (com DDD)</label><input id="pf-whats" className="entrada" inputMode="tel" value={f.whatsapp} onChange={(e) => campo('whatsapp', e.target.value)} /></div>
         <div className="campo"><label htmlFor="pf-insta">Instagram</label><input id="pf-insta" className="entrada" placeholder="@clube" value={f.instagram} onChange={(e) => campo('instagram', e.target.value)} /></div>
         <div className="campo"><label htmlFor="pf-email">E-mail de contato</label><input id="pf-email" className="entrada" type="email" value={f.email} onChange={(e) => campo('email', e.target.value)} /></div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="campo">
+          <label htmlFor="pf-cor">Cor de destaque</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              aria-label="Escolher a cor"
+              className="h-[46px] w-[56px] flex-none cursor-pointer rounded-[9px] border border-linha bg-white p-1"
+              value={normalizarCor(f.cor) ?? COR_PADRAO}
+              onChange={(e) => campo('cor', e.target.value.toUpperCase())}
+            />
+            <input id="pf-cor" className="entrada num uppercase" placeholder={`${COR_PADRAO} (padrão)`} maxLength={7} value={f.cor} onChange={(e) => campo('cor', e.target.value)} />
+            {f.cor && <button type="button" className="link flex-none text-sm" onClick={() => campo('cor', '')}>Usar padrão</button>}
+          </div>
+          <span className="dica">Usada nos botões, ícones e links das páginas do clube. Vazio: azul padrão da plataforma.</span>
+          <div className="flex items-center gap-2 pt-1" style={estiloDoTema(temaDoClube(f.cor)) as React.CSSProperties}>
+            <span className="botao botao-primario botao-pequeno" aria-hidden>Inscrever-se</span>
+            <span className="link text-sm" aria-hidden>ver no mapa</span>
+            <span className="dica">prévia</span>
+          </div>
+        </div>
+        <div className="campo">
+          <label htmlFor="pf-preco">Nome do preço especial</label>
+          <input
+            id="pf-preco"
+            className="entrada"
+            placeholder="Sócio"
+            maxLength={LIMITE_NOME_PRECO_ESPECIAL}
+            value={f.nomePrecoEspecial}
+            onChange={(e) => campo('nomePrecoEspecial', e.target.value)}
+          />
+          <span className="dica">
+            Como o atleta vê o preço de quem está na lista de sócios, por exemplo &quot;Aluno CF&quot;. Até {LIMITE_NOME_PRECO_ESPECIAL} letras ({f.nomePrecoEspecial.length}/{LIMITE_NOME_PRECO_ESPECIAL}).
+            Aparece como: <b>Preço {nomePrecoEspecial(f.nomePrecoEspecial)}</b>.
+          </span>
+        </div>
       </div>
       {msg && <p className={msg.ok ? 'text-sm text-ok' : 'erros'}>{msg.texto}</p>}
       <button className="botao botao-primario botao-pequeno self-start" disabled={ocupado}>{ocupado ? 'Salvando…' : 'Salvar perfil'}</button>

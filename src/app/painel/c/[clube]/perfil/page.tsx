@@ -30,7 +30,7 @@ export default async function Perfil({ params }: { params: Promise<{ clube: stri
           dica="Quadrada, por exemplo 400 × 400. Aparece na página de todos os eventos do clube."
           enviar={enviarFotoClubeAcao.bind(null, clube.id)}
         />
-        <FormularioPerfil clubeId={clube.id} inicial={{ nome: clube.nome, whatsapp: whats, instagram: clube.instagram ?? '', email: clube.email ?? '' }} />
+        <FormularioPerfil clubeId={clube.id} inicial={{ nome: clube.nome, whatsapp: whats, instagram: clube.instagram ?? '', email: clube.email ?? '', cor: clube.cor ?? '', nomePrecoEspecial: clube.nomePrecoEspecial ?? '' }} />
       </section>
       <section className="cartao">
         <h3 className="titulo-3">Organizadores</h3>

@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6, #7 e #8 com merge). O Allan está testando a etapa 3 lá. Ajustes pedidos: abas de "Minhas inscrições" (feito) e "sexo vem do cadastro" (PR para o `staging`).
+> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -81,9 +81,9 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 0. Protótipo | ✅ `docs/prototipo.html` |
 | 1. Inscrição com Pix | ✅ em produção; Pix real de R$ 1 confirmado sozinho |
 | 2. Painel do organizador | ✅ em produção (PR #4) |
-| **3. Área do atleta** | 🟡 **PR #6 com merge no `staging`** (substitui o #5, mesmo código). Falta o Allan testar na homologação. Aprovado, abro o PR `staging` → `main` |
-| 4. Identidade visual (layout novo) | ⏳ nova, ver seção 6 |
-| 5. Versão para computador (páginas do atleta) | ⏳ |
+| 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
+| **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5, num PR para o `staging` (ver seção 6) |
+| **5. Versão para computador (páginas do atleta)** | 🟡 idem |
 | 6. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 7. Extras | ⏳ cartão, check-in com QR, lotes de preço por data… |
 | 8. Outros clubes | ⏳ inclui "Conectar Mercado Pago" (OAuth) por clube e comissão da plataforma |
@@ -114,9 +114,9 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - **Sexo só em evento com categoria:** sem categoria, o campo some do formulário e da transferência, e não é obrigatório. No banco, `inscricoes.sexo` passou a aceitar vazio (migração `0003_sexo_opcional`). Na planilha, fica em branco. A inscrição não apaga o sexo e a camisa que já estão no cadastro quando o evento não pergunta.
    - **"Quem você já inscreveu":** botões "+ Fulano" com as pessoas que a conta já inscreveu. Os dados vêm da inscrição mais recente de cada CPF (`pessoasJaInscritas` em `src/lib/atleta/consultas.ts`).
    - Regra única do que falta preencher: `src/lib/regras/participante.ts`, com testes.
-   - Está num PR para o `staging`. Falta o merge e o teste do Allan no hml.
-4. Continuar os testes da **etapa 3** no hml e corrigir o que o Allan apontar.
-5. Aprovada a etapa 3, abrir o PR **`staging` → `main`**. Depois do merge, recomeçar o branch de trabalho do `staging` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
+   - [PR #9](https://github.com/allannvictor/inscricoes/pull/9) com merge no `staging` e publicado no hml (versão `9cb248c`; a migração `0003_sexo_opcional` foi aplicada no banco de homologação pelo deploy). Falta o Allan conferir.
+4. ✅ Etapa 3 aprovada (14/11). O Allan decidiu **deixar no `staging`** por enquanto; o PR `staging` → `main` sai quando ele pedir.
+5. 🟡 **Etapas 4 + 5 juntas** (autorizadas em 14/11, direção B + C do canvas): PR para o `staging`. Falta o merge e o teste do Allan no hml (celular e computador). Detalhes na seção 6.
 
 ## 6. Etapa 4: identidade visual (nova)
 
@@ -136,12 +136,25 @@ Melhorias de experiência sugeridas, para qualquer direção:
 6. **Formulário em etapas**, com indicador "Dados → Pagamento → Confirmado", pedindo só o essencial.
 7. **Carregamento leve no 4G:** imagem otimizada.
 
-**Pendente com o Allan:**
-- qual direção ele prefere, ou se quer misturar;
-- **a cor da CF** e o logo em boa resolução;
-- se a etapa sai junto com a versão para computador.
+**Decisões (14/11):**
+- Direção **B + C**, junto com a etapa 5 (computador).
+- **Cor padrão neutra** da plataforma: o azul `#2563EB`. Cada clube pode trocar no Perfil do clube (`clubes.cor`); vazio = padrão. O texto do botão (branco ou escuro) e a cor de links e ícones são calculados para ter contraste (`src/lib/regras/cores.ts`).
+- **Nome do preço especial** editável por clube no Perfil do clube (`clubes.nome_preco_especial`), até **20 letras**; vazio = "Sócio". Aparece como "Preço Aluno CF" no formulário, nos preços da página do evento, no Pix, no comprovante, no painel e na planilha.
+- Ficou de fora: o **formulário em etapas** (Dados → Pagamento → Confirmado). Pode virar um ajuste depois.
 
-Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do clube (banco: `clubes.cor`). As cores do tema ficam em `src/app/globals.css` (bloco `@theme`).
+**O que foi feito:**
+- Fundo suave (`--color-fundo-pagina`) com cartões brancos; cabeçalho branco com a marca "Inscrições **Fast**".
+- **Página do evento:** foto em destaque (sem foto, o topo usa a cor do clube); cartão flutuante com selos ("Inscrições abertas", "faltam X dias"), ícones de data, largada e local, "ver no mapa", "Adicionar à agenda" (arquivo `.ics` em `/eventos/[slug]/agenda.ics`) e "Compartilhar" (WhatsApp); distâncias com o preço especial; textos em sanfonas; organização; selo "Pagamento seguro com Pix via Mercado Pago".
+  - Celular: barra fixa embaixo com "a partir de R$ X" e Inscrever-se.
+  - Computador: distâncias e botão fixos na lateral direita.
+- **Formulário:** no computador, o resumo do pedido (cupom, total, aceite, pagar) fica fixo na lateral.
+- **Pix:** no computador, QR code grande (300 px) ao lado das instruções em 3 passos.
+- **Página inicial:** grade de cartões (1, 2 ou 3 colunas), com foto, clube, data, local e selos.
+- **Tema por clube** (`TemaClube`) na página do evento, inscrição, Pix, confirmação, comprovante e cartões da página inicial.
+- **Testes:** os testes ponta a ponta rodam em dois tamanhos (projetos `celular` e `computador` 1366 px no `playwright.config.ts`). O teste do painel troca a cor do clube e confere a cor do botão.
+- Migração `0004_visual_do_clube` (colunas `cor` e `nome_preco_especial` em `clubes`).
+
+**Pendente com o Allan:** escolher a cor da CF e o nome do preço especial ("Aluno CF"?) no Perfil do clube, e subir a foto/logo em boa resolução.
 
 ## 7. Pendências e decisões em aberto
 
@@ -152,17 +165,17 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
   - conferir se a **URL do webhook de produção no Mercado Pago** foi trocada para `https://www.inscricoesfast.com.br/api/webhooks/mercadopago`, tópico **Order**. Foi pedido ao Allan, mas não está confirmado;
   - desativar o cupom de teste `TESTE1REAL` em produção, se ainda não foi (`update cupons set ativo=false where codigo='TESTE1REAL'`).
 - **Homologação para testadores:** ✅ decidido em 13/11: aberta a qualquer pessoa, com e-mail de verdade, sem código fixo e sem master (passo a passo na seção 5). Aplicado e conferido pelo `/api/status`, e o domínio já publica o `staging` ✅.
-- **"Aluno CF" em vez de "sócio":** deixar o nome do preço especial configurável por clube. Pequeno; pode entrar na etapa 4.
+- **"Aluno CF" em vez de "sócio":** ✅ feito na etapa 4 (campo no Perfil do clube).
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
-- **Página inicial:** hoje é só uma lista de eventos. Melhorar na etapa 4 ou 5.
+- **Página inicial:** ✅ grade de eventos na etapa 4 + 5.
 
 ## 8. Dicas técnicas para a próxima sessão
 
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (unitários, 67);
-  - `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (5 de ponta a ponta);
+  - `npm test` (unitários, 77);
+  - `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (5 de ponta a ponta, em 2 tamanhos de tela = 10);
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.
 - **Migrações:** editar `src/db/schema.ts` → `npx drizzle-kit generate --name <nome>` → `npm run db:migrate`. Na Vercel, o `vercel-build` aplica as migrações sozinho.
