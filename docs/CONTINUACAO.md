@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026. Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 (cadastro de clubes + login novo) feita** no PR #11 para o `staging`, com 5 varreduras de segurança. Criado o agente de produto `especialista-produto` (PR #12; ver seção 7). A hospedagem comercial fica para discutir no futuro (decisão do Allan em 14/11).
+> Última atualização: 14/11/2026 (fim da sessão). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #11](https://github.com/allannvictor/inscricoes/pull/11), AINDA NÃO pronto para o merge:** faltam 4 correções baixas da 6ª varredura de segurança e a 7ª varredura completa (ver **seção 5, "Para a próxima sessão"**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -86,7 +86,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
 | **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| **6. Cadastro de clubes + login novo** | 🟡 feita num PR para o `staging` (ver seção 5, item 6): clubes criados pelo master, "Conectar Mercado Pago" por clube, senha opcional e "Entrar com Google" |
+| **6. Cadastro de clubes + login novo** | 🟡 [PR #11](https://github.com/allannvictor/inscricoes/pull/11) para o `staging`, **ainda não pronto**: faltam 4 correções baixas e a 7ª varredura (seção 5, "Para a próxima sessão") |
 | 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
 | 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
@@ -109,6 +109,68 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 **Branch e homologação:** o branch `staging` foi criado em 13/11 a partir do `main`. Na Vercel, o domínio `hml.inscricoesfast.com.br` deve ficar fixo nele (Settings → Domains → Git Branch = `staging`).
 
 ## 5. Próximo passo imediato
+
+### ⏭️ Para a próxima sessão (decidido pelo Allan em 14/11)
+
+**Objetivo:** fechar o PR #11 (etapa 6).
+1. Corrigir os 4 itens BAIXOS da **6ª varredura** de segurança (lista abaixo), com testes.
+2. Rodar a **7ª varredura completa** com o agente `revisor-seguranca`.
+3. Se sair LIBERADO, ou LIBERADO COM RESSALVAS só com itens já aceitos, avisar o Allan que o PR #11 está **pronto para o merge no `staging`**.
+
+**Branch:**
+- O trabalho está no branch `claude/inscricoes-fast-etapa-3-hum6h2` (PR #11 → `staging`), no commit `caf9c27`, que já inclui o PR #12.
+- Se a nova sessão não puder enviar para esse branch, crie o branch dela **a partir de `origin/claude/inscricoes-fast-etapa-3-hum6h2`** e abra um PR novo para o `staging`, dizendo que ele **substitui o #11**. O Allan fecha o #11 sem merge, como foi feito com o #5 → #6.
+
+**Os 4 achados da 6ª varredura** (todos BAIXOS; o agente provou cada um localmente):
+1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
+   - Onde: `src/lib/pedidos/servico.ts`, perto da mensagem "Já existe inscrição neste evento para o CPF…" (por volta das linhas 143 a 149). Ela sai antes de criar o pedido e não passa por `dentroDoLimite`.
+   - Correção: antes de devolver esse erro, contar a tentativa em `dentroDoLimite('cpf:' + usuario.id, 60, 1h)`. Passado o limite, responder de forma genérica, sem dizer qual CPF.
+   - Teste: 61 tentativas; a 61ª não revela o CPF.
+2. **O campo `cupom` do pedido ainda aceita o caractere nulo** (dá erro no banco; o log sai protegido).
+   - Onde: `pedidoSchema` em `src/lib/pedidos/validacao.ts`.
+   - Correção: `.superRefine(semCaractereNulo)` ou a regra `^[A-Za-z0-9_-]{0,30}$`.
+   - Teste: um caso a mais em `src/lib/pedidos/validacao.test.ts`.
+3. **"Simular Pix" na homologação com clube conectado a uma conta real.**
+   - O pedido nasce com o provedor provisório `'simulado'` (`src/lib/pedidos/servico.ts`, insert do pedido), e a rota `src/app/api/pedidos/[id]/simular/route.ts` só confere o comprador, o provedor e o ambiente.
+   - `confirmarPagamento` também aceita pedidos `cancelado` e `expirado`.
+   - Correção:
+     - provedor provisório neutro (ex.: `'criando'`; conferir onde `provedor` é lido: tela do Pix, `sincronizarPagamento` e painel);
+     - na rota, exigir `status === 'pendente'` e `situacaoDoPagamento(clube) === 'simulado'`.
+   - Teste: da rota ou de banco.
+4. **Entradas estranhas dão erro 500** (não vaza nada).
+   - Id só com hifens passa em `^[0-9a-f-]{36}$`. Trocar por uma regra de UUID de verdade em:
+     - `src/lib/pedidos/consultas.ts`;
+     - `src/lib/atleta/consultas.ts`;
+     - `src/lib/painel/acesso.ts`;
+     - `ehUuid` em `src/app/acoes.ts`;
+     - as checagens em `src/app/painel/acoes.ts` e em `src/app/api/pedidos/[id]/status/route.ts`.
+   - `?erro=constructor` derruba `/entrar` e a página de Pagamento do painel. Usar `Object.hasOwn(ERROS, erro)`.
+   - `?busca=a&busca=b` dá TypeError em `src/lib/painel/inscritos.ts`: aceitar só texto.
+   - Webhook com o corpo `null` dá 500 antes da assinatura (`src/app/api/webhooks/mercadopago/route.ts`): tratar corpo que não é objeto.
+   - Data inválida no evento ("2026-13-45T99:99") dá RangeError: `conferirEvento` (`src/lib/painel/evento-form.ts`) deve recusar datas inválidas.
+   - Testes unitários dessas regras.
+
+**Como verificar** (antes de pedir a varredura):
+1. `service postgresql start`. Se o banco local der "Este cupom esgotou", recriar o banco e rodar migrate + seed.
+2. `npm run lint`, `npm run typecheck` e `npm test` (os testes `*.db.test.ts` usam o Postgres).
+3. `npm run build`, depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off`, **duas vezes**.
+4. No fim, desligar os servidores: `pkill -f next-server`.
+
+**Como pedir a varredura:**
+- Usar o agente `revisor-seguranca` com o escopo completo.
+- Instruções que funcionaram nas rodadas anteriores:
+  - não fazer checkout, stash nem commit;
+  - scripts só no scratchpad;
+  - provas só locais, com `next start`;
+  - encerrar os servidores no fim.
+- Trazer o veredito ao Allan em linguagem simples.
+
+**Depois do merge do PR #11, pendências com o Allan:**
+- configurar na Preview `ADMIN_EMAILS`, `MP_CLIENT_ID`/`MP_CLIENT_SECRET` (URL de retorno e PKCE no Mercado Pago) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`;
+- testar a etapa 6 no hml;
+- enviar uma imagem pelo painel, para conferir o `@vercel/blob` com o override do `zod`.
+
+**Já aceito pelo Allan (não corrigir):** depois de uma transferência, quem comprou continua vendo o nome, o CPF mascarado e a categoria de quem recebeu.
 
 1. ✅ **Homologação aberta ao público** (13/11):
    - sem login da Vercel, `homologacao: true`, código de teste desligado, e-mail via Resend e Pix simulado;
@@ -252,6 +314,9 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - **Valor do cupom:** `VALOR_CUPOM` em `src/lib/regras/cupom.ts`, sem `1e10`, `0x10` nem números gigantes.
   - **Dependências:** `overrides` no `package.json` (`postcss` do `next` ≥ 8.5.33 e um único `zod`). O `npm audit --omit=dev` agora dá **0 vulnerabilidades**.
   - **PR #12** (agente de produto) juntado ao branch, com o conflito do `CONTINUACAO.md` resolvido.
+- **Sexta varredura completa (14/11): LIBERADO COM RESSALVAS** (4 baixos).
+  - Confirmados com provas locais: as correções da 5ª, a rede de segurança dos logs (zero dados pessoais em 4 caminhos de erro do banco), o modo "em breve" fechado por 14 caminhos e o `npm audit` com 0.
+  - Os 4 baixos estão listados em **"Para a próxima sessão"** (seção 5).
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
