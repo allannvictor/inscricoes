@@ -40,6 +40,13 @@ Se a sessão estiver perto do fim, ou o Allan avisar que vai abrir outra, atuali
 - Ele escreve **só** em `docs/produto/` e **propõe**; quem decide é o Allan. Uma oportunidade só vira trabalho depois de aprovada e posta no `docs/PLANO.md`.
 - Antes de propor uma etapa ou melhoria, consulte `docs/produto/BACKLOG.md`, para não repetir ideias já descartadas.
 
+## Agente de UX
+
+- O agente **`especialista-ux`** (`.claude/agents/especialista-ux.md`) faz a varredura de usabilidade, acessibilidade, visual e textos: varredura completa do site, auditoria de um fluxo e revisão de UX de um PR.
+- Ele navega só no ambiente local (e nas páginas públicas da homologação), escreve **só** em `docs/ux/` e **propõe**; quem decide é o Allan.
+- Antes de mexer no visual ou nos textos, consulte `docs/ux/PADROES.md` (tokens e componentes) e `docs/ux/MELHORIAS.md` (sugestões e situação).
+- Divisão com o agente de produto: **produto** decide *o que* construir (mercado, oportunidades, roadmap); **UX** cuida de *como* as telas funcionam e parecem.
+
 ## Regras técnicas que já custaram caro
 
 - Valores em dinheiro são sempre em **centavos** (inteiros).

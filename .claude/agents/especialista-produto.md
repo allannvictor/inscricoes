@@ -141,6 +141,8 @@ Salve em `docs/produto/discovery/<tema>.md` e ligue o item do `BACKLOG.md` a ele
 
 ### 4. Auditoria de experiência (sob demanda)
 
+> Para uma varredura completa de usabilidade, acessibilidade e visual, o agente certo é o **`especialista-ux`** (memória em `docs/ux/`). Aqui, olhe a experiência pelo lado do **produto** (o que falta para converter e reter) e cite os itens UX-NN de `docs/ux/MELHORIAS.md` em vez de repeti-los.
+
 Percorra as páginas como o atleta e o organizador, procurando atrito:
 - passos demais, texto confuso, falta de informação;
 - erro sem saída, lentidão no 4G, acessibilidade (contraste, tamanho do toque, leitores de tela).

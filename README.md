@@ -77,6 +77,14 @@ O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesqu
 - `BACKLOG.md`: oportunidades pontuadas e a situação de cada uma;
 - `radar/AAAA-MM-DD.md`: o radar de cada semana.
 
+## UX (usabilidade e visual)
+
+O agente `especialista-ux` (`.claude/agents/especialista-ux.md`) percorre o site no ambiente local (celular e computador), confere usabilidade, acessibilidade, padrão visual e textos, e propõe melhorias em ordem de prioridade. A memória dele fica em `docs/ux/`:
+- `PADROES.md`: tokens, componentes e princípios do visual;
+- `MELHORIAS.md`: sugestões numeradas (UX-NN) e a situação de cada uma;
+- `varreduras/AAAA-MM-DD.md`: o relatório de cada varredura completa;
+- `fluxos/<tema>.md` e `revisoes/`: auditorias de um fluxo e revisões de UX de PRs.
+
 ## Onde mexer em cada coisa
 
 | Quero mudar… | Arquivo |
@@ -102,6 +110,7 @@ O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesqu
 | Ids (UUID de verdade) e parâmetros da URL (`?erro=`, `?busca=`) sem erro 500 | `src/lib/regras/uuid.ts` e `src/lib/regras/parametros.ts` |
 | Quando o botão "Simular Pix" vale (só homologação/local, pedido pendente, clube sem conta) | `podeSimularPagamento` em `src/lib/pagamento/situacao.ts` |
 | Revisão de segurança antes da produção (agente) | `.claude/agents/revisor-seguranca.md` |
+| Varredura de UX e padrões visuais (agente) | `.claude/agents/especialista-ux.md` e `docs/ux/` |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
 | O que é obrigatório por pessoa (sexo só com categoria, camisa só se o evento pede) e quando "Você" aparece em resumo | `src/lib/regras/participante.ts` |
