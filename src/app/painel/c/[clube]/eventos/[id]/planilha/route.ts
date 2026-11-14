@@ -28,7 +28,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ clube: str
       l.inscricao.email,
       dataBr(l.inscricao.nascimento),
       idadeEm(l.inscricao.nascimento, diaProva),
-      l.inscricao.sexo === 'F' ? 'Feminino' : 'Masculino',
+      l.inscricao.sexo === 'F' ? 'Feminino' : l.inscricao.sexo === 'M' ? 'Masculino' : '',
       l.inscricao.categoria,
       l.distancia,
       l.inscricao.camisa,

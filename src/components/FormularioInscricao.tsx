@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { criarPedidoAcao, validarCupomAcao, verificarCpfAcao } from '@/app/acoes';
-import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
-import { nascimentoValido } from '@/lib/regras/datas';
+import { formatarCpf, limparCpf, mascararCpf, validarCpf } from '@/lib/regras/cpf';
+import { cadastroCompleto, faltasDaPessoa } from '@/lib/regras/participante';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { NOME_MOTIVO, ehIdoso, formatarReais, precoParticipante } from '@/lib/regras/preco';
 import { TAMANHOS_CAMISA as TAMANHOS, mascaraTelefone } from '@/lib/mascaras';
@@ -32,17 +32,25 @@ interface Props {
   perfil: Omit<Participante, 'distanciaId' | 'email'>;
   /** Inscrição ativa do dono da conta neste evento, se houver. */
   jaInscrito: { numero: number | null; pago: boolean; pedidoId: string | null } | null;
+  /** Pessoas que esta conta já inscreveu antes, para adicionar com um toque. */
+  pessoasSalvas: Array<Omit<Participante, 'distanciaId'>>;
 }
+
+const NOME_SEXO: Record<string, string> = { F: 'Feminino', M: 'Masculino' };
+const dataBr = (iso: string) => iso.split('-').reverse().join('/');
 
 const vazio = (): Participante => ({ distanciaId: '', nome: '', cpf: '', email: '', nascimento: '', sexo: '', telefone: '', camisa: '', contatoEmergencia: '' });
 
-export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito }: Props) {
+export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito, pessoasSalvas }: Props) {
   const router = useRouter();
+  const distanciaUnica = distancias.length === 1 ? distancias[0].id : '';
+  // Cadastro completo: "Você" aparece em resumo; os campos só abrem em "Alterar".
+  const [editandoEu, setEditandoEu] = useState(() => !!jaInscrito || !cadastroCompleto(perfil, evento, hoje));
   const [participantes, setParticipantes] = useState<Participante[]>([
     // Se a pessoa já está inscrita, o formulário começa vazio (para inscrever outra pessoa).
     jaInscrito
-      ? { ...vazio(), distanciaId: distancias.length === 1 ? distancias[0].id : '' }
-      : { ...vazio(), ...perfil, cpf: perfil.cpf ? formatarCpf(perfil.cpf) : '', distanciaId: distancias.length === 1 ? distancias[0].id : '' },
+      ? { ...vazio(), distanciaId: distanciaUnica }
+      : { ...vazio(), ...perfil, cpf: perfil.cpf ? formatarCpf(perfil.cpf) : '', distanciaId: distanciaUnica },
   ]);
   const [infoCpf, setInfoCpf] = useState<Record<string, { socio: boolean; jaInscrito: boolean }>>({});
   const [cupomTxt, setCupomTxt] = useState('');
@@ -76,6 +84,10 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
     dataEvento: evento.dataEvento,
   });
 
+  // Pessoas já inscritas antes que ainda não estão neste pedido.
+  const cpfsNoPedido = new Set(participantes.map((p) => limparCpf(p.cpf)));
+  const sugestoes = pessoasSalvas.filter((p) => !cpfsNoPedido.has(p.cpf));
+
   const alterar = (i: number, campo: keyof Participante, valor: string) =>
     setParticipantes((lista) => lista.map((p, j) => (j === i ? { ...p, [campo]: valor } : p)));
 
@@ -94,17 +106,13 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
     const lista: string[] = [];
     participantes.forEach((p, i) => {
       const quem = i === 0 ? 'Você' : `Participante ${i + 1}`;
-      const falta: string[] = [];
-      if (!p.distanciaId) falta.push('distância');
-      if (!validarCpf(p.cpf)) falta.push('CPF válido');
-      else if (cpfJaInscrito(p.cpf)) lista.push(`${quem}: este CPF já está inscrito neste evento.`);
-      if (p.nome.trim().length < 3) falta.push('nome');
-      if (!nascimentoValido(p.nascimento, hoje)) falta.push('nascimento');
-      if (!p.sexo) falta.push('sexo');
-      if (p.telefone.replace(/\D/g, '').length < 10) falta.push('WhatsApp com DDD');
-      if (evento.pedeCamisa && !p.camisa) falta.push('camisa');
-      if (p.contatoEmergencia.trim().length < 3) falta.push('contato de emergência');
-      if (falta.length) lista.push(`${quem}: ${falta.join(', ')}`);
+      const falta = faltasDaPessoa(p, evento, hoje);
+      if (!p.distanciaId) falta.unshift('distância');
+      if (validarCpf(p.cpf) && cpfJaInscrito(p.cpf)) lista.push(`${quem}: este CPF já está inscrito neste evento.`);
+      if (falta.length) {
+        lista.push(`${quem}: ${falta.join(', ')}`);
+        if (i === 0) setEditandoEu(true); // abre os campos para corrigir
+      }
     });
     const cpfs = participantes.map((p) => limparCpf(p.cpf)).filter(Boolean);
     if (new Set(cpfs).size !== cpfs.length) lista.push('Há CPF repetido no pedido.');
@@ -191,6 +199,30 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
               </div>
             </div>
 
+            {i === 0 && !editandoEu ? (
+              <div className="flex flex-col gap-1 rounded-xl border border-linha bg-fundo2 p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <b>{p.nome}</b>
+                  <button type="button" className="link text-sm" onClick={() => setEditandoEu(true)}>Alterar</button>
+                </div>
+                <span>
+                  CPF <span className="num">{mascararCpf(limparCpf(p.cpf))}</span> · {dataBr(p.nascimento)}
+                  {NOME_SEXO[p.sexo] ? ` · ${NOME_SEXO[p.sexo]}` : ''}
+                </span>
+                <span className="text-suave">
+                  WhatsApp {p.telefone}
+                  {evento.pedeCamisa && p.camisa ? ` · Camisa ${p.camisa}` : ''}
+                </span>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {item?.categoria && <span>Categoria: <b>{item.categoria}</b></span>}
+                  {ehSocio && <span className="selo selo-ok">Sócio do clube · preço de sócio</span>}
+                  {ehIdoso(p.nascimento, hoje) && <span className="selo selo-ok">60+ · paga meia</span>}
+                  {cpfJaInscrito(p.cpf) && <span className="selo selo-erro">Este CPF já está inscrito neste evento</span>}
+                </div>
+                <span className="dica">Dados do seu cadastro. Para mudar de vez, use Meus dados.</span>
+              </div>
+            ) : (
+            <>
             <div className="campo">
               <label htmlFor={id('cpf')}>CPF</label>
               <input id={id('cpf')} className="entrada num" inputMode="numeric" placeholder="000.000.000-00" value={p.cpf} onChange={(e) => alterar(i, 'cpf', formatarCpf(e.target.value))} />
@@ -220,14 +252,16 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
                 <label htmlFor={id('nascimento')}>Nascimento</label>
                 <input id={id('nascimento')} className="entrada" type="date" max={hoje} value={p.nascimento} onChange={(e) => alterar(i, 'nascimento', e.target.value)} />
               </div>
-              <div className="campo">
-                <label htmlFor={id('sexo')}>Sexo</label>
-                <select id={id('sexo')} className="entrada" value={p.sexo} onChange={(e) => alterar(i, 'sexo', e.target.value)}>
-                  <option value="">Selecione</option>
-                  <option value="F">Feminino</option>
-                  <option value="M">Masculino</option>
-                </select>
-              </div>
+              {evento.usaCategoria && (
+                <div className="campo">
+                  <label htmlFor={id('sexo')}>Sexo</label>
+                  <select id={id('sexo')} className="entrada" value={p.sexo} onChange={(e) => alterar(i, 'sexo', e.target.value)}>
+                    <option value="">Selecione</option>
+                    <option value="F">Feminino</option>
+                    <option value="M">Masculino</option>
+                  </select>
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-sm">
               {item?.categoria ? <span>Categoria: <b>{item.categoria}</b></span> : evento.usaCategoria && <span className="text-suave">A categoria aparece depois de nascimento e sexo.</span>}
@@ -254,14 +288,35 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
               <label htmlFor={id('emergencia')}>Contato de emergência</label>
               <input id={id('emergencia')} className="entrada" placeholder="Nome e telefone" value={p.contatoEmergencia} onChange={(e) => alterar(i, 'contatoEmergencia', e.target.value)} />
             </div>
+            </>
+            )}
           </section>
         );
       })}
 
       {participantes.length < 10 && (
-        <button type="button" className="botao botao-borda w-full" onClick={() => setParticipantes((l) => [...l, vazio()])}>
-          + Adicionar outro participante
-        </button>
+        <div className="flex flex-col gap-2">
+          {sugestoes.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="rotulo">Quem você já inscreveu</span>
+              <div className="flex flex-wrap gap-2">
+                {sugestoes.map((pessoa) => (
+                  <button
+                    key={pessoa.cpf}
+                    type="button"
+                    className="botao botao-borda botao-pequeno"
+                    onClick={() => setParticipantes((l) => [...l, { ...vazio(), ...pessoa, cpf: formatarCpf(pessoa.cpf), distanciaId: distanciaUnica }])}
+                  >
+                    + {pessoa.nome}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <button type="button" className="botao botao-borda w-full" onClick={() => setParticipantes((l) => [...l, { ...vazio(), distanciaId: distanciaUnica }])}>
+            + Adicionar outro participante
+          </button>
+        </div>
       )}
 
       <section className="cartao">

@@ -82,6 +82,7 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   await page.getByLabel(/Transferência até/).fill(daqui(110));
   await page.getByLabel(/Informações para o atleta/).fill('Kit: camisa e medalha.');
   await page.getByLabel(/Preço diferenciado para sócio/).check();
+  await page.getByLabel(/Categoria por idade/).uncheck(); // sem categoria: o formulário não pede sexo
   await page.getByLabel('Distância', { exact: true }).first().fill('5 km');
   await page.getByLabel('Preço (R$)').first().fill('50,00');
   await page.getByLabel('Preço sócio (R$)').first().fill('40');
@@ -128,7 +129,7 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   await expect(r.getByText('Sócio do clube · preço de sócio')).toBeVisible();
   await r.getByLabel('Nome completo').fill('Sócia E2E');
   await r.getByLabel('Nascimento').fill('1990-05-05');
-  await r.getByLabel('Sexo').selectOption('F');
+  await expect(r.getByLabel('Sexo')).toHaveCount(0);
   await r.getByLabel('WhatsApp').fill('11988887777');
   await r.getByLabel('Camisa').selectOption('M');
   await r.getByLabel('Contato de emergência').fill('Fulano 11977776666');

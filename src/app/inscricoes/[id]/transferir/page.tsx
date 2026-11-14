@@ -35,7 +35,7 @@ export default async function Transferir({ params }: { params: Promise<{ id: str
         </p>
       </section>
       {permitido ? (
-        <FormularioTransferencia inscricaoId={inscricao.id} pedeCamisa={evento.pedeCamisa} hoje={dataLocal(new Date())} />
+        <FormularioTransferencia inscricaoId={inscricao.id} pedeCamisa={evento.pedeCamisa} usaCategoria={evento.usaCategoria} hoje={dataLocal(new Date())} />
       ) : (
         <div className="cartao">
           <p>

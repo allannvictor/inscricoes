@@ -180,7 +180,7 @@ export const inscricoes = pgTable(
     cpf: text('cpf').notNull(), // só dígitos
     email: text('email'),
     nascimento: date('nascimento').notNull(),
-    sexo: text('sexo').notNull(),
+    sexo: text('sexo'), // 'F' | 'M'; vazio em evento sem categoria
     telefone: text('telefone'),
     camisa: text('camisa'),
     contatoEmergencia: text('contato_emergencia'),
