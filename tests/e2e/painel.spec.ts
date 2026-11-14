@@ -126,7 +126,7 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   const r = atleta.getByRole('region', { name: 'Seus dados' });
   await r.getByRole('button', { name: /5 km/ }).click();
   await r.getByLabel('CPF').fill(cpfSocio);
-  await expect(r.getByText('Sócio do clube · preço de sócio')).toBeVisible();
+  await expect(r.getByText(/^Preço /)).toBeVisible();
   await r.getByLabel('Nome completo').fill('Sócia E2E');
   await r.getByLabel('Nascimento').fill('1990-05-05');
   await expect(r.getByLabel('Sexo')).toHaveCount(0);
@@ -148,9 +148,22 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   const texto = await planilha.text();
   expect(texto).toContain('Sócia E2E');
   expect(texto).toContain('Fulano 11977776666');
-  expect(texto).toContain('sócio');
+  expect(texto).toMatch(/sócio/i);
 
   await page.getByRole('button', { name: 'Cancelar inscrição de Sócia E2E' }).click();
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await expect(page.getByRole('cell', { name: 'Cancelada', exact: true })).toBeVisible();
+
+  // Cor de destaque do clube: o botão da página do evento passa a usar a cor escolhida.
+  await page.getByRole('link', { name: 'Perfil do clube' }).click();
+  await page.getByLabel('Cor de destaque').fill('#0E6B4A');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await expect(page.getByText('Perfil salvo.')).toBeVisible();
+  const visitante = await browser.newPage();
+  await visitante.goto(linkPagina!);
+  await expect(visitante.getByRole('link', { name: 'Inscrever-se' })).toHaveCSS('background-color', 'rgb(14, 107, 74)');
+  await visitante.close();
+  await page.getByLabel('Cor de destaque').fill('');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await expect(page.getByText('Perfil salvo.')).toBeVisible();
 });

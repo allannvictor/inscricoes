@@ -35,3 +35,18 @@ export function formatarHora(instante: Date): string {
 export function formatarDiaMes(instante: Date): string {
   return new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit' }).format(instante);
 }
+
+/** Quantos dias de calendário (Brasília) faltam do dia de hoje até o dia do evento. 0 = é hoje; negativo = já passou. */
+export function diasAte(evento: Date, agora: Date): number {
+  const dia = (d: Date) => Date.parse(dataLocal(d) + 'T00:00:00Z');
+  return Math.round((dia(evento) - dia(agora)) / 86_400_000);
+}
+
+/** Texto curto para o selo de contagem: "é hoje", "amanhã", "faltam 12 dias". Vazio se já passou. */
+export function textoFaltam(evento: Date, agora: Date): string {
+  const n = diasAte(evento, agora);
+  if (n < 0) return '';
+  if (n === 0) return 'é hoje';
+  if (n === 1) return 'amanhã';
+  return `faltam ${n} dias`;
+}

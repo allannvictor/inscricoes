@@ -27,6 +27,9 @@ export const clubes = pgTable('clubes', {
   whatsapp: text('whatsapp'),
   instagram: text('instagram'),
   email: text('email'),
+  // Visual: cor de destaque (#RRGGBB; vazio = cor padrão da plataforma) e nome do preço especial (vazio = "Sócio").
+  cor: text('cor'),
+  nomePrecoEspecial: text('nome_preco_especial'),
   // Conta Mercado Pago conectada (OAuth, etapa 2). Na etapa 1 usamos MP_ACCESS_TOKEN do ambiente.
   mpAccessToken: text('mp_access_token'),
   mpRefreshToken: text('mp_refresh_token'),

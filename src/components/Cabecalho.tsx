@@ -6,10 +6,10 @@ import { sairAcao } from '@/app/acoes';
 export async function Cabecalho() {
   const usuario = await usuarioAtual();
   return (
-    <header className="border-b border-linha">
+    <header className="border-b border-linha bg-white">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="font-display text-lg font-extrabold uppercase tracking-wide no-underline">
-          Inscrições
+          Inscrições <span className="text-acao">Fast</span>
         </Link>
         {usuario ? (
           <form action={sairAcao} className="flex items-center gap-3 text-sm">

@@ -6,7 +6,8 @@ import { criarPedidoAcao, validarCupomAcao, verificarCpfAcao } from '@/app/acoes
 import { formatarCpf, limparCpf, mascararCpf, validarCpf } from '@/lib/regras/cpf';
 import { cadastroCompleto, faltasDaPessoa } from '@/lib/regras/participante';
 import { calcularPedido } from '@/lib/regras/pedido';
-import { NOME_MOTIVO, ehIdoso, formatarReais, precoParticipante } from '@/lib/regras/preco';
+import { ehIdoso, formatarReais, nomeMotivo, precoParticipante } from '@/lib/regras/preco';
+import { IconeCadeado } from '@/components/Icones';
 import { TAMANHOS_CAMISA as TAMANHOS, mascaraTelefone } from '@/lib/mascaras';
 
 
@@ -32,6 +33,8 @@ interface Props {
   perfil: Omit<Participante, 'distanciaId' | 'email'>;
   /** Inscrição ativa do dono da conta neste evento, se houver. */
   jaInscrito: { numero: number | null; pago: boolean; pedidoId: string | null } | null;
+  /** Nome do preço especial do clube (ex.: "Aluno CF"; padrão "Sócio"). */
+  nomePrecoEspecial: string;
   /** Pessoas que esta conta já inscreveu antes, para adicionar com um toque. */
   pessoasSalvas: Array<Omit<Participante, 'distanciaId'>>;
 }
@@ -41,7 +44,7 @@ const dataBr = (iso: string) => iso.split('-').reverse().join('/');
 
 const vazio = (): Participante => ({ distanciaId: '', nome: '', cpf: '', email: '', nascimento: '', sexo: '', telefone: '', camisa: '', contatoEmergencia: '' });
 
-export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito, pessoasSalvas }: Props) {
+export function FormularioInscricao({ voltar, evento, distancias, hoje, emailConta, perfil, jaInscrito, pessoasSalvas, nomePrecoEspecial }: Props) {
   const router = useRouter();
   const distanciaUnica = distancias.length === 1 ? distancias[0].id : '';
   // Cadastro completo: "Você" aparece em resumo; os campos só abrem em "Alterar".
@@ -143,11 +146,14 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
   };
 
   return (
-    <div className="pagina">
-      <div className="flex flex-col gap-1">
+    <div className="pagina lg:grid lg:max-w-[1120px] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-x-6">
+      <div className="flex flex-col gap-1 lg:col-span-2">
         {voltar}
         <span className="text-sm text-suave">Inscrevendo com a conta {emailConta}. Adicione outras pessoas no fim da página.</span>
       </div>
+
+      {/* Coluna principal: participantes. No celular, "contents" mantém a ordem de sempre. */}
+      <div className="contents lg:flex lg:flex-col lg:gap-3.5">
 
       {jaInscrito && (
         <div className="cartao border-ok bg-ok-fundo">
@@ -215,7 +221,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
                 </span>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {item?.categoria && <span>Categoria: <b>{item.categoria}</b></span>}
-                  {ehSocio && <span className="selo selo-ok">Sócio do clube · preço de sócio</span>}
+                  {ehSocio && <span className="selo selo-ok">Preço {nomePrecoEspecial}</span>}
                   {ehIdoso(p.nascimento, hoje) && <span className="selo selo-ok">60+ · paga meia</span>}
                   {cpfJaInscrito(p.cpf) && <span className="selo selo-erro">Este CPF já está inscrito neste evento</span>}
                 </div>
@@ -228,7 +234,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
               <input id={id('cpf')} className="entrada num" inputMode="numeric" placeholder="000.000.000-00" value={p.cpf} onChange={(e) => alterar(i, 'cpf', formatarCpf(e.target.value))} />
               <div className="flex flex-wrap gap-1.5">
                 {cpfLimpo.length === 11 && !validarCpf(cpfLimpo) && <span className="selo selo-erro">CPF inválido</span>}
-                {ehSocio && <span className="selo selo-ok">Sócio do clube · preço de sócio</span>}
+                {ehSocio && <span className="selo selo-ok">Preço {nomePrecoEspecial}</span>}
                 {repetido && <span className="selo selo-erro">CPF repetido neste pedido</span>}
                 {cpfJaInscrito(p.cpf) && <span className="selo selo-erro">Este CPF já está inscrito neste evento</span>}
               </div>
@@ -319,6 +325,10 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
         </div>
       )}
 
+      </div>
+
+      {/* Resumo do pedido: no computador, fixo na lateral. */}
+      <div className="contents lg:sticky lg:top-4 lg:flex lg:flex-col lg:gap-3">
       <section className="cartao">
         <div className="campo">
           <label htmlFor="cupom">Cupom</label>
@@ -331,7 +341,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
             <span className="dica">
               {calculo.desconto > 0
                 ? `Cupom ${cupom.codigo} aplicado.`
-                : `Cupom ${cupom.codigo} válido, mas vale só para quem paga preço cheio (não acumula com sócio ou meia).`}
+                : `Cupom ${cupom.codigo} válido, mas vale só para quem paga preço cheio (não acumula com preço ${nomePrecoEspecial} ou meia).`}
             </span>
           )}
         </div>
@@ -344,7 +354,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
               <div key={i} className="flex justify-between gap-2 text-sm">
                 <span>
                   {p.nome || (i === 0 ? 'Você' : `Participante ${i + 1}`)} · {d?.nome ?? '—'}
-                  {item?.motivo && item.motivo !== 'cupom' ? ` · ${NOME_MOTIVO[item.motivo]}` : ''}
+                  {item?.motivo && item.motivo !== 'cupom' ? ` · ${nomeMotivo(item.motivo, nomePrecoEspecial)}` : ''}
                 </span>
                 <span className="num">{d ? formatarReais(item.valorSemCupom) : '—'}</span>
               </div>
@@ -372,10 +382,14 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
         </label>
       </section>
 
-      <div className="fixo-baixo">
+      <div className="fixo-baixo lg:static lg:bg-none lg:p-0">
         <button type="button" className="botao botao-primario w-full" disabled={enviando} onClick={pagar}>
           {enviando ? 'Gerando Pix…' : faltaDistancia ? 'Escolha a distância para continuar' : `Pagar ${formatarReais(calculo.total)} com Pix`}
         </button>
+        <p className="mt-2 hidden items-center justify-center gap-2 text-xs text-suave lg:flex">
+          <IconeCadeado className="h-4 w-4" /> Pagamento seguro com Pix via Mercado Pago
+        </p>
+      </div>
       </div>
     </div>
   );

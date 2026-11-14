@@ -5,6 +5,8 @@ import { LoginCodigo } from '@/components/LoginCodigo';
 import { codigoTesteAtivo } from '@/lib/ambiente';
 import { pessoasJaInscritas } from '@/lib/atleta/consultas';
 import { usuarioAtual } from '@/lib/auth/sessao';
+import { TemaClube } from '@/components/TemaClube';
+import { nomePrecoEspecial } from '@/lib/regras/preco';
 import { eventoPorSlug, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { dataLocal } from '@/lib/regras/datas';
 import { db } from '@/db';
@@ -17,7 +19,7 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const dados = await eventoPorSlug(slug);
   if (!dados) notFound();
-  const { evento, distancias } = dados;
+  const { evento, clube, distancias } = dados;
   const voltar = (
     <Link href={`/eventos/${slug}`} className="link text-sm">
       ← {evento.nome}
@@ -57,7 +59,9 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
   const pessoasSalvas = await pessoasJaInscritas(usuario);
 
   return (
+    <TemaClube cor={clube.cor}>
     <FormularioInscricao
+      nomePrecoEspecial={nomePrecoEspecial(clube.nomePrecoEspecial)}
       pessoasSalvas={pessoasSalvas}
       jaInscrito={
         minha
@@ -86,5 +90,6 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
         contatoEmergencia: usuario.contatoEmergencia ?? '',
       }}
     />
+    </TemaClube>
   );
 }

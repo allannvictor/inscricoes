@@ -15,8 +15,8 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 | 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
 | 2. Painel do organizador | **Concluída**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
 | 3. Área do atleta | **Pronta para teste**: minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
-| 4. Identidade visual (layout novo) | A fazer |
-| 5. Versão para computador | A fazer |
+| 4. Identidade visual (layout novo) | **Pronta para teste**: cor e nome do preço especial por clube, página do evento com foto em destaque, ícones, selos, agenda, compartilhar e sanfonas |
+| 5. Versão para computador | **Pronta para teste**: evento, formulário e Pix com lateral fixa no computador, página inicial em grade, testes em 1366 px |
 | 6 a 8 | A fazer (uso real, extras, outros clubes) |
 
 ## Stack
@@ -59,7 +59,7 @@ Depois abra **http://localhost:3000/eventos/simulado-10k-dezembro**.
 
 ```bash
 npm test             # regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
-npm run test:e2e     # fluxo completo no navegador (precisa do banco com seed; na 1ª vez: npx playwright install chromium)
+npm run test:e2e     # fluxo completo no navegador (roda no celular e num monitor de 1366 px; precisa do banco com seed; na 1ª vez: npx playwright install chromium)
 npm run lint
 npm run typecheck
 ```
@@ -79,6 +79,11 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Integração Mercado Pago | `src/lib/pagamento/mercadopago.ts` |
 | Textos dos e-mails | `src/lib/email/modelos.ts` |
 | Cores e fontes | `src/app/globals.css` (bloco `@theme`) |
+| Cor de cada clube (padrão, contraste do botão e dos links) | `src/lib/regras/cores.ts` e `src/components/TemaClube.tsx` |
+| Nome do preço especial ("Aluno CF"; padrão "Sócio") | `nomePrecoEspecial` em `src/lib/regras/preco.ts` |
+| Ícones | `src/components/Icones.tsx` |
+| Agenda (.ics), mapa e compartilhar | `src/lib/agenda.ts` e `src/app/eventos/[slug]/agenda.ics/route.ts` |
+| Página inicial | `src/app/page.tsx` |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
 | O que é obrigatório por pessoa (sexo só com categoria, camisa só se o evento pede) e quando "Você" aparece em resumo | `src/lib/regras/participante.ts` |

@@ -196,9 +196,9 @@ O site ficou "muito branco". As direções estão no canvas https://claude.ai/ar
 - Texto longo em sanfonas.
 - Formulário com indicador de etapas.
 - Página inicial com mais identidade.
-- Opcional: nome do preço especial configurável ("Aluno CF" em vez de "sócio").
+- Nome do preço especial configurável por clube ("Aluno CF" em vez de "Sócio"), até 20 letras.
 
-Sugestão: fazer junto com a etapa 5, porque mexem nas mesmas telas.
+**Decidido em 14/11/2026:** feita junto com a etapa 5. Cor padrão da plataforma neutra (azul `#2563EB`), que cada clube pode trocar. O formulário em etapas ficou para um ajuste posterior.
 
 **Pronto quando:** o Allan aprovar o visual no celular e no computador, na homologação.
 

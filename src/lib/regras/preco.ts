@@ -48,3 +48,14 @@ export const NOME_MOTIVO: Record<Exclude<MotivoDesconto, null>, string> = {
   meia60: 'meia 60+',
   cupom: 'cupom',
 };
+
+/** Cada clube dá o próprio nome ao preço especial (ex.: "Aluno CF"). Vazio: "Sócio". */
+export const LIMITE_NOME_PRECO_ESPECIAL = 20;
+export function nomePrecoEspecial(nomeDoClube: string | null | undefined): string {
+  return nomeDoClube?.trim() || 'Sócio';
+}
+
+/** Nome do desconto para mostrar, com o nome do preço especial do clube. */
+export function nomeMotivo(motivo: Exclude<MotivoDesconto, null>, nomeDoClube: string | null | undefined): string {
+  return motivo === 'socio' ? nomePrecoEspecial(nomeDoClube) : NOME_MOTIVO[motivo];
+}
