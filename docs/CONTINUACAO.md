@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
+> Última atualização: 14/11/2026. Criado o agente de produto `especialista-produto` (ver seção 7). Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -168,6 +168,11 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **"Aluno CF" em vez de "sócio":** ✅ feito na etapa 4 (campo no Perfil do clube).
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
 - **Página inicial:** ✅ grade de eventos na etapa 4 + 5.
+- **Agente de produto (14/11):** criado o `especialista-produto` (`.claude/agents/especialista-produto.md`), com a memória em `docs/produto/` (estratégia, mercado, backlog de 18 oportunidades pontuadas e radares semanais).
+  - Ele só propõe; nada do backlog entra no plano sem o Allan aprovar.
+  - **Rotina semanal (decidida em 14/11):** toda **segunda às 7h40** (horário de Brasília), uma tarefa agendada ("Radar semanal de produto") abre uma sessão nova, roda o agente no modo radar e abre um **PR para o `staging`** só com `docs/produto/`. Também avisa por notificação no celular.
+    - **Atenção:** a tarefa foi criada sem os conectores (GitHub). Se a sessão da segunda não conseguir enviar o branch ou abrir o PR, recriar a tarefa pela tela de tarefas agendadas do claude.ai, com o repositório `allannvictor/inscricoes` e o GitHub marcados.
+  - **Rede do ambiente (14/11):** os sites dos concorrentes foram liberados no ambiente "Projetos" (ticketsports, sympla, minhasinscricoes, centraldacorrida, haid e runsignup, com e sem `www`), e o agente consegue abrir as páginas deles. Para pesquisar outro site, é preciso liberar o endereço do mesmo jeito.
 
 ## 8. Dicas técnicas para a próxima sessão
 
