@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. A 8ª varredura completa deu **LIBERADO COM RESSALVAS** (2 baixos novos). **Aguardando o Allan decidir** se corrige os 2 antes do merge (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
+> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo novo e 1 observação técnica). **Aguardando o Allan decidir** (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -86,7 +86,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
 | **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 8ª varredura: LIBERADO COM RESSALVAS (2 baixos); aguardando a decisão do Allan (seção 5) |
+| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 9ª varredura: LIBERADO COM RESSALVAS (1 baixo); aguardando a decisão do Allan (seção 5) |
 | 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
 | 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
@@ -140,9 +140,20 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
      - Em `src/lib/agenda.ts` (`escaparIcs`), o `'\;'` não escapa nada, e um `\r` sozinho não é tratado. Assim, um organizador poderia injetar linhas no calendário de quem baixa o arquivo.
      - Correção: `'\\;'` e `/\r\n|\r|\n/`, e recusar caracteres de controle no `nome` e no `local` do evento (`evento-form.ts`).
      - Teste: `src/lib/agenda.test.ts`.
+- ✅ **Decisão do Allan:** corrigir os 2, com uma regra nova: **até 4 pessoas por pedido** (você e mais 3). Corrigido no commit `0716553`:
+  - `MAX_PARTICIPANTES_POR_PEDIDO = 4`;
+  - `dentroDoLimite` com peso (1 uso por CPF revelado);
+  - `escaparIcs` completo, e nome e local do evento sem caracteres de controle.
+  - Ao todo, 161 testes; o ponta a ponta deu 16/16 duas vezes.
+- **9ª varredura completa: LIBERADO COM RESSALVAS.** As 3 correções foram provadas, inclusive com concorrência (30 chamadas simultâneas → exatamente 60 usos). Ficaram:
+  1. **BAIXO:** com o limite de CPF esgotado, a mensagem "genérica" ainda confirma, sem limite, se **um** CPF está inscrito, quando o pedido tem um CPF só.
+     - Correção: cobrar o limite (peso = nº de CPFs) **antes** de procurar os CPFs, no `criarPedido` e na transferência. Sem saldo, responder "Muitas tentativas" sem consultar.
+     - Teste: com 60 usos, um pedido com 1 CPF inscrito não revela nada.
+  2. **Observação técnica (não é de segurança):** na versão compilada, o `.ics` sai com quebras `\n` em vez de `\r\n` (o minificador mexe no `join('\r\n')`). Algum aplicativo de agenda mais rígido pode recusar o arquivo.
+     - Correção: trocar para `\r\n` na rota, na hora de responder, com teste.
 - **Próximo passo:** o Allan decide entre:
-  - **A)** corrigir os 2 e rodar a 9ª varredura;
-  - **B)** aceitá-los, e aí o PR #14 fica pronto para o merge no `staging`.
+  - **A)** corrigir os 2 e rodar a 10ª varredura;
+  - **B)** aceitar e fazer o merge do PR #14 no `staging`.
 
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
 1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
@@ -347,7 +358,8 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - Confirmados com provas locais: as correções da 5ª, a rede de segurança dos logs (zero dados pessoais em 4 caminhos de erro do banco), o modo "em breve" fechado por 14 caminhos e o `npm audit` com 0.
   - Os 4 baixos estão listados em **"Para a próxima sessão"** (seção 5). ✅ Corrigidos em 14/11 (tarde).
 - **Sétima varredura completa (14/11, tarde): LIBERADO COM RESSALVAS** (5 baixos novos, listados na seção 5). ✅ Corrigidos (commit `a553b3c`).
-- **Oitava varredura completa (14/11, tarde): LIBERADO COM RESSALVAS** (2 baixos, listados na seção 5).
+- **Oitava varredura completa (14/11, tarde): LIBERADO COM RESSALVAS** (2 baixos, listados na seção 5). ✅ Corrigidos (commit `0716553`).
+- **Nona varredura completa (14/11, tarde): LIBERADO COM RESSALVAS** (1 baixo e 1 observação técnica, listados na seção 5).
   - Provados com servidor real:
     - as 5 correções da 7ª;
     - 404 para `%00` em todas as rotas com endereço;
@@ -392,7 +404,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (156 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (161 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.
