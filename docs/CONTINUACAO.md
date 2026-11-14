@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** num PR para o `staging`, aguardando merge e teste no hml.
+> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
