@@ -31,26 +31,29 @@ export function gerarHashSenha(senha: string): Promise<string> {
 export async function entrarComSenha(emailBruto: string, senha: string): Promise<{ ok: true } | { ok: false; erro: string }> {
   const email = normalizarEmail(emailBruto);
   const desde = new Date(Date.now() - JANELA_MS);
-  const [{ erros }] = await db
-    .select({ erros: count() })
+  const ipHash = await hashDoIp();
+
+  // Registra a tentativa ANTES de conferir e só depois conta. Com tentativas simultâneas, só as 5 primeiras
+  // (por e-mail) chegam a conferir a senha (falha encontrada na varredura de segurança de 14/11/2026).
+  await db.insert(tentativasSenha).values({ email, ipHash });
+  const [{ porEmail }] = await db
+    .select({ porEmail: count() })
     .from(tentativasSenha)
     .where(and(eq(tentativasSenha.email, email), gt(tentativasSenha.criadoEm, desde)));
-  if (erros >= MAX_ERROS) return { ok: false, erro: 'Muitas tentativas erradas. Espere 15 minutos ou entre com o código por e-mail.' };
-  const ipHash = await hashDoIp();
+  if (porEmail > MAX_ERROS) return { ok: false, erro: 'Muitas tentativas erradas. Espere 15 minutos ou entre com o código por e-mail.' };
   if (ipHash) {
-    const [{ errosIp }] = await db
-      .select({ errosIp: count() })
+    const [{ porIp }] = await db
+      .select({ porIp: count() })
       .from(tentativasSenha)
       .where(and(eq(tentativasSenha.ipHash, ipHash), gt(tentativasSenha.criadoEm, desde)));
-    if (errosIp >= MAX_ERROS_IP) return { ok: false, erro: 'Muitas tentativas erradas a partir desta conexão. Espere 15 minutos.' };
+    if (porIp > MAX_ERROS_IP) return { ok: false, erro: 'Muitas tentativas erradas a partir desta conexão. Espere 15 minutos.' };
   }
 
   const [usuario] = await db.select({ id: usuarios.id, senhaHash: usuarios.senhaHash }).from(usuarios).where(eq(usuarios.email, email));
   const certa = await verify(usuario?.senhaHash ?? (await hashDeMentira()), senha).catch(() => false);
-  if (!usuario?.senhaHash || !certa) {
-    await db.insert(tentativasSenha).values({ email, ipHash });
-    return { ok: false, erro: ERRO };
-  }
+  if (!usuario?.senhaHash || !certa) return { ok: false, erro: ERRO }; // a tentativa já ficou registrada como erro
+
+  // Acertou: zera as tentativas deste e-mail (inclusive a desta vez).
   await db.delete(tentativasSenha).where(eq(tentativasSenha.email, email));
   await criarSessao(usuario.id);
   return { ok: true };

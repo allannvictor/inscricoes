@@ -59,7 +59,8 @@ Depois abra **http://localhost:3000/eventos/simulado-10k-dezembro**.
 ## Testes
 
 ```bash
-npm test             # regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
+npm test             # (precisa do Postgres local migrado: os testes de limite de tentativas usam o banco)
+# regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
 npm run test:e2e     # fluxo completo no navegador (roda no celular e num monitor de 1366 px; precisa do banco com seed; na 1ª vez: npx playwright install chromium)
 # Mais estável (versão compilada, como no CI): npm run build && E2E_PRODUCAO=1 npm run test:e2e
 npm run lint
@@ -87,6 +88,9 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Agenda (.ics), mapa e compartilhar | `src/lib/agenda.ts` e `src/app/eventos/[slug]/agenda.ics/route.ts` |
 | Página inicial | `src/app/page.tsx` |
 | Para onde o site pode mandar depois do login (só caminhos internos) | `src/lib/regras/redirecionamento.ts` |
+| Limites: pedidos aguardando Pix, consultas de CPF, cupom, tentativas de código e senha | `src/lib/regras/limites-pedido.ts`, `src/lib/limites.ts`, `src/lib/auth/codigo-email.ts`, `src/lib/auth/senha.ts` |
+| Quem vê uma inscrição (o CPF não dá acesso) | `podeVerInscricao` em `src/lib/auth/permissoes.ts` |
+| Cabeçalhos de segurança | `next.config.ts` |
 | Revisão de segurança antes da produção (agente) | `.claude/agents/revisor-seguranca.md` |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |

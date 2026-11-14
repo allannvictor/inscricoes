@@ -85,6 +85,17 @@ export const tentativasSenha = pgTable(
   (t) => [index('tentativas_senha_email').on(t.email, t.criadoEm), index('tentativas_senha_ip').on(t.ipHash, t.criadoEm)],
 );
 
+/** Registro de usos para limites simples por chave (ex.: consultas de CPF por conta). Veja src/lib/limites.ts. */
+export const limitesUso = pgTable(
+  'limites_uso',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    chave: text('chave').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (t) => [index('limites_uso_chave').on(t.chave, t.criadoEm)],
+);
+
 export const codigosLogin = pgTable(
   'codigos_login',
   {

@@ -1,11 +1,17 @@
 /**
  * Dados de exemplo: clube CF, um Simulado 10K publicado, sócios e cupons.
  * `npm run db:seed` (pode rodar mais de uma vez).
- * Organizador: SEED_ORGANIZADOR_EMAIL (padrão organizador@exemplo.com).
+ * Organizador: SEED_ORGANIZADOR_EMAIL (padrão organizador@exemplo.invalid, domínio que não existe).
+ * Nunca roda na produção.
  */
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 config();
+
+if (process.env.VERCEL_ENV === 'production') {
+  console.log('Seed nunca roda na produção.');
+  process.exit(0);
+}
 
 // Na Vercel o seed só roda se a variável RODAR_SEED=1 estiver configurada.
 if (process.argv.includes('--so-se-RODAR_SEED') && process.env.RODAR_SEED !== '1') {
@@ -15,7 +21,7 @@ if (process.argv.includes('--so-se-RODAR_SEED') && process.env.RODAR_SEED !== '1
 
 const { db } = await import('./index');
 const { clubes, cupons, distancias, eventos, organizadores, socios, usuarios } = await import('./schema');
-const { eq } = await import('drizzle-orm');
+const { and, eq } = await import('drizzle-orm');
 
 const [clube] = await db
   .insert(clubes)
@@ -23,9 +29,14 @@ const [clube] = await db
   .onConflictDoUpdate({ target: clubes.slug, set: { nome: 'CF Assessoria Esportiva' } })
   .returning();
 
-const emailOrg = (process.env.SEED_ORGANIZADOR_EMAIL ?? 'organizador@exemplo.com').toLowerCase();
+const emailOrg = (process.env.SEED_ORGANIZADOR_EMAIL ?? 'organizador@exemplo.invalid').toLowerCase();
 const [org] = await db.insert(usuarios).values({ email: emailOrg }).onConflictDoUpdate({ target: usuarios.email, set: { email: emailOrg } }).returning();
 await db.insert(organizadores).values({ clubeId: clube.id, usuarioId: org.id }).onConflictDoNothing();
+// Limpeza: o padrão antigo usava exemplo.com, um domínio real de terceiros. Tira esse organizador do clube.
+const [antigo] = await db.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.email, 'organizador@exemplo.com'));
+if (antigo && emailOrg !== 'organizador@exemplo.com') {
+  await db.delete(organizadores).where(and(eq(organizadores.clubeId, clube.id), eq(organizadores.usuarioId, antigo.id)));
+}
 
 const slug = 'simulado-10k-dezembro';
 // Datas relativas a hoje: o evento de exemplo está sempre com inscrições abertas em um banco novo (CI, homologação).

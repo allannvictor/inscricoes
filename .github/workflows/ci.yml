@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+# Só leitura do repositório (o CI não precisa escrever nada).
+permissions:
+  contents: read
+
 jobs:
   verificar:
     runs-on: ubuntu-latest
@@ -29,9 +33,10 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      # O banco vem antes dos testes unitários: os de limite de tentativas usam o Postgres.
       - run: npm run db:migrate
       - run: npm run db:seed
+      - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       # Os testes de ponta a ponta rodam na versão compilada (next start), como na homologação.

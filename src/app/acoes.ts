@@ -13,6 +13,7 @@ import { enviarEmail } from '@/lib/email/enviar';
 import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
+import { dentroDoLimite } from '@/lib/limites';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 
@@ -85,9 +86,12 @@ export async function sairAcao(): Promise<void> {
  */
 export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{ socio: boolean; jaInscrito: boolean }> {
   const nada = { socio: false, jaInscrito: false };
-  if (!(await usuarioAtual())) return nada;
+  const usuario = await usuarioAtual();
+  if (!usuario) return nada;
   const limpo = limparCpf(cpf);
   if (!validarCpf(limpo)) return nada;
+  // Limite por conta: a consulta revela se um CPF é sócio ou está inscrito (dado pessoal, LGPD).
+  if (!(await dentroDoLimite(`cpf:${usuario.id}`, 60, 60 * 60 * 1000))) return nada;
   const [evento] = await db.select({ clubeId: eventos.clubeId, ativo: eventos.precoSocioAtivo }).from(eventos).where(eq(eventos.id, eventoId));
   if (!evento) return nada;
   const [inscrito] = await db
@@ -108,6 +112,10 @@ export type CupomValidado = { ok: true; codigo: string; tipo: 'percentual' | 'va
 export async function validarCupomAcao(eventoId: string, codigo: string): Promise<CupomValidado> {
   const c = codigo.trim().toUpperCase();
   if (!c) return { ok: false, erro: 'Digite o código do cupom.' };
+  // Exige login e limita as tentativas, para ninguém adivinhar cupons testando códigos.
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: 'Entre com seu e-mail para usar um cupom.' };
+  if (!(await dentroDoLimite(`cupom:${usuario.id}`, 20, 60 * 60 * 1000))) return { ok: false, erro: 'Muitas tentativas de cupom. Espere um pouco.' };
   const [cupom] = await db.select().from(cupons).where(and(eq(cupons.eventoId, eventoId), eq(cupons.codigo, c), eq(cupons.ativo, true)));
   if (!cupom) return { ok: false, erro: 'Cupom não encontrado.' };
   return { ok: true, codigo: c, tipo: cupom.tipo as 'percentual' | 'valor', valor: cupom.valor };

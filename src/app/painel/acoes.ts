@@ -352,7 +352,8 @@ export async function criarClubeAcao(dados: z.input<typeof novoClubeSchema>): Pr
   if (!parse.success) return { ok: false, erros: [...new Set(parse.error.issues.map((i) => i.message))] };
   const d = parse.data;
   const slug = gerarSlug(d.slug || d.nome);
-  if (RESERVADOS.has(slug)) return { ok: false, erros: ['Escolha outro endereço para o clube.'] };
+  // O endereço do clube que usa a conta do site (MP_CLUBE_DO_TOKEN) é reservado: um clube novo nunca herda essa conta.
+  if (RESERVADOS.has(slug) || slug === (process.env.MP_CLUBE_DO_TOKEN || 'cf-assessoria')) return { ok: false, erros: ['Escolha outro endereço para o clube.'] };
   const [existe] = await db.select({ id: clubes.id }).from(clubes).where(eq(clubes.slug, slug));
   if (existe) return { ok: false, erros: [`Já existe um clube com o endereço "${slug}". Escolha outro.`] };
   const [clube] = await db

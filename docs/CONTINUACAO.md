@@ -192,8 +192,31 @@ Melhorias de experiência sugeridas, para qualquer direção:
   3. ✅ **Senha criada, trocada ou removida:** encerra as sessões nos outros aparelhos e manda um aviso por e-mail. Ligar a conta Google a uma conta existente também avisa.
   4. ✅ **Limite por IP** (só o hash do IP é guardado): 30 senhas erradas a cada 15 minutos e 20 códigos por hora.
   5. ✅ **Pix simulado em produção:** com `PERMITIR_SIMULADO=1` ainda ligado na produção, um clube que desconectasse o Mercado Pago depois de publicar teria Pix simulado, e o comprador poderia "simular" e se inscrever de graça. Agora `simuladoPermitido` é sempre falso com `VERCEL_ENV=production`.
-  - Ainda em aberto:
-    - **Master sem segundo fator:** quem acessar o e-mail do master controla tudo. Avaliar um 2º fator para o master no futuro.
+- **Varredura completa do agente `revisor-seguranca` (14/11): veredito BLOQUEADO.** O Allan autorizou corrigir os graves, os médios e os reforços simples. Tudo foi **corrigido no PR #11**:
+  - 🔴 **Roubo de inscrição pelo CPF:** quem digitasse o CPF de outra pessoa em Meus dados via e transferia a inscrição dela. Agora **o CPF não dá acesso**: só o comprador, o e-mail da inscrição (comprovado no login) e o organizador (`src/lib/auth/permissoes.ts`, `minhasInscricoes`). Há teste ponta a ponta do golpe.
+  - 🔴 **Limite de tentativas do código de login burlável com tentativas simultâneas** (estava na produção desde a etapa 1). Agora a tentativa é reservada no banco de forma atômica, o código vale uma vez só e o pedido de códigos usa trava (`src/lib/auth/codigo-email.ts`).
+  - 🔴 **O mesmo no limite de erros de senha.** A tentativa é registrada antes de conferir (`src/lib/auth/senha.ts`).
+    - Os testes `src/lib/auth/limites.db.test.ts` usam o banco e disparam tentativas em paralelo.
+    - No código antigo, passavam 20, 30 e 12 tentativas; agora, no máximo 5.
+  - 🟠 **Redirecionamento com `/..//site`:** `destinoInterno` confere o resultado depois de normalizar.
+  - 🟠 **Reserva de vagas sem limite:** no máximo 2 pedidos aguardando Pix por evento e 5 por conta (`src/lib/regras/limites-pedido.ts`).
+  - 🟡 **Reforços:**
+    - o modo "em breve" bloqueia POST (Server Actions);
+    - consulta de CPF limitada (60 por hora por conta) e cupom só com login (20 tentativas por hora), com tabela `limites_uso` e `src/lib/limites.ts`;
+    - webhook com comparação em tempo constante e `external_reference` obrigatório;
+    - cabeçalhos de segurança (anti-clickjacking, nosniff, referrer);
+    - e-mail em produção sem Resend falha em vez de ir para os logs;
+    - o endereço da CF (`MP_CLUBE_DO_TOKEN`) fica reservado;
+    - a planilha ganhou mais proteção contra fórmulas;
+    - o upload confere os bytes do arquivo (`src/lib/tipo-arquivo.ts`);
+    - o seed nunca roda em produção, usa `organizador@exemplo.invalid` e tira o antigo `organizador@exemplo.com` do clube;
+    - o CI roda com permissão só de leitura e os testes de banco antes dos unitários.
+  - **Ainda em aberto:**
+    - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
+    - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
+    - **`npm audit`:** 5 vulnerabilidades altas em dependências de build ou internas (`postcss` do `next`, `zod` dentro de `@vercel/blob`), sem entrada do usuário. Acompanhar as atualizações do `next` e do `@vercel/blob`.
+    - **Actions do CI fixadas por SHA.**
+    - **Vercel Firewall:** limite de requisições como reforço.
 
 - **Etapa 7 (lançamento):**
   - decidir a **hospedagem comercial**: o plano Hobby da Vercel é para uso não comercial. Recomendação de 14/11: **Vercel Pro** (cerca de US$ 20 por mês; nada muda no projeto). Outras opções avaliadas: Netlify, Cloudflare Workers e Fly.io. O Allan pediu para **discutir no futuro**;
@@ -213,8 +236,8 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (unitários, 97);
-  - ponta a ponta (7 testes × 2 tamanhos de tela = 14): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
+  - `npm test` (108 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.
 - **Migrações:** editar `src/db/schema.ts` → `npx drizzle-kit generate --name <nome>` → `npm run db:migrate`. Na Vercel, o `vercel-build` aplica as migrações sozinho.

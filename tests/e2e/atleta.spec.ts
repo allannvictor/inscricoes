@@ -77,6 +77,7 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   const cartaoAna = page.locator('section', { hasText: 'Ana Atleta' });
   await cartaoAna.getByRole('link', { name: 'Comprovante' }).click();
   await expect(page.getByText('Inscrição confirmada')).toBeVisible();
+  const comprovanteAna = new URL(page.url()).pathname;
   await expect(page.getByText(/\*\*\*\.\d{3}\.\d{3}-\*\*/)).toBeVisible(); // CPF mascarado
   await page.goBack();
 
@@ -84,6 +85,20 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   const bruno = await novaPagina(browser, emailB, '/entrar?voltar=/minhas-inscricoes');
   await expect(bruno.page.getByText('Bruno Atleta')).toBeVisible();
   await expect(bruno.page.getByText('Ana Atleta')).toHaveCount(0);
+
+  // Golpe do CPF: alguém digita o CPF da Ana em Meus dados. Não pode ver nem transferir a inscrição dela.
+  const golpista = await novaPagina(browser, `golpista+${t}@exemplo.com`, '/entrar?voltar=/minha-conta');
+  await golpista.page.getByLabel('Nome completo').fill('Golpista');
+  await golpista.page.getByLabel('CPF').fill(cpfA);
+  await golpista.page.getByRole('button', { name: 'Salvar meus dados' }).click();
+  await expect(golpista.page.getByText(/Dados salvos/)).toBeVisible();
+  await golpista.page.goto('/minhas-inscricoes');
+  await expect(golpista.page.getByText('Ana Atleta')).toHaveCount(0);
+  await golpista.page.goto(comprovanteAna);
+  await expect(golpista.page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
+  await golpista.page.goto(`${comprovanteAna}/transferir`);
+  await expect(golpista.page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
+  await golpista.ctx.close();
 
   // Na próxima inscrição (outra prova), os dados da Ana vêm do cadastro, em resumo,
   // e o Bruno aparece em "Quem você já inscreveu".

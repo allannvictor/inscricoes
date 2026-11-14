@@ -34,7 +34,12 @@ export function podeVerPedido(usuario: UsuarioLogado | null, pedido: { comprador
   return pedido.compradorId === usuario.id || ehOrganizadorDoClube(usuario, clubeIdDoEvento);
 }
 
-/** Inscrição: comprador, o próprio participante (pelo CPF ou e-mail da conta) ou organizador do clube. */
+/**
+ * Inscrição: comprador, o próprio participante ou organizador do clube.
+ * O participante é reconhecido SÓ pelo e-mail da inscrição, que é comprovado no login.
+ * O CPF NÃO dá acesso: ele não é segredo, e qualquer um poderia digitar o CPF de outra pessoa em Meus dados
+ * (falha encontrada na varredura de segurança de 14/11/2026).
+ */
 export function podeVerInscricao(
   usuario: UsuarioLogado | null,
   inscricao: { cpf: string; email: string | null },
@@ -43,7 +48,6 @@ export function podeVerInscricao(
 ): boolean {
   if (!usuario) return false;
   if (pedido.compradorId === usuario.id || ehOrganizadorDoClube(usuario, clubeIdDoEvento)) return true;
-  if (usuario.cpf && usuario.cpf === inscricao.cpf) return true;
   return !!inscricao.email && inscricao.email.toLowerCase() === usuario.email.toLowerCase();
 }
 

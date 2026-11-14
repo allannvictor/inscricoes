@@ -99,7 +99,7 @@ export default async function MinhasInscricoes({ searchParams }: { searchParams:
       {lista.length === 0 ? (
         <div className="cartao">
           <p>Você ainda não tem inscrições com este e-mail ({usuario.email}).</p>
-          <p className="text-sm text-suave">Se alguém te inscreveu, peça para usar o seu e-mail ou CPF na inscrição. Inscrições feitas no seu CPF aparecem aqui depois que você preencher o CPF em Meus dados.</p>
+          <p className="text-sm text-suave">Se alguém te inscreveu, a inscrição aparece aqui quando essa pessoa informa o seu e-mail nos seus dados de participante. Se não informou, peça para ela corrigir com a organização.</p>
           <Link href="/" className="botao botao-borda self-start">Ver eventos</Link>
         </div>
       ) : (

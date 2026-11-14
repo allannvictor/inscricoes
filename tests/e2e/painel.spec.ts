@@ -8,7 +8,7 @@ config();
 // Os e-mails fixos de teste entram muitas vezes; zera o limite de 5 códigos por hora antes de rodar.
 test.beforeAll(async () => {
   const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
-  await sql`delete from codigos_login where email in ('organizador@exemplo.com', 'master@exemplo.com')`;
+  await sql`delete from codigos_login where email in ('organizador@exemplo.invalid', 'master@exemplo.com')`;
   await sql.end();
 });
 
@@ -95,7 +95,7 @@ test('organizador cria, publica e acompanha um evento', async ({ page, browser }
   const cpfSocio = cpfAleatorio();
 
   // Organizador do seed entra direto no clube.
-  await entrar(page, 'organizador@exemplo.com', '/entrar?voltar=/painel');
+  await entrar(page, 'organizador@exemplo.invalid', '/entrar?voltar=/painel');
   await expect(page).toHaveURL(/\/painel\/c\/cf-assessoria$/);
 
   // Sócios

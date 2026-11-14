@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, count, eq, inArray, lt, max, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gt, inArray, lt, max, sql } from 'drizzle-orm';
 import { db, type Tx } from '@/db';
 import { clubes, cupons, distancias, eventos, inscricoes, pedidos, socios, usuarios } from '@/db/schema';
 import type { UsuarioAtual } from '@/lib/auth/sessao';
@@ -8,6 +8,7 @@ import { emailConfirmacao } from '@/lib/email/modelos';
 import { provedorDoClube } from '@/lib/pagamento';
 import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { dataLocal, formatarDataHora, nascimentoValido } from '@/lib/regras/datas';
+import { bloqueioDePedido } from '@/lib/regras/limites-pedido';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { ErroNegocio } from './erros';
 import { pedidoSchema } from './validacao';
@@ -98,6 +99,15 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   try {
     pedidoId = await db.transaction(async (tx) => {
       await expirarPendentes(tx, evento.id);
+
+      // Limite de pedidos aguardando Pix (dentro da transação, para pedidos simultâneos não escaparem).
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'pedidos-conta:' + usuario.id}))`);
+      const pendentes = await tx
+        .select({ eventoId: pedidos.eventoId })
+        .from(pedidos)
+        .where(and(eq(pedidos.compradorId, usuario.id), eq(pedidos.status, 'pendente'), gt(pedidos.expiraEm, new Date())));
+      const bloqueio = bloqueioDePedido(pendentes.filter((p) => p.eventoId === evento.id).length, pendentes.length);
+      if (bloqueio) throw new ErroNegocio(bloqueio);
 
       // Trava as distâncias do evento: duas pessoas não pegam a última vaga ao mesmo tempo.
       const travadas = await tx.select().from(distancias).where(eq(distancias.eventoId, evento.id)).for('update');
@@ -312,7 +322,8 @@ export async function sincronizarPagamento(pedidoId: string): Promise<void> {
   if (!linha || !linha.pedido.pagamentoId || linha.pedido.provedor !== 'mercadopago') return;
   if (!['pendente', 'expirado'].includes(linha.pedido.status)) return;
   const consulta = await (await provedorDoClube(linha.clube)).consultar(linha.pedido.pagamentoId);
-  if (consulta.pedidoId && consulta.pedidoId !== pedidoId) return;
+  // A order no Mercado Pago precisa apontar para ESTE pedido (external_reference); vazio também não vale.
+  if (consulta.pedidoId !== pedidoId) return;
   if (consulta.status === 'aprovado' && consulta.valorCentavos >= linha.pedido.totalCentavos) {
     await confirmarPagamento(pedidoId, consulta.taxaCentavos);
   }

@@ -11,6 +11,8 @@ export interface Email {
 export async function enviarEmail(email: Email): Promise<void> {
   const chave = process.env.RESEND_API_KEY;
   if (!chave) {
+    // Em produção, nunca imprimir o e-mail (o código de login iria para os logs da Vercel).
+    if (process.env.VERCEL_ENV === 'production') throw new Error('RESEND_API_KEY não configurada em produção.');
     console.log(`\n✉️  [e-mail simulado] Para: ${email.para}\n   Assunto: ${email.assunto}\n${email.texto.replace(/^/gm, '   ')}\n`);
     return;
   }

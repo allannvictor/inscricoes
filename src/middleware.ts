@@ -22,7 +22,8 @@ export function middleware(req: NextRequest) {
     return resposta;
   }
 
-  if (req.nextUrl.pathname.startsWith('/api/')) {
+  // API e qualquer envio (POST de Server Action) param aqui: o rewrite para "em breve" executaria a ação.
+  if (req.nextUrl.pathname.startsWith('/api/') || (req.method !== 'GET' && req.method !== 'HEAD')) {
     return NextResponse.json({ erro: 'em breve' }, { status: 503 });
   }
   const resposta = NextResponse.rewrite(new URL(PAGINA_EM_BREVE, req.url));

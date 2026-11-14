@@ -6,12 +6,11 @@ import type { UsuarioAtual } from '@/lib/auth/sessao';
 
 /**
  * Inscrições que o atleta pode ver em "Minhas inscrições":
- * as dos pedidos que ele pagou e as feitas no CPF ou e-mail dele por outra pessoa.
+ * as dos pedidos que ele pagou e as feitas no E-MAIL dele por outra pessoa (o CPF não dá acesso: não é segredo).
  * Pix vencido não aparece (vira ruído); canceladas aparecem para ninguém achar que sumiu.
  */
 export async function minhasInscricoes(usuario: UsuarioAtual) {
   const minhas: SQL[] = [eq(pedidos.compradorId, usuario.id), sql`lower(${inscricoes.email}) = ${usuario.email.toLowerCase()}`];
-  if (usuario.cpf) minhas.push(eq(inscricoes.cpf, usuario.cpf));
   const linhas = await db
     .select({
       inscricao: inscricoes,

@@ -12,7 +12,10 @@ export function destinoInterno(valor: string | null | undefined, padrao = '/'): 
   try {
     const url = new URL(valor, BASE);
     if (url.origin !== BASE) return padrao;
-    return `${url.pathname}${url.search}${url.hash}`;
+    const destino = `${url.pathname}${url.search}${url.hash}`;
+    // "/..//site.com" vira "//site.com" depois de normalizado: confere o RESULTADO de novo.
+    if (!destino.startsWith('/') || destino.startsWith('//') || destino.startsWith('/\\')) return padrao;
+    return destino;
   } catch {
     return padrao;
   }
