@@ -171,7 +171,9 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
      - Migração `0007_conta_mp_conectada`, com colunas `mp_conta_*` em `clubes`.
      - Clubes já conectados buscam os dados uma vez.
   5. **Topo:** botão "Minha conta" no lugar do e-mail.
-- **Pendente:** Google (Parte 2 do passo a passo) e o Pix do clube de teste.
+- ✅ **PR #16 com merge no `staging`** (CI verde). O log novo mostrou o motivo do 402: **`invalid_users_involved`**. Uma conta de teste do Mercado Pago só faz transação com outra conta de teste, e o pagador era o e-mail real do Allan.
+- **Decisão do Allan (14/11):** considerar o teste do Mercado Pago **concluído**. A conexão OAuth, o token do clube e os dados da conta foram provados, e o Pix real usa o mesmo código já validado na produção da CF. Ele **não quer** o ajuste de "pagador de teste" na homologação.
+- **Pendente:** Google (Parte 2 do passo a passo).
 - **Segurança:** os itens 3 e 4 mexem em login e no Mercado Pago. Eles entram na **10ª varredura**, na próxima etapa (decisão do Allan).
 
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
