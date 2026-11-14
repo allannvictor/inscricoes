@@ -66,6 +66,14 @@ npm run typecheck
 
 O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 
+## Produto (discovery e roadmap)
+
+O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesquisa o mercado e propõe melhorias. A memória dele fica em `docs/produto/`:
+- `ESTRATEGIA.md`: tese, públicos, métricas e princípios;
+- `MERCADO.md`: concorrentes e tendências, com fontes;
+- `BACKLOG.md`: oportunidades pontuadas e a situação de cada uma;
+- `radar/AAAA-MM-DD.md`: o radar de cada semana.
+
 ## Onde mexer em cada coisa
 
 | Quero mudar… | Arquivo |

@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
+> Última atualização: 14/11/2026. Criado o agente de produto `especialista-produto` (ver seção 7). Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -168,6 +168,10 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **"Aluno CF" em vez de "sócio":** ✅ feito na etapa 4 (campo no Perfil do clube).
 - **Seguro atleta:** o site antigo (inscricoes.com.br) oferecia. Precisaria de uma seguradora parceira; fica para depois.
 - **Página inicial:** ✅ grade de eventos na etapa 4 + 5.
+- **Agente de produto (14/11):** criado o `especialista-produto` (`.claude/agents/especialista-produto.md`), com a memória em `docs/produto/` (estratégia, mercado, backlog de 18 oportunidades pontuadas e radares semanais).
+  - Ele só propõe; nada do backlog entra no plano sem o Allan aprovar.
+  - **Em aberto:** o Allan decidir o dia, o horário e o formato da **rotina semanal** (tarefa agendada que roda o radar e entrega o resultado).
+  - **Limite da rede:** a sessão na nuvem faz buscas na web, mas não abre os sites dos concorrentes (ticketsports, sympla, minhasinscricoes, runsignup, haid). Para um radar mais rico, esses endereços podem ser liberados na rede do ambiente.
 
 ## 8. Dicas técnicas para a próxima sessão
 
