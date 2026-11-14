@@ -82,11 +82,19 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 1. Inscrição com Pix | ✅ em produção; Pix real de R$ 1 confirmado sozinho |
 | 2. Painel do organizador | ✅ em produção (PR #4) |
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
-| **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5, num PR para o `staging` (ver seção 6) |
+| **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| 6. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
-| 7. Extras | ⏳ cartão, check-in com QR, lotes de preço por data… |
-| 8. Outros clubes | ⏳ inclui "Conectar Mercado Pago" (OAuth) por clube e comissão da plataforma |
+| 6. Cadastro de clubes + login novo | ⏳ **nova (14/11)**: clubes criados pelo master, "Conectar Mercado Pago" por clube, senha opcional e "Entrar com Google". Ver `PLANO.md` |
+| 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
+| 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
+| 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
+
+**Plano reordenado em 14/11:** o cadastro de clubes saiu da última etapa e virou a etapa 6, junto com o login novo. A decisão do Allan foi:
+- o master cria os clubes;
+- senha **opcional** mais "Entrar com Google";
+- o código por e-mail continua valendo.
+
+As etapas seguintes foram renumeradas (lançamento = 7, extras = 8, plataforma aberta = 9).
 
 PRs anteriores, todos com merge feito:
 - [#1](https://github.com/allannvictor/inscricoes/pull/1): etapa 1.
@@ -158,7 +166,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 
 ## 7. Pendências e decisões em aberto
 
-- **Etapa 6 (lançamento):**
+- **Etapa 7 (lançamento):**
   - decidir a **hospedagem comercial**: o plano Hobby da Vercel é para uso não comercial. Opções: Vercel Pro (US$ 20 por mês) ou outra;
   - remover `PERMITIR_SIMULADO` da produção;
   - desligar o modo "em breve" (apagar `PRE_LANCAMENTO`) no dia do lançamento;

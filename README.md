@@ -14,10 +14,11 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 |---|---|
 | 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
 | 2. Painel do organizador | **Concluída**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
-| 3. Área do atleta | **Pronta para teste**: minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
+| 3. Área do atleta | **Aprovada** (no `staging`): minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
 | 4. Identidade visual (layout novo) | **Pronta para teste**: cor e nome do preço especial por clube, página do evento com foto em destaque, ícones, selos, agenda, compartilhar e sanfonas |
 | 5. Versão para computador | **Pronta para teste**: evento, formulário e Pix com lateral fixa no computador, página inicial em grade, testes em 1366 px |
-| 6 a 8 | A fazer (uso real, extras, outros clubes) |
+| 6. Cadastro de clubes + login novo | A fazer: clubes criados pelo master, Mercado Pago por clube, senha opcional e Entrar com Google |
+| 7 a 9 | A fazer (uso real, extras, plataforma aberta) |
 
 ## Stack
 

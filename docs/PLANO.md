@@ -50,13 +50,13 @@ O protótipo foi aprovado em conversa: `docs/prototipo.html` no repositório e n
 
 A sintaxe do TypeScript é parecida com a do C# (tipos, classes, async/await).
 
-**Atenção na hospedagem:** o plano gratuito da Vercel (Hobby) é para uso não comercial. Ele serve para desenvolver e testar. Antes de receber inscrições pagas de verdade (etapa 6), decidimos entre o Vercel Pro (US$ 20 por mês) e outra hospedagem com plano gratuito que aceite uso comercial, como Netlify ou Cloudflare. O código não muda.
+**Atenção na hospedagem:** o plano gratuito da Vercel (Hobby) é para uso não comercial. Ele serve para desenvolver e testar. Antes de receber inscrições pagas de verdade (etapa 7), decidimos entre o Vercel Pro (US$ 20 por mês) e outra hospedagem com plano gratuito que aceite uso comercial, como Netlify ou Cloudflare. O código não muda.
 
 **Custo mensal estimado no início:** R$ 0 de infraestrutura, mais as taxas do Mercado Pago (cerca de 1% no Pix). Essa taxa fica com o Mercado Pago, não com o site.
 
 ## Receita da plataforma (o que o site ganha)
 
-- **Onde se define:** cada clube tem uma comissão configurada (`clubes.comissao_tipo` em % ou R$, mais `clubes.comissao_valor`). Quem configura é só o dono da plataforma, por um painel de administrador na etapa 8.
+- **Onde se define:** cada clube tem uma comissão configurada (`clubes.comissao_tipo` em % ou R$, mais `clubes.comissao_valor`). Quem configura é só o dono da plataforma, por um painel de administrador na etapa 9.
 - **Como se cobra:** a comissão vai no campo `application_fee` do pagamento no Mercado Pago (modelo marketplace). No mesmo Pix, o valor da comissão cai na conta da plataforma e o resto na conta do clube, sem repasse manual.
 - **Quem paga** (opção por evento, `eventos.taxa_paga_por`):
   - o **atleta**: aparece uma "taxa de serviço" somada ao total;
@@ -212,19 +212,37 @@ As páginas do atleta são desenhadas para o celular (uma coluna estreita, tamb�
 
 **Pronto quando:** o fluxo inteiro (evento → inscrição → Pix) ficar bom num monitor de 1366 px ou mais, e o teste automático rodar também nesse tamanho de tela.
 
-### Etapa 6: Uso real
-- Decidir a hospedagem comercial.
-- Configurar o Mercado Pago de produção e o Resend com remetente próprio.
+### Etapa 6: Cadastro de clubes e login novo
+Decidido em 14/11/2026: o cadastro de clubes, antes na última etapa, vem para cá, junto com o login novo.
+
+**Cadastro de clubes (pelo painel master):**
+- O dono da plataforma (master) cria o clube (nome, endereço do clube, cor, nome do preço especial) e convida o primeiro organizador por e-mail.
+- Lista de clubes no painel master, com a situação de cada um (Mercado Pago conectado ou não, eventos publicados).
+- **"Conectar Mercado Pago" de cada clube (OAuth):** o organizador conecta a conta do clube em Painel → Pagamento, e o Pix do clube passa a cair nela. A CF continua funcionando como hoje enquanto não conectar.
+- Um clube só publica evento depois de conectar o Mercado Pago (ou com o Pix simulado, na homologação).
+- A comissão da plataforma fica **desligada**, porque exige MEI ou CNPJ. Os campos já existem.
+- O cadastro aberto ("Cadastre seu clube") fica para depois.
+
+**Login novo (o código por e-mail continua valendo):**
+- **Senha opcional:** quem quiser cria uma senha em Meus dados (hash Argon2, em `src/lib/auth/senha.ts`) e entra com e-mail e senha. "Esqueci a senha" usa o código por e-mail. Há limite de tentativas.
+- **Entrar com Google:** um toque, pela conta Google. Se o e-mail do Google já tiver conta, entra nela.
+- Precisa de um "cliente OAuth" no Google Cloud. O Allan cria pela tela e põe `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` na Vercel, nunca no chat.
+
+**Pronto quando:** o Allan criar um segundo clube de teste pelo painel master, o organizador dele conectar um Mercado Pago (de teste) e publicar um evento, e der para entrar com senha e com Google, na homologação.
+
+### Etapa 7: Uso real
+- Decidir a hospedagem comercial. Com mais de um clube, o uso é claramente comercial.
+- Configurar o Mercado Pago de produção e o Resend com remetente próprio, e avaliar o plano pago do Resend (o gratuito tem limite de 100 e-mails por dia).
 - Rodar um simulado real e ajustar o que aparecer.
 
-### Etapa 7: Extras, conforme a necessidade
-Cartão de crédito, check-in no dia com QR code, lotes de preço por data, cupons avançados e duplicar evento.
+### Etapa 8: Extras, conforme a necessidade
+Cartão de crédito, check-in no dia com QR code, lotes de preço por data, cupons avançados e formulário em etapas.
 
-### Etapa 8: Outros clubes
-- Cadastro de clubes.
-- Cada clube conecta o próprio Mercado Pago, com a comissão automática da plataforma (`application_fee`).
+### Etapa 9: Plataforma aberta
+- Cadastro aberto de clubes ("Cadastre seu clube"), com aprovação do master.
+- Comissão automática da plataforma (`application_fee`). A plataforma vai precisar de MEI ou CNPJ.
 - Página do clube.
-- Domínio próprio. A plataforma vai precisar de MEI ou CNPJ para cobrar comissão.
+- Domínio próprio por clube.
 
 ---
 
