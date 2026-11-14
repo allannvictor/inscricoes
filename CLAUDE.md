@@ -16,6 +16,9 @@ Comece a conversa com um resumo curto da situação e do próximo passo.
 - **Converse em português**, com linguagem simples e passo a passo. Ele configura Vercel, Neon, Resend, Mercado Pago e Registro.br pela tela, mandando prints.
 - **Uma etapa por vez.** Só comece uma etapa quando ele autorizar. No fim de cada etapa, pare, mostre o resultado e **abra um PR para o `staging`**.
 - **Fluxo de branches:** `claude/…` (trabalho) → PR para o **`staging`** (= homologação, `https://hml.inscricoesfast.com.br`) → depois de testado, PR **`staging` → `main`** (= produção). Nunca abra PR de `claude/…` direto para o `main`.
+- **Revisão de segurança antes da produção:** antes de abrir (ou atualizar) um PR **`staging` → `main`**, rode o agente **`revisor-seguranca`** (`.claude/agents/revisor-seguranca.md`).
+  - Cole o parecer dele na descrição do PR.
+  - Com veredito **BLOQUEADO**, não abra o PR: mostre os achados ao Allan e corrija primeiro, num PR para o `staging`.
 - **Homologação antes da produção.** Diga claramente quando um PR está **"pronto para o merge"** e quando ainda não está. O merge é ele que faz.
 - **Mudança no plano no meio de uma etapa: pergunte antes.**
 - **Nunca peça segredos no chat** (tokens, senhas, chaves). Eles vão direto nas variáveis da Vercel.
