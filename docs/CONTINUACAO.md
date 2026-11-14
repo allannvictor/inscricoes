@@ -127,7 +127,7 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - [PR #9](https://github.com/allannvictor/inscricoes/pull/9) com merge no `staging` e publicado no hml (versão `9cb248c`; a migração `0003_sexo_opcional` foi aplicada no banco de homologação pelo deploy). Falta o Allan conferir.
 4. ✅ Etapa 3 aprovada (14/11). O Allan decidiu **deixar no `staging`** por enquanto; o PR `staging` → `main` sai quando ele pedir.
 5. 🟡 **Etapas 4 + 5 juntas** (autorizadas em 14/11, direção B + C do canvas): PR para o `staging`. PR #10 com merge no `staging` e publicado no hml (versão `012915a`; migração `0004_visual_do_clube` aplicada). Falta o teste do Allan (celular e computador). Detalhes na seção 6.
-6. 🟡 **Etapa 6: cadastro de clubes + login novo** (autorizada em 14/11). PR para o `staging`.
+6. 🟡 **Etapa 6: cadastro de clubes + login novo** (autorizada em 14/11). [PR #11](https://github.com/allannvictor/inscricoes/pull/11) para o `staging`.
    - **Clubes:** em `/painel`, o master vê a lista de clubes (situação do Mercado Pago, organizadores, eventos publicados) e cria clubes em "+ Novo clube" (nome, endereço, cor, nome do preço especial e e-mail do 1º organizador). O organizador recebe um **convite por e-mail**, e o mesmo vale para quem é adicionado em Organizadores.
    - **Mercado Pago por clube (OAuth com PKCE):**
      - Painel → Pagamento → "Conectar Mercado Pago". Os tokens ficam criptografados (AES-GCM, chave derivada do `SESSION_SECRET`) e são renovados sozinhos quando faltam menos de 30 dias.
