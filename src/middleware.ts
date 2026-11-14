@@ -7,7 +7,11 @@ export function middleware(req: NextRequest) {
   const decisao = decidirAcesso({
     ligado: process.env.PRE_LANCAMENTO === '1',
     chave,
-    caminho: req.nextUrl.pathname,
+    // Caminho BRUTO: o req.nextUrl já vem "limpo" pelo Next (sem .rsc, sem /_next/data/<build>),
+    // e isso deixava passar endereços que, no fim, executavam as ações do site.
+    caminho: new URL(req.url).pathname,
+    metodo: req.method,
+    ehAcao: req.headers.has('next-action'),
     acessoNaUrl: req.nextUrl.searchParams.get('acesso'),
     cookie: req.cookies.get(COOKIE_ACESSO)?.value,
   });
@@ -22,7 +26,8 @@ export function middleware(req: NextRequest) {
     return resposta;
   }
 
-  if (req.nextUrl.pathname.startsWith('/api/')) {
+  // API, qualquer envio (POST) e qualquer Server Action param aqui: o rewrite para "em breve" executaria a ação.
+  if (new URL(req.url).pathname.startsWith('/api/') || req.headers.has('next-action') || (req.method !== 'GET' && req.method !== 'HEAD')) {
     return NextResponse.json({ erro: 'em breve' }, { status: 503 });
   }
   const resposta = NextResponse.rewrite(new URL(PAGINA_EM_BREVE, req.url));
@@ -31,6 +36,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Não passa por arquivos estáticos do Next nem pelo ícone.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Só os arquivos estáticos do Next ficam de fora (com a barra: "/_next/staticX" passa pelo middleware).
+  // Ícone e imagens passam por aqui e são liberados só para leitura (quarta varredura, 14/11/2026).
+  matcher: ['/((?!_next/static/).*)'],
 };

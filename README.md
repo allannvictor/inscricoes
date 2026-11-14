@@ -14,10 +14,11 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 |---|---|
 | 1. Inscrição com Pix | **Concluída**: login por código, vários participantes, preço de sócio, meia 60+, cupom, Pix (Mercado Pago ou simulado), confirmação por e-mail |
 | 2. Painel do organizador | **Concluída**: eventos (criar, editar, publicar, duplicar, imagem, regulamento), inscritos (resumo, filtros, cancelar, planilha), cupons, sócios, perfil do clube, organizadores, usuário master |
-| 3. Área do atleta | **Pronta para teste**: minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
+| 3. Área do atleta | **Aprovada** (no `staging`): minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
 | 4. Identidade visual (layout novo) | **Pronta para teste**: cor e nome do preço especial por clube, página do evento com foto em destaque, ícones, selos, agenda, compartilhar e sanfonas |
 | 5. Versão para computador | **Pronta para teste**: evento, formulário e Pix com lateral fixa no computador, página inicial em grade, testes em 1366 px |
-| 6 a 8 | A fazer (uso real, extras, outros clubes) |
+| 6. Cadastro de clubes + login novo | **Pronta para teste**: clubes criados pelo master (com convite), "Conectar Mercado Pago" por clube, senha opcional e Entrar com Google |
+| 7 a 9 | A fazer (uso real, extras, plataforma aberta) |
 
 ## Stack
 
@@ -58,8 +59,10 @@ Depois abra **http://localhost:3000/eventos/simulado-10k-dezembro**.
 ## Testes
 
 ```bash
-npm test             # regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
+npm test             # (precisa do Postgres local migrado: os testes de limite de tentativas usam o banco)
+# regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
 npm run test:e2e     # fluxo completo no navegador (roda no celular e num monitor de 1366 px; precisa do banco com seed; na 1ª vez: npx playwright install chromium)
+# Mais estável (versão compilada, como no CI): npm run build && E2E_PRODUCAO=1 npm run test:e2e
 npm run lint
 npm run typecheck
 ```
@@ -92,6 +95,13 @@ O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesqu
 | Ícones | `src/components/Icones.tsx` |
 | Agenda (.ics), mapa e compartilhar | `src/lib/agenda.ts` e `src/app/eventos/[slug]/agenda.ics/route.ts` |
 | Página inicial | `src/app/page.tsx` |
+| Para onde o site pode mandar depois do login (só caminhos internos) | `src/lib/regras/redirecionamento.ts` |
+| Limites: participantes por pedido (você e mais 3), pedidos aguardando Pix, consultas de CPF (1 uso por CPF revelado), cupom, tentativas de código e senha | `src/lib/regras/limites-pedido.ts`, `src/lib/limites.ts`, `src/lib/auth/codigo-email.ts`, `src/lib/auth/senha.ts` |
+| Quem vê uma inscrição (o CPF não dá acesso) | `podeVerInscricao` em `src/lib/auth/permissoes.ts` |
+| Cabeçalhos de segurança | `next.config.ts` |
+| Ids (UUID de verdade) e parâmetros da URL (`?erro=`, `?busca=`) sem erro 500 | `src/lib/regras/uuid.ts` e `src/lib/regras/parametros.ts` |
+| Quando o botão "Simular Pix" vale (só homologação/local, pedido pendente, clube sem conta) | `podeSimularPagamento` em `src/lib/pagamento/situacao.ts` |
+| Revisão de segurança antes da produção (agente) | `.claude/agents/revisor-seguranca.md` |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
 | O que é obrigatório por pessoa (sexo só com categoria, camisa só se o evento pede) e quando "Você" aparece em resumo | `src/lib/regras/participante.ts` |
@@ -117,6 +127,32 @@ Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver 
    - Localmente, a tela do Pix consulta o Mercado Pago a cada 5 segundos, então a confirmação funciona mesmo sem webhook.
 
 **No Pix real:** o e-mail de quem paga precisa ser diferente do e-mail da conta Mercado Pago que recebe.
+
+### Conta de cada clube ("Conectar Mercado Pago")
+
+Cada clube conecta a própria conta em **Painel → Pagamento**, e o Pix das inscrições dele cai direto nela.
+- **Na aplicação do Mercado Pago:**
+  - em **URLs de redirecionamento**, cadastre `https://SEU-SITE/api/mercadopago/oauth/callback` (uma para a homologação e outra para a produção);
+  - ligue o **PKCE**;
+  - copie o *Client ID* e o *Client Secret* para `MP_CLIENT_ID` e `MP_CLIENT_SECRET`.
+- **Tokens:** ficam criptografados no banco (chave derivada do `SESSION_SECRET`) e são renovados sozinhos antes de vencer (valem 180 dias).
+- **Token do site:** `MP_ACCESS_TOKEN` vale **só** para o clube de `MP_CLUBE_DO_TOKEN` (padrão: `cf-assessoria`). Um clube sem conta conectada nunca usa a conta de outro.
+- **Publicar evento:** só depois de conectar. Fora da produção, o Pix simulado também vale. **Em produção, o Pix simulado nunca vale**, mesmo com `PERMITIR_SIMULADO`.
+- **Aviso:** conectar, trocar ou desconectar a conta manda um e-mail para todos os organizadores do clube e para os masters.
+- Regras em `src/lib/pagamento/situacao.ts`; conexão em `src/lib/pagamento/oauth-mercadopago.ts`.
+
+## Entrar (código, senha e Google)
+
+- **Código por e-mail:** o padrão; a conta nasce no primeiro acesso.
+- **Senha opcional:** criada em Meus dados → Acesso.
+  - Hash Argon2id; aceita 5 tentativas erradas a cada 15 minutos por e-mail e 30 por IP (só o hash do IP é guardado). O pedido de código tem limite de 20 por hora por IP.
+  - Criar, trocar ou remover a senha encerra as sessões nos outros aparelhos e avisa por e-mail.
+  - "Esqueci a senha": entrar com o código e criar outra.
+  - Arquivos: `src/lib/auth/senha.ts` e `src/lib/regras/senha.ts`.
+- **Entrar com Google:** aparece quando `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estão configurados.
+  - Liga a conta pelo e-mail verificado do Google.
+  - URL de retorno: `https://SEU-SITE/api/auth/google/callback`.
+  - Arquivos: `src/lib/auth/google.ts` e `src/lib/auth/google-login.ts`.
 
 ## Publicar (Vercel + Neon)
 
@@ -175,7 +211,9 @@ Com isso:
 
 Fica em **`/painel`**, com o mesmo login por código.
 - **Organizador:** quem está na lista de organizadores de um clube (Perfil do clube → Organizadores). Pode tudo nos eventos do clube.
-- **Master:** os e-mails em `ADMIN_EMAILS` acessam o painel de qualquer clube. Não existe senha master: o acesso é pelo código enviado ao e-mail.
+- **Master:** os e-mails em `ADMIN_EMAILS` acessam o painel de qualquer clube e **criam clubes** (`/painel` → "+ Novo clube").
+  - Ao criar um clube, o primeiro organizador recebe um convite por e-mail.
+  - O mesmo vale para quem é adicionado em Perfil do clube → Organizadores.
 
 ### Arquivos (imagem do evento, foto do clube, regulamento)
 

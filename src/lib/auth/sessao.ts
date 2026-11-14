@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, ne } from 'drizzle-orm';
 import { cache } from 'react';
 import { db } from '@/db';
 import { organizadores, sessoes, usuarios, type Usuario } from '@/db/schema';
@@ -21,6 +21,14 @@ export async function criarSessao(usuarioId: string): Promise<void> {
     path: '/',
     expires: expiraEm,
   });
+}
+
+/** Encerra todas as outras sessões do usuário (outros aparelhos), mantendo a atual. Usado ao mudar a senha. */
+export async function encerrarOutrasSessoes(usuarioId: string): Promise<void> {
+  const token = (await cookies()).get(COOKIE)?.value;
+  await db
+    .delete(sessoes)
+    .where(token ? and(eq(sessoes.usuarioId, usuarioId), ne(sessoes.tokenHash, hmac(token))) : eq(sessoes.usuarioId, usuarioId));
 }
 
 export async function encerrarSessao(): Promise<void> {

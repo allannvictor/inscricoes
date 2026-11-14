@@ -9,6 +9,8 @@ import { transferirInscricao } from '@/lib/atleta/transferencia';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { dataLocal, nascimentoValido } from '@/lib/regras/datas';
+import { semCaractereNulo } from '@/lib/regras/texto';
+import { resumoDoErro } from '@/lib/log';
 
 export async function transferirInscricaoAcao(inscricaoId: string, dados: unknown): Promise<{ ok: true } | { ok: false; erros: string[] }> {
   const usuario = await usuarioAtual();
@@ -18,20 +20,20 @@ export async function transferirInscricaoAcao(inscricaoId: string, dados: unknow
     if (r.ok) revalidatePath('/minhas-inscricoes');
     return r;
   } catch (e) {
-    console.error(e);
+    console.error('Falha na transferência', resumoDoErro(e));
     return { ok: false, erros: ['Algo deu errado na transferência. Tente de novo.'] };
   }
 }
 
 const meusDadosSchema = z.object({
   nome: z.string().trim().max(200),
-  cpf: z.string().trim(),
-  nascimento: z.string().trim(),
+  cpf: z.string().trim().max(20),
+  nascimento: z.string().trim().max(10),
   sexo: z.enum(['F', 'M', '']),
-  telefone: z.string().trim().max(30),
+  telefone: z.string().trim().max(20),
   camisa: z.string().trim().max(5),
   contatoEmergencia: z.string().trim().max(200),
-});
+}).superRefine(semCaractereNulo);
 
 export async function salvarMeusDadosAcao(dados: z.input<typeof meusDadosSchema>): Promise<{ ok: true } | { ok: false; erros: string[] }> {
   const usuario = await usuarioAtual();
@@ -44,18 +46,23 @@ export async function salvarMeusDadosAcao(dados: z.input<typeof meusDadosSchema>
   if (cpf && !validarCpf(cpf)) erros.push('CPF inválido.');
   if (d.nascimento && !nascimentoValido(d.nascimento, dataLocal(new Date()))) erros.push('Data de nascimento inválida.');
   if (erros.length) return { ok: false, erros };
-  await db
-    .update(usuarios)
-    .set({
-      nome: d.nome || null,
-      cpf: cpf || null,
-      nascimento: d.nascimento || null,
-      sexo: d.sexo || null,
-      telefone: d.telefone || null,
-      camisa: d.camisa || null,
-      contatoEmergencia: d.contatoEmergencia || null,
-    })
-    .where(eq(usuarios.id, usuario.id));
+  try {
+    await db
+      .update(usuarios)
+      .set({
+        nome: d.nome || null,
+        cpf: cpf || null,
+        nascimento: d.nascimento || null,
+        sexo: d.sexo || null,
+        telefone: d.telefone || null,
+        camisa: d.camisa || null,
+        contatoEmergencia: d.contatoEmergencia || null,
+      })
+      .where(eq(usuarios.id, usuario.id));
+  } catch (e) {
+    console.error('Falha ao salvar Meus dados', resumoDoErro(e));
+    return { ok: false, erros: ['Não foi possível salvar agora. Tente de novo.'] };
+  }
   revalidatePath('/minhas-inscricoes');
   return { ok: true };
 }

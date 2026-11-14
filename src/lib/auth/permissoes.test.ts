@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ehEmailAdmin, ehOrganizadorDoClube, podeAbrirPainel, podeVerInscricao, podeVerPedido, type UsuarioLogado } from './permissoes';
+import { ehEmailAdmin, ehOrganizadorDoClube, podeAbrirPainel, podeTransferirInscricao, podeVerInscricao, podeVerPedido, type UsuarioLogado } from './permissoes';
 
 const comprador: UsuarioLogado = { id: 'u1', email: 'marina@exemplo.com', cpf: '52998224725', clubesOrganizados: [] };
 const outro: UsuarioLogado = { id: 'u2', email: 'outro@exemplo.com', cpf: '11144477735', clubesOrganizados: [] };
@@ -17,7 +17,10 @@ describe('Permissões de pedido', () => {
 
 describe('Permissões de inscrição', () => {
   const inscricao = { cpf: '11144477735', email: null };
-  it('participante pelo CPF da conta vê', () => expect(podeVerInscricao(outro, inscricao, pedido, 'clubeA')).toBe(true));
+  it('CPF igual NÃO dá acesso (CPF não é segredo)', () => {
+    expect(podeVerInscricao(outro, inscricao, pedido, 'clubeA')).toBe(false);
+    expect(podeTransferirInscricao(outro, inscricao, pedido, 'clubeA')).toBe(false);
+  });
   it('participante pelo e-mail vê', () =>
     expect(podeVerInscricao({ ...outro, cpf: null }, { cpf: '00000000000', email: 'OUTRO@exemplo.com' }, pedido, 'clubeA')).toBe(true));
   it('estranho não vê', () =>

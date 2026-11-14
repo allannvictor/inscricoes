@@ -7,7 +7,7 @@ export function gerarCsv(cabecalho: string[], linhas: Array<Array<string | numbe
     if (v == null) return '';
     let s = String(v);
     // Evita que o Excel interprete o conteúdo como fórmula.
-    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const corpo = [cabecalho, ...linhas].map((l) => l.map(celula).join(';')).join('\r\n');

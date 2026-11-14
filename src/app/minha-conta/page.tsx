@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { FormularioMeusDados } from '@/components/FormularioMeusDados';
+import { FormularioSenha } from '@/components/FormularioSenha';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { dataLocal } from '@/lib/regras/datas';
 
@@ -29,6 +30,11 @@ export default async function MinhaConta() {
           contatoEmergencia: usuario.contatoEmergencia ?? '',
         }}
       />
+      <section className="cartao" aria-labelledby="titulo-acesso">
+        <h2 id="titulo-acesso" className="titulo-3">Acesso</h2>
+        <FormularioSenha temSenha={!!usuario.senhaHash} />
+        {usuario.googleId && <p className="text-sm text-suave">Conta Google ligada: você também pode usar &quot;Entrar com Google&quot;.</p>}
+      </section>
     </div>
   );
 }

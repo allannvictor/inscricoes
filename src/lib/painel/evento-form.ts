@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { FUSO } from '@/lib/regras/datas';
+import { anoDeEvento, dataDoCalendario, dataHoraDoCalendario, FUSO } from '@/lib/regras/datas';
+import { CONTROLE, semCaractereNulo } from '@/lib/regras/texto';
 
 /** Formulário de criar/editar evento. Datas chegam como no <input> e são do fuso de Brasília. */
 
@@ -7,20 +8,22 @@ const reais = z
   .string()
   .trim()
   .transform((v) => v.replace(/\s|R\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'))
-  .refine((v) => v === '' || /^\d+(\.\d{1,2})?$/.test(v), 'Valor inválido');
+  // No máximo R$ 9.999.999,99 (números enormes não cabem no banco e davam erro 500).
+  .refine((v) => v === '' || /^\d{1,7}(\.\d{1,2})?$/.test(v), 'Valor inválido');
 
 export const distanciaFormSchema = z.object({
   id: z.string().optional(),
   nome: z.string().trim().min(1, 'Dê um nome para cada distância').max(40),
   preco: reais.refine((v) => v !== '', 'Informe o preço de cada distância'),
   precoSocio: reais,
-  vagas: z.string().trim().refine((v) => v === '' || /^\d+$/.test(v), 'Vagas deve ser um número'),
+  vagas: z.string().trim().refine((v) => v === '' || /^\d{1,6}$/.test(v), 'Vagas deve ser um número (até 999.999)'),
 });
 
 export const eventoFormSchema = z.object({
-  nome: z.string().trim().min(3, 'Informe o nome do evento').max(120),
+  // Nome e local são de uma linha só: sem caracteres de controle (iam para o .ics da agenda; oitava varredura).
+  nome: z.string().trim().min(3, 'Informe o nome do evento').max(120).refine((v) => !CONTROLE.test(v), 'O nome do evento tem um caractere inválido.'),
   dataHora: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Informe data e hora da largada'),
-  local: z.string().trim().min(2, 'Informe o local').max(200),
+  local: z.string().trim().min(2, 'Informe o local').max(200).refine((v) => !CONTROLE.test(v), 'O local tem um caractere inválido.'),
   descricao: z.string().trim().max(5000).optional().default(''),
   inscricoesAte: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe até quando vão as inscrições'),
   transferenciaAte: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).optional().default(''),
@@ -28,7 +31,7 @@ export const eventoFormSchema = z.object({
   pedeCamisa: z.boolean(),
   usaCategoria: z.boolean(),
   distancias: z.array(distanciaFormSchema).min(1, 'Adicione ao menos uma distância').max(10),
-});
+}).superRefine(semCaractereNulo);
 
 export type EventoForm = z.input<typeof eventoFormSchema>;
 
@@ -59,6 +62,13 @@ export function paraCentavos(valor: string): number {
 /** Regras que dependem de mais de um campo. Devolve a lista de erros. */
 export function conferirEvento(e: z.output<typeof eventoFormSchema>): string[] {
   const erros: string[] = [];
+  // Datas que não existem ("2026-13-45T99:99", "2026-02-30") viravam data inválida e erro 500 ao gravar
+  // (sexta varredura de segurança, 14/11/2026). Confere antes de comparar.
+  // Ano fora de 2000 a 2100 (ex.: 0000, 9999) também dava erro 500 (sétima varredura).
+  if (!dataHoraDoCalendario(e.dataHora) || !anoDeEvento(e.dataHora)) erros.push('Data ou hora da largada inválida.');
+  if (!dataDoCalendario(e.inscricoesAte) || !anoDeEvento(e.inscricoesAte)) erros.push('Data de fim das inscrições inválida.');
+  if (e.transferenciaAte && (!dataDoCalendario(e.transferenciaAte) || !anoDeEvento(e.transferenciaAte))) erros.push('Data de fim das transferências inválida.');
+  if (erros.length) return erros;
   const largada = dataHoraBrasilia(e.dataHora);
   if (fimDoDiaBrasilia(e.inscricoesAte) > largada) erros.push('As inscrições precisam terminar antes da largada.');
   if (e.transferenciaAte && fimDoDiaBrasilia(e.transferenciaAte) > largada) erros.push('O prazo de transferência precisa terminar antes da largada.');

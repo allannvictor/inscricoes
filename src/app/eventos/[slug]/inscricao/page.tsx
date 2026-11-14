@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { FormularioInscricao } from '@/components/FormularioInscricao';
 import { LoginCodigo } from '@/components/LoginCodigo';
 import { codigoTesteAtivo } from '@/lib/ambiente';
+import { googleAtivo } from '@/lib/auth/google';
 import { pessoasJaInscritas } from '@/lib/atleta/consultas';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { TemaClube } from '@/components/TemaClube';
@@ -11,7 +12,7 @@ import { eventoPorSlug, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { dataLocal } from '@/lib/regras/datas';
 import { db } from '@/db';
 import { inscricoes, pedidos } from '@/db/schema';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
     return (
       <div className="pagina">
         {voltar}
-        <LoginCodigo destino={`/eventos/${slug}/inscricao`} modoTeste={!!codigoTesteAtivo()} />
+        <LoginCodigo destino={`/eventos/${slug}/inscricao`} modoTeste={!!codigoTesteAtivo()} google={googleAtivo()} />
       </div>
     );
   }
@@ -51,7 +52,15 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
         .select({ numero: inscricoes.numero, status: inscricoes.status, pedidoId: pedidos.id, compradorId: pedidos.compradorId })
         .from(inscricoes)
         .innerJoin(pedidos, eq(pedidos.id, inscricoes.pedidoId))
-        .where(and(eq(inscricoes.eventoId, evento.id), eq(inscricoes.cpf, usuario.cpf), inArray(inscricoes.status, ['pendente', 'confirmada'])))
+        .where(
+          and(
+            eq(inscricoes.eventoId, evento.id),
+            eq(inscricoes.cpf, usuario.cpf),
+            inArray(inscricoes.status, ['pendente', 'confirmada']),
+            // Só conta como "sua" se você comprou ou se o e-mail da inscrição é o seu (o CPF sozinho não prova nada).
+            or(eq(pedidos.compradorId, usuario.id), sql`lower("inscricoes"."email") = ${usuario.email.toLowerCase()}`),
+          ),
+        )
         .orderBy(desc(inscricoes.criadoEm))
         .limit(1)
     : [];

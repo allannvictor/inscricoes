@@ -1,20 +1,33 @@
 import 'server-only';
-import { and, asc, count, eq, inArray, lt, max, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gt, inArray, lt, max, ne, sql } from 'drizzle-orm';
 import { db, type Tx } from '@/db';
 import { clubes, cupons, distancias, eventos, inscricoes, pedidos, socios, usuarios } from '@/db/schema';
 import type { UsuarioAtual } from '@/lib/auth/sessao';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailConfirmacao } from '@/lib/email/modelos';
 import { provedorDoClube } from '@/lib/pagamento';
-import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
+import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { dataLocal, formatarDataHora, nascimentoValido } from '@/lib/regras/datas';
+import { bloqueioDePedido } from '@/lib/regras/limites-pedido';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { ErroNegocio } from './erros';
 import { pedidoSchema } from './validacao';
+import { resumoDoErro } from '@/lib/log';
+import { cupomDentroDoLimite, LIMITE_CONSULTA_CPF, MENSAGEM_CPF_JA_INSCRITO_GENERICA, MENSAGEM_LIMITE_CUPOM, mensagemCpfJaInscrito } from '@/lib/limites';
+
+export { LIMITE_CONSULTA_CPF, MENSAGEM_CPF_JA_INSCRITO_GENERICA };
 
 /** Tempo que as vagas ficam reservadas esperando o Pix. */
 export const MINUTOS_RESERVA = 30;
 const ATIVAS = ['pendente', 'confirmada'] as const;
+
+/** CPF já inscrito: a mensagem com o CPF sai fora da transação, pelo limite de mensagemCpfJaInscrito. */
+class ErroCpfJaInscrito extends Error {
+  constructor(readonly cpfs: string[]) {
+    super('CPF já inscrito');
+  }
+}
+
 
 /**
  * Marca como expirados os pedidos pendentes cujo prazo do Pix acabou, liberando as vagas.
@@ -63,6 +76,9 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
     if (!nascimentoValido(p.nascimento, hoje)) erros.push(`${quem}: data de nascimento inválida.`);
     if (evento.usaCategoria && !p.sexo) erros.push(`${quem}: informe o sexo (este evento tem categoria).`);
     if (evento.pedeCamisa && !p.camisa) erros.push(`${quem}: escolha o tamanho da camisa.`);
+    // Do 2º participante em diante, o e-mail é obrigatório: é por ele que a pessoa vê a própria inscrição
+    // (o CPF não dá acesso). Decisão do Allan em 14/11/2026.
+    if (i > 0 && !p.email) erros.push(`${quem}: informe o e-mail (a pessoa recebe a confirmação e vê a inscrição com ele).`);
   });
   const cpfs = participantes.map((p) => p.cpf);
   if (new Set(cpfs).size !== cpfs.length) erros.push('Há CPF repetido no pedido.');
@@ -77,6 +93,8 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   let cupom: typeof cupons.$inferSelect | null = null;
   const codigoCupom = entrada.cupom?.toUpperCase();
   if (codigoCupom) {
+    // Mesmo limite da tela de cupom: senão daria para adivinhar cupons por aqui (sétima varredura).
+    if (!(await cupomDentroDoLimite(usuario.id))) return { ok: false, erros: [MENSAGEM_LIMITE_CUPOM] };
     [cupom] = await db.select().from(cupons).where(and(eq(cupons.eventoId, evento.id), eq(cupons.codigo, codigoCupom), eq(cupons.ativo, true)));
     if (!cupom) return { ok: false, erros: ['Cupom não encontrado.'] };
   }
@@ -98,6 +116,19 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   try {
     pedidoId = await db.transaction(async (tx) => {
       await expirarPendentes(tx, evento.id);
+
+      // Limite de pedidos aguardando Pix (dentro da transação, para pedidos simultâneos não escaparem).
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'pedidos-conta:' + usuario.id}))`);
+      const pendentes = await tx
+        .select({ id: pedidos.id, eventoId: pedidos.eventoId })
+        .from(pedidos)
+        .where(and(eq(pedidos.compradorId, usuario.id), eq(pedidos.status, 'pendente'), gt(pedidos.expiraEm, new Date())));
+      const pendentesNoEvento = pendentes.filter((p) => p.eventoId === evento.id);
+      const [{ pessoas }] = pendentesNoEvento.length
+        ? await tx.select({ pessoas: count() }).from(inscricoes).where(inArray(inscricoes.pedidoId, pendentesNoEvento.map((p) => p.id)))
+        : [{ pessoas: 0 }];
+      const bloqueio = bloqueioDePedido(pendentesNoEvento.length, pendentes.length, pessoas + participantes.length);
+      if (bloqueio) throw new ErroNegocio(bloqueio);
 
       // Trava as distâncias do evento: duas pessoas não pegam a última vaga ao mesmo tempo.
       const travadas = await tx.select().from(distancias).where(eq(distancias.eventoId, evento.id)).for('update');
@@ -126,9 +157,8 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
         .select({ cpf: inscricoes.cpf })
         .from(inscricoes)
         .where(and(eq(inscricoes.eventoId, evento.id), inArray(inscricoes.cpf, cpfs), inArray(inscricoes.status, [...ATIVAS])));
-      if (jaInscritos.length) {
-        throw new ErroNegocio(`Já existe inscrição neste evento para o CPF ${jaInscritos.map((j) => formatarCpf(j.cpf)).join(', ')}.`);
-      }
+      // A mensagem com o CPF sai fora da transação, depois de passar pelo limite (ver mensagemCpfJaInscrito).
+      if (jaInscritos.length) throw new ErroCpfJaInscrito(jaInscritos.map((j) => j.cpf));
 
       const [novo] = await tx
         .insert(pedidos)
@@ -139,7 +169,9 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
           descontoCentavos: calculo.desconto,
           totalCentavos: calculo.total,
           cupomId: calculo.desconto > 0 && cupom ? cupom.id : null,
-          provedor: 'simulado', // atualizado abaixo, quando o Pix for criado
+          // Provisório e neutro: vira 'mercadopago', 'simulado' ou 'gratuito' quando o Pix for criado.
+          // Antes nascia 'simulado', e o botão de simular servia num pedido de clube com conta real (sexta varredura).
+          provedor: 'criando',
           expiraEm: new Date(Date.now() + MINUTOS_RESERVA * 60 * 1000),
         })
         .returning({ id: pedidos.id });
@@ -166,7 +198,8 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
     });
   } catch (e) {
     if (e instanceof ErroNegocio) return { ok: false, erros: [e.message] };
-    if (typeof e === 'object' && e && 'code' in e && e.code === '23505') return { ok: false, erros: ['Um dos CPFs já tem inscrição neste evento.'] };
+    if (e instanceof ErroCpfJaInscrito) return { ok: false, erros: [await mensagemCpfJaInscrito(usuario.id, e.cpfs)] };
+    if (typeof e === 'object' && e && 'code' in e && e.code === '23505') return { ok: false, erros: [MENSAGEM_CPF_JA_INSCRITO_GENERICA] };
     throw e;
   }
 
@@ -198,7 +231,7 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
 
   // 9. Cria o Pix. Se o Mercado Pago falhar, libera as vagas.
   try {
-    const provedor = provedorDoClube(clube);
+    const provedor = await provedorDoClube(clube);
     const [pedido] = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId));
     const pix = await provedor.criarPix({
       pedidoId,
@@ -212,7 +245,7 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
       .set({ provedor: provedor.nome, pagamentoId: pix.pagamentoId, pixCopiaECola: pix.copiaECola, pixQrBase64: pix.qrBase64 })
       .where(eq(pedidos.id, pedidoId));
   } catch (e) {
-    console.error('Falha ao criar Pix', e);
+    console.error('Falha ao criar Pix', resumoDoErro(e));
     await cancelarPedido(pedidoId);
     return { ok: false, erros: [e instanceof Error ? e.message : 'Não foi possível gerar o Pix. Tente de novo.'] };
   }
@@ -239,7 +272,17 @@ export async function confirmarPagamento(pedidoId: string, taxaGatewayCentavos: 
 
     // Trava o evento para numerar as inscrições em sequência.
     await tx.select({ id: eventos.id }).from(eventos).where(eq(eventos.id, p.eventoId)).for('update');
-    const lista = await tx.select().from(inscricoes).where(eq(inscricoes.pedidoId, p.id)).orderBy(asc(inscricoes.criadoEm), asc(inscricoes.id));
+    // Inscrição cancelada pelo organizador NÃO volta a valer com um Pix pago depois (terceira varredura, 14/11/2026).
+    const lista = await tx
+      .select()
+      .from(inscricoes)
+      .where(and(eq(inscricoes.pedidoId, p.id), ne(inscricoes.status, 'cancelada')))
+      .orderBy(asc(inscricoes.criadoEm), asc(inscricoes.id));
+    if (lista.length === 0) {
+      // Dinheiro recebido, mas não sobrou nada para confirmar: a organização resolve (devolução ou nova inscrição).
+      await tx.update(pedidos).set({ status: 'pago_conflito', pagoEm: new Date(), taxaGatewayCentavos }).where(eq(pedidos.id, p.id));
+      return false;
+    }
 
     if (p.status !== 'pendente') {
       const conflitos = await tx
@@ -270,7 +313,7 @@ export async function confirmarPagamento(pedidoId: string, taxaGatewayCentavos: 
   });
 
   if (confirmado) {
-    await enviarConfirmacao(pedidoId).catch((e) => console.error('Falha ao enviar confirmação', e));
+    await enviarConfirmacao(pedidoId).catch((e) => console.error('Falha ao enviar confirmação', resumoDoErro(e)));
   }
   return confirmado;
 }
@@ -311,8 +354,9 @@ export async function sincronizarPagamento(pedidoId: string): Promise<void> {
     .where(eq(pedidos.id, pedidoId));
   if (!linha || !linha.pedido.pagamentoId || linha.pedido.provedor !== 'mercadopago') return;
   if (!['pendente', 'expirado'].includes(linha.pedido.status)) return;
-  const consulta = await provedorDoClube(linha.clube).consultar(linha.pedido.pagamentoId);
-  if (consulta.pedidoId && consulta.pedidoId !== pedidoId) return;
+  const consulta = await (await provedorDoClube(linha.clube)).consultar(linha.pedido.pagamentoId);
+  // A order no Mercado Pago precisa apontar para ESTE pedido (external_reference); vazio também não vale.
+  if (consulta.pedidoId !== pedidoId) return;
   if (consulta.status === 'aprovado' && consulta.valorCentavos >= linha.pedido.totalCentavos) {
     await confirmarPagamento(pedidoId, consulta.taxaCentavos);
   }

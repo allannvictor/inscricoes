@@ -3,15 +3,20 @@ import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-o
 import { db } from '@/db';
 import { distancias, inscricoes, pedidos, usuarios } from '@/db/schema';
 import { limparCpf } from '@/lib/regras/cpf';
+import { ehUuid } from '@/lib/regras/uuid';
+import { textoDoParametro } from '@/lib/regras/parametros';
 
 /** Inscrições do evento com distância e pedido. "pendente" só conta enquanto o Pix não venceu. */
-export async function listarInscritos(eventoId: string, filtros: { busca?: string; distanciaId?: string; status?: string } = {}) {
+export async function listarInscritos(eventoId: string, filtrosBrutos: { busca?: unknown; distanciaId?: unknown; status?: unknown } = {}) {
+  // Filtros vêm da URL: só texto vale (lista ou outro tipo é ignorado, em vez de erro 500).
+  const filtros = { busca: textoDoParametro(filtrosBrutos.busca), distanciaId: textoDoParametro(filtrosBrutos.distanciaId), status: textoDoParametro(filtrosBrutos.status) };
   const condicoes: SQL[] = [eq(inscricoes.eventoId, eventoId)];
   const status = filtros.status ?? 'ativas';
   if (status === 'ativas') condicoes.push(inArray(inscricoes.status, ['confirmada', 'pendente', 'cancelada']));
   else if (['confirmada', 'pendente', 'cancelada', 'expirada'].includes(status)) condicoes.push(eq(inscricoes.status, status));
-  if (filtros.distanciaId && /^[0-9a-f-]{36}$/i.test(filtros.distanciaId)) condicoes.push(eq(inscricoes.distanciaId, filtros.distanciaId));
-  const busca = filtros.busca?.trim();
+  if (filtros.distanciaId && ehUuid(filtros.distanciaId)) condicoes.push(eq(inscricoes.distanciaId, filtros.distanciaId));
+  // Sem caracteres de controle (o nulo dava erro no banco) e no máximo 100 caracteres.
+  const busca = filtros.busca?.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   if (busca) {
     const digitos = limparCpf(busca);
     const opcoes: SQL[] = [ilike(inscricoes.nome, `%${busca.replace(/[%_]/g, '')}%`)];

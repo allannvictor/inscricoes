@@ -4,6 +4,9 @@ import { db } from '@/db';
 import { pedidos } from '@/db/schema';
 import { assinaturaValida } from '@/lib/pagamento/assinatura';
 import { sincronizarPagamento } from '@/lib/pedidos/servico';
+import { resumoDoErro } from '@/lib/log';
+import { comoObjeto } from '@/lib/regras/parametros';
+import { CONTROLE } from '@/lib/regras/texto';
 
 /**
  * Webhook do Mercado Pago (Suas integrações > Webhooks > tópico "Order").
@@ -11,12 +14,14 @@ import { sincronizarPagamento } from '@/lib/pedidos/servico';
  */
 export async function POST(req: Request) {
   const url = new URL(req.url);
-  const corpo = await req.json().catch(() => ({}) as Record<string, unknown>);
-  const tipo = (corpo.type as string) ?? url.searchParams.get('type') ?? url.searchParams.get('topic');
+  const corpo = comoObjeto(await req.json().catch(() => null));
+  const tipo = (typeof corpo.type === 'string' ? corpo.type : null) ?? url.searchParams.get('type') ?? url.searchParams.get('topic');
   // A assinatura usa o data.id da URL; o corpo é só reserva.
-  const dataId = String(url.searchParams.get('data.id') ?? (corpo.data as { id?: string } | undefined)?.id ?? url.searchParams.get('id') ?? '');
+  const idDoCorpo = comoObjeto(corpo.data).id;
+  const dataId = String(url.searchParams.get('data.id') ?? (typeof idDoCorpo === 'string' || typeof idDoCorpo === 'number' ? idDoCorpo : null) ?? url.searchParams.get('id') ?? '');
   // Usamos a API de Orders (tópico "order"); "payment" fica aceito por compatibilidade.
-  if (!['order', 'payment'].includes(tipo ?? '') || !dataId) return NextResponse.json({ ok: true });
+  // Id vazio, longo demais ou com caractere de controle não é de verdade (o nulo daria erro no banco).
+  if (!['order', 'payment'].includes(tipo ?? '') || !dataId || dataId.length > 100 || CONTROLE.test(dataId)) return NextResponse.json({ ok: true });
 
   const segredo = process.env.MP_WEBHOOK_SECRET;
   if (segredo && !assinaturaValida({ xSignature: req.headers.get('x-signature'), xRequestId: req.headers.get('x-request-id'), dataId, segredo })) {
@@ -28,7 +33,7 @@ export async function POST(req: Request) {
     try {
       await sincronizarPagamento(pedido.id);
     } catch (e) {
-      console.error('Webhook: falha ao confirmar', e);
+      console.error('Webhook: falha ao confirmar', resumoDoErro(e));
       return NextResponse.json({ erro: 'tente de novo' }, { status: 500 }); // o Mercado Pago reenvia
     }
   }

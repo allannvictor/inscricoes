@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { codigoTesteAtivo, ehHomologacao } from '@/lib/ambiente';
+import { simuladoPermitido } from '@/lib/pagamento/situacao';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export function GET() {
     tipoCredencial: process.env.MP_ACCESS_TOKEN?.startsWith('TEST-') ? 'teste (TEST-)' : process.env.MP_ACCESS_TOKEN ? 'APP_USR (teste ou produção)' : null,
     webhookComAssinatura: !!process.env.MP_WEBHOOK_SECRET,
     email: process.env.RESEND_API_KEY ? 'resend' : 'simulado (só nos logs)',
-    simuladoPermitido: process.env.PERMITIR_SIMULADO === '1',
+    simuladoPermitido: simuladoPermitido(),
     appUrl: process.env.APP_URL ?? null,
     emBreve: process.env.PRE_LANCAMENTO === '1',
     homologacao: ehHomologacao(),

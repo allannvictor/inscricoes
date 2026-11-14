@@ -36,6 +36,20 @@
       "when": 1794615725466,
       "tag": "0004_visual_do_clube",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794618072537,
+      "tag": "0005_etapa6_clubes_e_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794656610276,
+      "tag": "0006_etapa6_seguranca",
+      "breakpoints": true
     }
   ]
 }

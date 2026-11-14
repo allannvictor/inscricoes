@@ -77,6 +77,7 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   const cartaoAna = page.locator('section', { hasText: 'Ana Atleta' });
   await cartaoAna.getByRole('link', { name: 'Comprovante' }).click();
   await expect(page.getByText('Inscrição confirmada')).toBeVisible();
+  const comprovanteAna = new URL(page.url()).pathname;
   await expect(page.getByText(/\*\*\*\.\d{3}\.\d{3}-\*\*/)).toBeVisible(); // CPF mascarado
   await page.goBack();
 
@@ -84,6 +85,20 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   const bruno = await novaPagina(browser, emailB, '/entrar?voltar=/minhas-inscricoes');
   await expect(bruno.page.getByText('Bruno Atleta')).toBeVisible();
   await expect(bruno.page.getByText('Ana Atleta')).toHaveCount(0);
+
+  // Golpe do CPF: alguém digita o CPF da Ana em Meus dados. Não pode ver nem transferir a inscrição dela.
+  const golpista = await novaPagina(browser, `golpista+${t}@exemplo.com`, '/entrar?voltar=/minha-conta');
+  await golpista.page.getByLabel('Nome completo').fill('Golpista');
+  await golpista.page.getByLabel('CPF').fill(cpfA);
+  await golpista.page.getByRole('button', { name: 'Salvar meus dados' }).click();
+  await expect(golpista.page.getByText(/Dados salvos/)).toBeVisible();
+  await golpista.page.goto('/minhas-inscricoes');
+  await expect(golpista.page.getByText('Ana Atleta')).toHaveCount(0);
+  await golpista.page.goto(comprovanteAna);
+  await expect(golpista.page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
+  await golpista.page.goto(`${comprovanteAna}/transferir`);
+  await expect(golpista.page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
+  await golpista.ctx.close();
 
   // Na próxima inscrição (outra prova), os dados da Ana vêm do cadastro, em resumo,
   // e o Bruno aparece em "Quem você já inscreveu".
@@ -117,11 +132,23 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   await form.getByLabel('Contato de emergência').fill('Filho 11944445555');
   await form.getByRole('button', { name: 'Transferir inscrição' }).click();
   await form.getByRole('button', { name: 'Confirmar transferência' }).click();
-  await expect(page.getByText(/já tem inscrição neste evento/)).toBeVisible();
+  await expect(page.getByText(/Já existe inscrição neste evento para o CPF/)).toBeVisible();
   await form.getByLabel('CPF').fill(cpfC);
   await form.getByRole('button', { name: 'Transferir inscrição' }).click();
   await form.getByRole('button', { name: 'Confirmar transferência' }).click();
   await expect(page.getByRole('heading', { name: 'Inscrição transferida' })).toBeVisible();
+
+  // Só uma transferência: ninguém transfere de novo.
+  await page.goto(linkTransferir!);
+  await expect(page.getByText('Esta inscrição já foi transferida uma vez e não pode ser transferida de novo.')).toBeVisible();
+  await page.goto('/minhas-inscricoes');
+  await expect(page.locator('section', { hasText: 'Carla Atleta' }).getByRole('link', { name: 'Transferir' })).toHaveCount(0);
+
+  // Os dados da Carla (que a Ana nunca digitou como "pessoa dela") não aparecem no "+ Adicionar".
+  await page.goto('/eventos/simuladao-run-da-cf-maratona-de-aracaju/inscricao');
+  await expect(page.getByRole('region', { name: 'Seus dados' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '+ Carla Atleta' })).toHaveCount(0);
+  expect(await page.content()).not.toContain(cpfC);
 
   // Carla agora vê a inscrição (categoria recalculada: 60+).
   const carla = await novaPagina(browser, emailC, '/entrar?voltar=/minhas-inscricoes');

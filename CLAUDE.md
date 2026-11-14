@@ -16,6 +16,9 @@ Comece a conversa com um resumo curto da situação e do próximo passo.
 - **Converse em português**, com linguagem simples e passo a passo. Ele configura Vercel, Neon, Resend, Mercado Pago e Registro.br pela tela, mandando prints.
 - **Uma etapa por vez.** Só comece uma etapa quando ele autorizar. No fim de cada etapa, pare, mostre o resultado e **abra um PR para o `staging`**.
 - **Fluxo de branches:** `claude/…` (trabalho) → PR para o **`staging`** (= homologação, `https://hml.inscricoesfast.com.br`) → depois de testado, PR **`staging` → `main`** (= produção). Nunca abra PR de `claude/…` direto para o `main`.
+- **Revisão de segurança antes da produção:** antes de abrir (ou atualizar) um PR **`staging` → `main`**, rode o agente **`revisor-seguranca`** (`.claude/agents/revisor-seguranca.md`).
+  - Cole o parecer dele na descrição do PR.
+  - Com veredito **BLOQUEADO**, não abra o PR: mostre os achados ao Allan e corrija primeiro, num PR para o `staging`.
 - **Homologação antes da produção.** Diga claramente quando um PR está **"pronto para o merge"** e quando ainda não está. O merge é ele que faz.
 - **Mudança no plano no meio de uma etapa: pergunte antes.**
 - **Nunca peça segredos no chat** (tokens, senhas, chaves). Eles vão direto nas variáveis da Vercel.
@@ -45,5 +48,6 @@ Se a sessão estiver perto do fim, ou o Allan avisar que vai abrir outra, atuali
 - Em subconsultas com `sql`, escreva a coluna com a tabela (`"eventos"."id"`), não `${eventos.id}`.
 - Prévias e homologação **nunca** usam o banco de produção: só `DATABASE_URL_PREVIEW` (veja `src/db/url.ts`).
 - O código fixo de login (`LOGIN_CODIGO_TESTE`) **nunca** vale em produção (veja `src/lib/ambiente.ts`).
-- Antes de abrir PR, rode `npm run lint`, `npm run typecheck`, `npm test` e os testes de ponta a ponta (`PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off`, com o Postgres local ligado: `service postgresql start`).
+- Antes de abrir PR, rode `npm run lint`, `npm run typecheck`, `npm test` e os testes de ponta a ponta na versão compilada (`npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off`, com o Postgres local ligado: `service postgresql start`).
+- Tokens e segredos de clubes ficam criptografados no banco (`cifrar`/`decifrar` em `src/lib/auth/cripto.ts`). O token do Mercado Pago do ambiente só vale para o clube de `MP_CLUBE_DO_TOKEN`; o dinheiro de um clube nunca pode cair na conta de outro.
 - Não coloque identificadores de modelo de IA em commits, PRs ou código.

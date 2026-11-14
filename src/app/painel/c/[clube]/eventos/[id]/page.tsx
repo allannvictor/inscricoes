@@ -7,6 +7,7 @@ import { exigirEvento } from '@/lib/painel/acesso';
 import { listarInscritos, statusVisivel } from '@/lib/painel/inscritos';
 import { formatarCpf } from '@/lib/regras/cpf';
 import { formatarReais, nomeMotivo, nomePrecoEspecial, type MotivoDesconto } from '@/lib/regras/preco';
+import { textoDoParametro } from '@/lib/regras/parametros';
 
 export const metadata = { title: 'Inscritos', robots: { index: false } };
 
@@ -23,10 +24,12 @@ export default async function Inscritos({
   searchParams,
 }: {
   params: Promise<{ clube: string; id: string }>;
-  searchParams: Promise<{ busca?: string; distancia?: string; status?: string }>;
+  searchParams: Promise<{ busca?: string | string[]; distancia?: string | string[]; status?: string | string[] }>;
 }) {
   const { clube: slug, id } = await params;
-  const filtros = await searchParams;
+  // Só texto: "?busca=a&busca=b" chega como lista e dava erro 500 (sexta varredura, 14/11/2026).
+  const brutos = await searchParams;
+  const filtros = { busca: textoDoParametro(brutos.busca), distancia: textoDoParametro(brutos.distancia), status: textoDoParametro(brutos.status) };
   const { clube, evento } = await exigirEvento(slug, id);
 
   const listaDistancias = await db.select().from(distancias).where(eq(distancias.eventoId, evento.id)).orderBy(asc(distancias.ordem));

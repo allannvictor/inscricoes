@@ -30,6 +30,8 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   const cpfCheio = cpfAleatorio();
   const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
   await sql`insert into socios (clube_id, cpf, nome) select id, ${cpfSocio}, 'Sócio E2E' from clubes where slug = 'cf-assessoria'`;
+  // O cupom de exemplo tem limite de usos; no banco local, muitas rodadas de teste esgotariam o cupom.
+  await sql`update cupons set limite = null where codigo = 'AMIGO10'`;
   await sql.end();
 
   await page.goto('/eventos/simulado-10k-dezembro');
@@ -56,6 +58,7 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   await p2.getByRole('button', { name: /5 km/ }).click();
   await p2.getByLabel('CPF').fill(cpfIdoso);
   await p2.getByLabel('Nome completo').fill('Seu José Teste');
+  await p2.getByLabel('E-mail do participante').fill(`jose+${Date.now()}@exemplo.com`);
   await p2.getByLabel('Nascimento').fill('1958-03-02');
   await p2.getByLabel('Sexo').selectOption('M');
   await expect(p2.getByText('60+ · paga meia')).toBeVisible();
@@ -79,6 +82,11 @@ test('inscrição com 3 participantes (sócio, 60+ e cupom), Pix simulado e priv
   await page.getByRole('button', { name: 'Aplicar' }).click();
   await expect(page.getByText('Cupom AMIGO10 aplicado.')).toBeVisible();
   await page.getByRole('checkbox').check();
+
+  // Do 2º participante em diante, o e-mail é obrigatório.
+  await page.getByRole('button', { name: 'Pagar R$ 142,00 com Pix' }).click();
+  await expect(page.getByText(/Participante 3: e-mail/)).toBeVisible();
+  await p3.getByLabel('E-mail do participante').fill(`pedro+${Date.now()}@exemplo.com`);
 
   // 45 (sócio) + 25 (meia) + 80 - 8 (cupom) = 142
   await page.getByRole('button', { name: 'Pagar R$ 142,00 com Pix' }).click();

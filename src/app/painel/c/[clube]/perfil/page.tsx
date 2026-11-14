@@ -8,8 +8,9 @@ import { exigirClube } from '@/lib/painel/acesso';
 
 export const metadata = { title: 'Perfil do clube', robots: { index: false } };
 
-export default async function Perfil({ params }: { params: Promise<{ clube: string }> }) {
+export default async function Perfil({ params, searchParams }: { params: Promise<{ clube: string }>; searchParams: Promise<{ criado?: string }> }) {
   const { usuario, clube } = await exigirClube((await params).clube);
+  const { criado } = await searchParams;
   const lista = await db
     .select({ id: usuarios.id, email: usuarios.email, nome: usuarios.nome })
     .from(organizadores)
@@ -19,6 +20,11 @@ export default async function Perfil({ params }: { params: Promise<{ clube: stri
   const whats = clube.whatsapp?.replace(/^55/, '') ?? '';
   return (
     <div className="grid items-start gap-4 lg:grid-cols-2">
+      {criado && (
+        <p className="cartao border-ok bg-ok-fundo lg:col-span-2" role="status">
+          <b>Clube criado e convite enviado.</b> O organizador entra com o e-mail convidado e conecta o Mercado Pago em Pagamento.
+        </p>
+      )}
       <section className="cartao">
         <h3 className="titulo-3">Perfil do clube</h3>
         <EnvioArquivo

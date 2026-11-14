@@ -16,10 +16,34 @@ export function idadeEm(nascimento: string, data: string): number {
   return idade;
 }
 
+/**
+ * Anos aceitos nas datas de um evento. O ano 0000 e o fim de 9999 passavam e davam erro no banco
+ * (sétima varredura de segurança, 14/11/2026).
+ */
+export const ANO_MINIMO_EVENTO = 2000;
+export const ANO_MAXIMO_EVENTO = 2100;
+
+/** "AAAA-MM-DD" (ou "AAAA-MM-DDTHH:MM") com ano entre ANO_MINIMO_EVENTO e ANO_MAXIMO_EVENTO. */
+export function anoDeEvento(valor: string): boolean {
+  const ano = Number(valor.slice(0, 4));
+  return ano >= ANO_MINIMO_EVENTO && ano <= ANO_MAXIMO_EVENTO;
+}
+
+/** "AAAA-MM-DD" que existe no calendário (recusa "2026-02-30" e "2026-13-45"). */
+export function dataDoCalendario(valor: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const dt = new Date(valor + 'T12:00:00Z');
+  return !Number.isNaN(dt.getTime()) && dt.toISOString().slice(0, 10) === valor;
+}
+
+/** "AAAA-MM-DDTHH:MM" com data do calendário e hora entre 00:00 e 23:59. */
+export function dataHoraDoCalendario(valor: string): boolean {
+  const m = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):[0-5]\d$/.exec(valor);
+  return !!m && dataDoCalendario(m[1]);
+}
+
 export function nascimentoValido(nascimento: string, hoje: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento)) return false;
-  const dt = new Date(nascimento + 'T12:00:00Z');
-  if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== nascimento) return false;
+  if (!dataDoCalendario(nascimento)) return false;
   const idade = idadeEm(nascimento, hoje);
   return idade >= 0 && idade <= 110;
 }

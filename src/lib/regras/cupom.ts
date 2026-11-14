@@ -39,3 +39,9 @@ export function aplicarCupom<T extends ItemPreco>(itens: T[], cupom: CupomRegra 
   descontoTotal -= restante; // se sobrou algo por arredondamento, não foi descontado
   return { itens: resultado, desconto: descontoTotal };
 }
+
+/**
+ * Valor digitado no painel ao criar um cupom: até R$ 9.999.999,99 (ou até 100%, conferido à parte).
+ * Sem notação científica (1e10) nem hexadecimal (0x10), que davam erro 500 ou valor estranho (quinta varredura).
+ */
+export const VALOR_CUPOM = /^\d{1,7}([.,]\d{1,2})?$/;

@@ -11,6 +11,8 @@ export interface Email {
 export async function enviarEmail(email: Email): Promise<void> {
   const chave = process.env.RESEND_API_KEY;
   if (!chave) {
+    // Em produção, nunca imprimir o e-mail (o código de login iria para os logs da Vercel).
+    if (process.env.VERCEL_ENV === 'production') throw new Error('RESEND_API_KEY não configurada em produção.');
     console.log(`\n✉️  [e-mail simulado] Para: ${email.para}\n   Assunto: ${email.assunto}\n${email.texto.replace(/^/gm, '   ')}\n`);
     return;
   }
@@ -26,7 +28,8 @@ export async function enviarEmail(email: Email): Promise<void> {
     }),
   });
   if (!resposta.ok) {
-    console.error('Falha ao enviar e-mail', resposta.status, await resposta.text());
+    // Só o status: a resposta do serviço de e-mail pode repetir o endereço de quem recebe.
+    console.error('Falha ao enviar e-mail', resposta.status);
     throw new Error('Não foi possível enviar o e-mail agora.');
   }
 }

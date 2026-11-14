@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gerarIcs, linkMapa, linkWhatsappCompartilhar } from './agenda';
+import { escaparIcs, gerarIcs, linkMapa, linkWhatsappCompartilhar } from './agenda';
 import { diasAte, textoFaltam } from './regras/datas';
 
 describe('agenda e links', () => {
@@ -15,8 +15,25 @@ describe('agenda e links', () => {
     expect(ics).toContain('DTSTART:20271010T070000Z');
     expect(ics).toContain('DTEND:20271010T100000Z');
     expect(ics).toContain('SUMMARY:Simuladão\\, da CF');
-    expect(ics).toContain('LOCATION:Pulse\; Aracaju');
+    expect(ics).toContain('LOCATION:Pulse\\; Aracaju');
     expect(ics.split('\r\n')[0]).toBe('BEGIN:VCALENDAR');
+  });
+
+  it('não deixa injetar linhas no calendário (CR sozinho, LF, ponto e vírgula) (oitava varredura)', () => {
+    const ics = gerarIcs({
+      id: 'abc',
+      nome: 'Corrida\rBEGIN:VALARM\rDESCRIPTION:Pague em site-falso.com\rEND:VALARM',
+      inicio: new Date('2027-10-10T07:00:00Z'),
+      local: 'Orla\nURL:https://site-falso.com\u2028X',
+      url: 'https://exemplo.com/eventos/x',
+      agora: new Date('2026-11-14T00:00:00Z'),
+    });
+    const linhas = ics.split('\r\n');
+    // Só as linhas do próprio arquivo; nenhuma linha começa com o que veio do organizador.
+    expect(linhas.filter((l) => l.startsWith('BEGIN:VALARM'))).toEqual([]);
+    expect(linhas.filter((l) => l.startsWith('URL:'))).toEqual(['URL:https://exemplo.com/eventos/x']);
+    expect(ics.replace(/\r\n/g, '')).not.toMatch(/[\r\n\u2028]/); // nada de \r, \n ou separador de linha soltos
+    expect(escaparIcs('a;b,c\\d\r\ne')).toBe('a\\;b\\,c\\\\d\\ne');
   });
 
   it('monta os links de mapa e WhatsApp', () => {

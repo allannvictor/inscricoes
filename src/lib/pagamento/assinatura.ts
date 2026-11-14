@@ -1,4 +1,6 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+const iguais = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 /**
  * Confere a assinatura do webhook (cabeçalho x-signature: "ts=...,v1=...").
@@ -20,5 +22,5 @@ export function assinaturaValida(args: { xSignature: string | null; xRequestId: 
     return createHmac('sha256', args.segredo).update(manifesto).digest('hex');
   };
   // O SDK oficial usa o id como veio; a documentação antiga pedia minúsculas. Aceitamos os dois.
-  return [args.dataId, args.dataId.toLowerCase()].some((id) => calcular(id) === partes.v1);
+  return [args.dataId, args.dataId.toLowerCase()].some((id) => iguais(calcular(id), partes.v1));
 }
