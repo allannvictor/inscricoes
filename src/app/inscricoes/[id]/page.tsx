@@ -65,7 +65,7 @@ export default async function Comprovante({ params }: { params: Promise<{ id: st
         <p className="dica">Leve um documento com foto na retirada do kit{motivo === 'meia60' ? ' (obrigatório para a meia 60+)' : ''}.</p>
       </section>
       {inscricao.status === 'confirmada' && <BotaoImprimir />}
-      {podeTransferir(inscricao, evento.transferenciaAte, new Date()) && (
+      {podeTransferir({ ...inscricao, transferida: dados.transferida }, evento.transferenciaAte, new Date()) && (
         <Link href={`/inscricoes/${inscricao.id}/transferir`} className="botao botao-borda w-full print:hidden">Transferir para outra pessoa</Link>
       )}
     </div>

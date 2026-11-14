@@ -40,8 +40,15 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1794654252521,
+      "when": 1794618072537,
       "tag": "0005_etapa6_clubes_e_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794656610276,
+      "tag": "0006_etapa6_seguranca",
       "breakpoints": true
     }
   ]

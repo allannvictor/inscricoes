@@ -64,6 +64,9 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
     if (!nascimentoValido(p.nascimento, hoje)) erros.push(`${quem}: data de nascimento inválida.`);
     if (evento.usaCategoria && !p.sexo) erros.push(`${quem}: informe o sexo (este evento tem categoria).`);
     if (evento.pedeCamisa && !p.camisa) erros.push(`${quem}: escolha o tamanho da camisa.`);
+    // Do 2º participante em diante, o e-mail é obrigatório: é por ele que a pessoa vê a própria inscrição
+    // (o CPF não dá acesso). Decisão do Allan em 14/11/2026.
+    if (i > 0 && !p.email) erros.push(`${quem}: informe o e-mail (a pessoa recebe a confirmação e vê a inscrição com ele).`);
   });
   const cpfs = participantes.map((p) => p.cpf);
   if (new Set(cpfs).size !== cpfs.length) erros.push('Há CPF repetido no pedido.');
@@ -103,10 +106,14 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
       // Limite de pedidos aguardando Pix (dentro da transação, para pedidos simultâneos não escaparem).
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'pedidos-conta:' + usuario.id}))`);
       const pendentes = await tx
-        .select({ eventoId: pedidos.eventoId })
+        .select({ id: pedidos.id, eventoId: pedidos.eventoId })
         .from(pedidos)
         .where(and(eq(pedidos.compradorId, usuario.id), eq(pedidos.status, 'pendente'), gt(pedidos.expiraEm, new Date())));
-      const bloqueio = bloqueioDePedido(pendentes.filter((p) => p.eventoId === evento.id).length, pendentes.length);
+      const pendentesNoEvento = pendentes.filter((p) => p.eventoId === evento.id);
+      const [{ pessoas }] = pendentesNoEvento.length
+        ? await tx.select({ pessoas: count() }).from(inscricoes).where(inArray(inscricoes.pedidoId, pendentesNoEvento.map((p) => p.id)))
+        : [{ pessoas: 0 }];
+      const bloqueio = bloqueioDePedido(pendentesNoEvento.length, pendentes.length, pessoas + participantes.length);
       if (bloqueio) throw new ErroNegocio(bloqueio);
 
       // Trava as distâncias do evento: duas pessoas não pegam a última vaga ao mesmo tempo.

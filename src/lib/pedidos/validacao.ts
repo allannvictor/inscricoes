@@ -6,7 +6,7 @@ export const participanteSchema = z.object({
   distanciaId: z.string().uuid('Escolha a distância'),
   nome: texto(3, 'Informe o nome completo'),
   cpf: z.string().trim(),
-  email: z.union([z.literal(''), z.string().trim().email('E-mail inválido')]).optional(),
+  email: z.union([z.literal(''), z.string().trim().max(254, 'E-mail longo demais').email('E-mail inválido')]).optional(),
   nascimento: z.string().trim(),
   // Obrigatório só em evento com categoria (conferido em criarPedido).
   sexo: z.union([z.enum(['F', 'M']), z.literal('')]).optional(),

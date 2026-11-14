@@ -17,7 +17,8 @@ import { dentroDoLimite } from '@/lib/limites';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 
-const emailValido = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+// E-mail com no máximo 254 caracteres (limite do padrão; também evita gravar textos gigantes no banco).
+const emailValido = (e: string) => e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
 export async function solicitarCodigoAcao(email: string): Promise<{ ok: boolean; erro?: string }> {
   if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };

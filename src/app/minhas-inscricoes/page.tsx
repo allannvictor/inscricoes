@@ -32,7 +32,7 @@ export default async function MinhasInscricoes({ searchParams }: { searchParams:
   const participante = (l: MinhaInscricao, mostrarPagar: boolean) => {
     const selo = SELO[l.inscricao.status] ?? SELO.cancelada;
     const comprei = l.pedido.compradorId === usuario.id;
-    const transferivel = aba === 'inscrito' && podeTransferir(l.inscricao, l.evento.transferenciaAte, agora);
+    const transferivel = aba === 'inscrito' && podeTransferir({ ...l.inscricao, transferida: l.transferida }, l.evento.transferenciaAte, agora);
     return (
       <section key={l.inscricao.id} aria-label={l.inscricao.nome} className="flex flex-col gap-1.5 border-t border-linha pt-3 first:border-t-0 first:pt-0">
         <div className="flex flex-wrap items-center justify-between gap-2">

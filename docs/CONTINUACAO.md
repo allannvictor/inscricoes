@@ -211,6 +211,17 @@ Melhorias de experiência sugeridas, para qualquer direção:
     - o upload confere os bytes do arquivo (`src/lib/tipo-arquivo.ts`);
     - o seed nunca roda em produção, usa `organizador@exemplo.invalid` e tira o antigo `organizador@exemplo.com` do clube;
     - o CI roda com permissão só de leitura e os testes de banco antes dos unitários.
+- **Segunda varredura (14/11): de novo BLOQUEADO.** As correções anteriores foram confirmadas, mas apareceram novos achados, todos corrigidos no PR #11:
+  - 🔴 **Vazamento depois de uma transferência:** quem comprou via no "+ Adicionar" os dados completos de quem recebeu a transferência. Agora as inscrições transferidas ficam fora de `pessoasJaInscritas`.
+  - **Decisão do Allan:** uma inscrição só pode ser **transferida uma vez** (`podeTransferir` com `transferida`). A regra é conferida de novo dentro da transação, com a inscrição travada e a permissão reconferida.
+  - **Decisão do Allan:** o **e-mail é obrigatório** do 2º participante em diante. Com ele, a pessoa vê a própria inscrição, já que o CPF não dá acesso.
+  - 🟠 **Dava para encher o banco:** tentativas de senha e usos de `limites_uso` já bloqueados eram gravados. Agora a contagem e a gravação ficam numa transação com trava, e só o que passa é gravado. O e-mail aceita no máximo 254 caracteres, e registros com mais de 1 dia são apagados de vez em quando.
+  - ⚠️ **Migração:** a `0005` tinha sido editada depois que a prévia do PR #11 aplicou a versão original no **banco da homologação**, e o deploy de prévia falhou. A `0005` voltou ao original, e as mudanças foram para a `0006_etapa6_seguranca`, escrita com `IF NOT EXISTS`. Simulado localmente: um banco com a `0005` original recebe a `0006` sem erro.
+    - **Lição:** nunca editar uma migração que já foi para algum branch publicado na Vercel. Toda prévia aplica as migrações no banco da homologação.
+  - 🟡 **Reforços:**
+    - `/em-breve` e `/api/status` só aceitam leitura (GET) no modo "em breve";
+    - no máximo 10 pessoas aguardando Pix por conta no mesmo evento;
+    - testes de limite mais rigorosos: no mínimo 1 e no máximo 5 conferidas, código certo em paralelo abre 1 sessão só, bloqueadas não são gravadas, e os testes apagam o que criam.
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).

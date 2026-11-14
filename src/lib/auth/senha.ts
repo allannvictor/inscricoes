@@ -1,6 +1,6 @@
 import 'server-only';
 import { hash, verify } from '@node-rs/argon2';
-import { and, count, eq, gt } from 'drizzle-orm';
+import { and, count, eq, gt, lt, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { tentativasSenha, usuarios } from '@/db/schema';
 import { normalizarEmail } from './codigo-email';
@@ -33,21 +33,30 @@ export async function entrarComSenha(emailBruto: string, senha: string): Promise
   const desde = new Date(Date.now() - JANELA_MS);
   const ipHash = await hashDoIp();
 
-  // Registra a tentativa ANTES de conferir e só depois conta. Com tentativas simultâneas, só as 5 primeiras
-  // (por e-mail) chegam a conferir a senha (falha encontrada na varredura de segurança de 14/11/2026).
-  await db.insert(tentativasSenha).values({ email, ipHash });
-  const [{ porEmail }] = await db
-    .select({ porEmail: count() })
-    .from(tentativasSenha)
-    .where(and(eq(tentativasSenha.email, email), gt(tentativasSenha.criadoEm, desde)));
-  if (porEmail > MAX_ERROS) return { ok: false, erro: 'Muitas tentativas erradas. Espere 15 minutos ou entre com o código por e-mail.' };
-  if (ipHash) {
-    const [{ porIp }] = await db
-      .select({ porIp: count() })
+  // Conta e registra a tentativa numa transação com trava (por e-mail e por IP):
+  // - tentativas simultâneas não passam do limite (só as 5 primeiras chegam a conferir a senha);
+  // - tentativas JÁ bloqueadas não são gravadas, então ninguém consegue encher o banco.
+  // (varreduras de segurança de 14/11/2026)
+  const bloqueio = await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'senha-email:' + email}))`);
+    if (ipHash) await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'senha-ip:' + ipHash}))`);
+    const [{ porEmail }] = await tx
+      .select({ porEmail: count() })
       .from(tentativasSenha)
-      .where(and(eq(tentativasSenha.ipHash, ipHash), gt(tentativasSenha.criadoEm, desde)));
-    if (porIp > MAX_ERROS_IP) return { ok: false, erro: 'Muitas tentativas erradas a partir desta conexão. Espere 15 minutos.' };
-  }
+      .where(and(eq(tentativasSenha.email, email), gt(tentativasSenha.criadoEm, desde)));
+    if (porEmail >= MAX_ERROS) return 'Muitas tentativas erradas. Espere 15 minutos ou entre com o código por e-mail.';
+    if (ipHash) {
+      const [{ porIp }] = await tx
+        .select({ porIp: count() })
+        .from(tentativasSenha)
+        .where(and(eq(tentativasSenha.ipHash, ipHash), gt(tentativasSenha.criadoEm, desde)));
+      if (porIp >= MAX_ERROS_IP) return 'Muitas tentativas erradas a partir desta conexão. Espere 15 minutos.';
+    }
+    await tx.insert(tentativasSenha).values({ email, ipHash });
+    return null;
+  });
+  if (bloqueio) return { ok: false, erro: bloqueio };
+  await limparAntigas();
 
   const [usuario] = await db.select({ id: usuarios.id, senhaHash: usuarios.senhaHash }).from(usuarios).where(eq(usuarios.email, email));
   const certa = await verify(usuario?.senhaHash ?? (await hashDeMentira()), senha).catch(() => false);
@@ -57,4 +66,10 @@ export async function entrarComSenha(emailBruto: string, senha: string): Promise
   await db.delete(tentativasSenha).where(eq(tentativasSenha.email, email));
   await criarSessao(usuario.id);
   return { ok: true };
+}
+
+/** De vez em quando, apaga tentativas com mais de 1 dia (não servem para nada depois da janela de 15 minutos). */
+async function limparAntigas(): Promise<void> {
+  if (Math.random() > 0.05) return;
+  await db.delete(tentativasSenha).where(lt(tentativasSenha.criadoEm, new Date(Date.now() - 24 * 60 * 60 * 1000)));
 }

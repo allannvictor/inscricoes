@@ -14,6 +14,7 @@ export async function minhasInscricoes(usuario: UsuarioAtual) {
   const linhas = await db
     .select({
       inscricao: inscricoes,
+      transferida: sql<boolean>`exists (select 1 from "transferencias" where "transferencias"."inscricao_id" = "inscricoes"."id")`,
       distancia: distancias.nome,
       evento: eventos,
       clube: clubes.nome,
@@ -36,7 +37,7 @@ export type MinhaInscricao = Awaited<ReturnType<typeof minhasInscricoes>>[number
 export async function inscricaoCompleta(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const [linha] = await db
-    .select({ inscricao: inscricoes, distancia: distancias.nome, evento: eventos, clube: clubes, pedido: pedidos })
+    .select({ inscricao: inscricoes, transferida: sql<boolean>`exists (select 1 from "transferencias" where "transferencias"."inscricao_id" = "inscricoes"."id")`, distancia: distancias.nome, evento: eventos, clube: clubes, pedido: pedidos })
     .from(inscricoes)
     .innerJoin(pedidos, eq(pedidos.id, inscricoes.pedidoId))
     .innerJoin(eventos, eq(eventos.id, inscricoes.eventoId))
@@ -49,7 +50,7 @@ export async function inscricaoCompleta(id: string) {
 /**
  * Pessoas que este comprador já inscreveu (exceto ele mesmo), com os dados da inscrição mais recente de cada CPF.
  * Servem para o botão "+ Adicionar: Fulano" no formulário, que preenche tudo de uma vez.
- * São dados que o próprio comprador digitou antes.
+ * São dados que o próprio comprador digitou antes: inscrições transferidas ficam de fora.
  */
 export async function pessoasJaInscritas(usuario: UsuarioAtual, limite = 8) {
   const linhas = await db
@@ -66,7 +67,14 @@ export async function pessoasJaInscritas(usuario: UsuarioAtual, limite = 8) {
     })
     .from(inscricoes)
     .innerJoin(pedidos, eq(pedidos.id, inscricoes.pedidoId))
-    .where(and(eq(pedidos.compradorId, usuario.id), usuario.cpf ? ne(inscricoes.cpf, usuario.cpf) : undefined))
+    .where(
+      and(
+        eq(pedidos.compradorId, usuario.id),
+        usuario.cpf ? ne(inscricoes.cpf, usuario.cpf) : undefined,
+        // Inscrição transferida tem os dados de OUTRA pessoa, que o comprador nunca recebeu (LGPD). Fica de fora.
+        sql`not exists (select 1 from "transferencias" where "transferencias"."inscricao_id" = "inscricoes"."id")`,
+      ),
+    )
     .orderBy(inscricoes.cpf, desc(inscricoes.criadoEm));
   return linhas
     .sort((a, b) => b.criadoEm.getTime() - a.criadoEm.getTime())

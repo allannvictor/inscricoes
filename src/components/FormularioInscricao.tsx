@@ -111,6 +111,7 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
       const quem = i === 0 ? 'Você' : `Participante ${i + 1}`;
       const falta = faltasDaPessoa(p, evento, hoje);
       if (!p.distanciaId) falta.unshift('distância');
+      if (i > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email.trim())) falta.push('e-mail');
       if (validarCpf(p.cpf) && cpfJaInscrito(p.cpf)) lista.push(`${quem}: este CPF já está inscrito neste evento.`);
       if (falta.length) {
         lista.push(`${quem}: ${falta.join(', ')}`);
@@ -247,9 +248,9 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
 
             {i > 0 && (
               <div className="campo">
-                <label htmlFor={id('email')}>E-mail do participante <span className="font-normal text-suave">(opcional)</span></label>
-                <input id={id('email')} className="entrada" type="email" value={p.email} onChange={(e) => alterar(i, 'email', e.target.value)} />
-                <span className="dica">Se preencher, a pessoa também recebe a confirmação.</span>
+                <label htmlFor={id('email')}>E-mail do participante</label>
+                <input id={id('email')} className="entrada" type="email" maxLength={254} value={p.email} onChange={(e) => alterar(i, 'email', e.target.value)} />
+                <span className="dica">A pessoa recebe a confirmação e vê a inscrição entrando com este e-mail.</span>
               </div>
             )}
 

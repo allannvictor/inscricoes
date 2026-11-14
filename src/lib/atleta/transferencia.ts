@@ -39,7 +39,8 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
     return { ok: false, erros: ['Inscrição não encontrada.'] };
   }
   const { inscricao, evento } = dados;
-  if (!podeTransferir(inscricao, evento.transferenciaAte, new Date())) {
+  if (dados.transferida) return { ok: false, erros: ['Esta inscrição já foi transferida uma vez e não pode ser transferida de novo.'] };
+  if (!podeTransferir({ ...inscricao, transferida: dados.transferida }, evento.transferenciaAte, new Date())) {
     return { ok: false, erros: [evento.transferenciaAte ? 'O prazo de transferência deste evento já acabou.' : 'Este evento não permite transferência.'] };
   }
 
@@ -70,8 +71,19 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
     await db.transaction(async (tx) => {
       // Trava o evento para que duas transferências não usem o mesmo CPF ao mesmo tempo.
       await tx.select({ id: eventos.id }).from(eventos).where(eq(eventos.id, evento.id)).for('update');
-      const [atual] = await tx.select({ status: inscricoes.status }).from(inscricoes).where(eq(inscricoes.id, inscricao.id)).for('update');
+      const [atual] = await tx
+        .select({ status: inscricoes.status, cpf: inscricoes.cpf, email: inscricoes.email })
+        .from(inscricoes)
+        .where(eq(inscricoes.id, inscricao.id))
+        .for('update');
       if (atual?.status !== 'confirmada') throw new Error('Esta inscrição não está mais ativa.');
+      // Com a inscrição travada: só uma transferência, e a permissão conferida de novo com os dados atuais
+      // (duas transferências ao mesmo tempo não passam as duas).
+      const [jaTransferida] = await tx.select({ id: transferencias.id }).from(transferencias).where(eq(transferencias.inscricaoId, inscricao.id)).limit(1);
+      if (jaTransferida) throw new Error('Esta inscrição já foi transferida uma vez e não pode ser transferida de novo.');
+      if (!podeTransferirInscricao(paraPermissao(usuario), { cpf: atual.cpf, email: atual.email }, dados.pedido, dados.clube.id)) {
+        throw new Error('Esta inscrição não está mais ativa.');
+      }
       const [ocupado] = await tx
         .select({ id: inscricoes.id })
         .from(inscricoes)

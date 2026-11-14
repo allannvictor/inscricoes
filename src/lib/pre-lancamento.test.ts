@@ -14,4 +14,11 @@ describe('Modo em breve', () => {
     expect(decidirAcesso({ ...base, caminho: '/api/status' })).toBe('liberar');
   });
   it('sem chave configurada ninguém passa', () => expect(decidirAcesso({ ...base, chave: undefined, acessoNaUrl: 'x' })).toBe('em_breve'));
+  it('a página "em breve" e o status só abrem para leitura: POST fica bloqueado', () => {
+    expect(decidirAcesso({ ...base, caminho: '/em-breve', metodo: 'GET' })).toBe('liberar');
+    expect(decidirAcesso({ ...base, caminho: '/em-breve', metodo: 'POST' })).toBe('em_breve');
+    expect(decidirAcesso({ ...base, caminho: '/em-breve/x', metodo: 'GET' })).toBe('em_breve');
+    expect(decidirAcesso({ ...base, caminho: '/api/status', metodo: 'POST' })).toBe('em_breve');
+    expect(decidirAcesso({ ...base, caminho: '/api/webhooks/mercadopago', metodo: 'POST' })).toBe('liberar');
+  });
 });

@@ -57,6 +57,8 @@ export async function solicitarCodigo(emailBruto: string): Promise<{ ok: true } 
     return null;
   });
   if (erro) return { ok: false, erro };
+  // De vez em quando, apaga códigos com mais de 1 dia (já vencidos há muito tempo).
+  if (Math.random() < 0.05) await db.delete(codigosLogin).where(lt(codigosLogin.criadoEm, new Date(Date.now() - 24 * 60 * 60 * 1000)));
   if (codigoTesteAtivo()) {
     console.log(`[código de teste] login solicitado para ${email}`);
     return { ok: true };

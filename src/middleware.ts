@@ -8,6 +8,7 @@ export function middleware(req: NextRequest) {
     ligado: process.env.PRE_LANCAMENTO === '1',
     chave,
     caminho: req.nextUrl.pathname,
+    metodo: req.method,
     acessoNaUrl: req.nextUrl.searchParams.get('acesso'),
     cookie: req.cookies.get(COOKIE_ACESSO)?.value,
   });

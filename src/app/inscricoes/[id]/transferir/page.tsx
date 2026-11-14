@@ -17,7 +17,7 @@ export default async function Transferir({ params }: { params: Promise<{ id: str
   const dados = await inscricaoCompleta(id);
   if (!dados || !podeTransferirInscricao(paraPermissao(usuario), dados.inscricao, dados.pedido, dados.clube.id)) notFound();
   const { inscricao, evento, distancia } = dados;
-  const permitido = podeTransferir(inscricao, evento.transferenciaAte, new Date());
+  const permitido = podeTransferir({ ...inscricao, transferida: dados.transferida }, evento.transferenciaAte, new Date());
 
   return (
     <div className="pagina">
@@ -34,7 +34,18 @@ export default async function Transferir({ params }: { params: Promise<{ id: str
           O número e o valor pago continuam com a inscrição; acertos entre vocês são por fora.
         </p>
       </section>
-      {permitido ? (
+      {dados.transferida ? (
+        // Logo depois de transferir, a página se atualiza e cai aqui: mostra a confirmação.
+        <section className="cartao">
+          <div className="flex flex-col items-center gap-1.5 py-1.5 text-center">
+            <div className="grid h-[54px] w-[54px] place-items-center rounded-full bg-ok-fundo text-3xl font-extrabold text-ok" aria-hidden>✓</div>
+            <h2 className="titulo-2">Inscrição transferida</h2>
+            <p className="text-suave">Hoje ela está em nome de {inscricao.nome}, que recebeu a confirmação por e-mail. O número continua o mesmo.</p>
+            <p className="text-sm">Esta inscrição já foi transferida uma vez e não pode ser transferida de novo.</p>
+          </div>
+          <Link href="/minhas-inscricoes" className="botao botao-primario w-full">Voltar para minhas inscrições</Link>
+        </section>
+      ) : permitido ? (
         <FormularioTransferencia inscricaoId={inscricao.id} pedeCamisa={evento.pedeCamisa} usaCategoria={evento.usaCategoria} hoje={dataLocal(new Date())} />
       ) : (
         <div className="cartao">

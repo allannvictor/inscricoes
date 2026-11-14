@@ -138,6 +138,18 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   await form.getByRole('button', { name: 'Confirmar transferência' }).click();
   await expect(page.getByRole('heading', { name: 'Inscrição transferida' })).toBeVisible();
 
+  // Só uma transferência: ninguém transfere de novo.
+  await page.goto(linkTransferir!);
+  await expect(page.getByText('Esta inscrição já foi transferida uma vez e não pode ser transferida de novo.')).toBeVisible();
+  await page.goto('/minhas-inscricoes');
+  await expect(page.locator('section', { hasText: 'Carla Atleta' }).getByRole('link', { name: 'Transferir' })).toHaveCount(0);
+
+  // Os dados da Carla (que a Ana nunca digitou como "pessoa dela") não aparecem no "+ Adicionar".
+  await page.goto('/eventos/simuladao-run-da-cf-maratona-de-aracaju/inscricao');
+  await expect(page.getByRole('region', { name: 'Seus dados' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '+ Carla Atleta' })).toHaveCount(0);
+  expect(await page.content()).not.toContain(cpfC);
+
   // Carla agora vê a inscrição (categoria recalculada: 60+).
   const carla = await novaPagina(browser, emailC, '/entrar?voltar=/minhas-inscricoes');
   await expect(carla.page.getByText('Carla Atleta')).toBeVisible();
