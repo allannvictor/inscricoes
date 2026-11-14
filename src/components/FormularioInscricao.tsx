@@ -6,6 +6,7 @@ import { criarPedidoAcao, validarCupomAcao, verificarCpfAcao } from '@/app/acoes
 import { formatarCpf, limparCpf, mascararCpf, validarCpf } from '@/lib/regras/cpf';
 import { cadastroCompleto, faltasDaPessoa } from '@/lib/regras/participante';
 import { calcularPedido } from '@/lib/regras/pedido';
+import { MAX_PARTICIPANTES_POR_PEDIDO } from '@/lib/regras/limites-pedido';
 import { ehIdoso, formatarReais, nomeMotivo, precoParticipante } from '@/lib/regras/preco';
 import { IconeCadeado } from '@/components/Icones';
 import { TAMANHOS_CAMISA as TAMANHOS, mascaraTelefone } from '@/lib/mascaras';
@@ -301,7 +302,10 @@ export function FormularioInscricao({ voltar, evento, distancias, hoje, emailCon
         );
       })}
 
-      {participantes.length < 10 && (
+      {participantes.length >= MAX_PARTICIPANTES_POR_PEDIDO && (
+        <p className="dica">Cada pedido tem até {MAX_PARTICIPANTES_POR_PEDIDO} pessoas (você e mais {MAX_PARTICIPANTES_POR_PEDIDO - 1}). Para inscrever mais gente, faça outro pedido depois deste.</p>
+      )}
+      {participantes.length < MAX_PARTICIPANTES_POR_PEDIDO && (
         <div className="flex flex-col gap-2">
           {sugestoes.length > 0 && (
             <div className="flex flex-col gap-1.5">

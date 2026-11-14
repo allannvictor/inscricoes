@@ -96,7 +96,7 @@ O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesqu
 | Agenda (.ics), mapa e compartilhar | `src/lib/agenda.ts` e `src/app/eventos/[slug]/agenda.ics/route.ts` |
 | Página inicial | `src/app/page.tsx` |
 | Para onde o site pode mandar depois do login (só caminhos internos) | `src/lib/regras/redirecionamento.ts` |
-| Limites: pedidos aguardando Pix, consultas de CPF, cupom, tentativas de código e senha | `src/lib/regras/limites-pedido.ts`, `src/lib/limites.ts`, `src/lib/auth/codigo-email.ts`, `src/lib/auth/senha.ts` |
+| Limites: participantes por pedido (você e mais 3), pedidos aguardando Pix, consultas de CPF (1 uso por CPF revelado), cupom, tentativas de código e senha | `src/lib/regras/limites-pedido.ts`, `src/lib/limites.ts`, `src/lib/auth/codigo-email.ts`, `src/lib/auth/senha.ts` |
 | Quem vê uma inscrição (o CPF não dá acesso) | `podeVerInscricao` em `src/lib/auth/permissoes.ts` |
 | Cabeçalhos de segurança | `next.config.ts` |
 | Ids (UUID de verdade) e parâmetros da URL (`?erro=`, `?busca=`) sem erro 500 | `src/lib/regras/uuid.ts` e `src/lib/regras/parametros.ts` |

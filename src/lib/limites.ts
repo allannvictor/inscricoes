@@ -9,13 +9,15 @@ import { formatarCpf } from '@/lib/regras/cpf';
  * Conta e grava numa transação com trava pela chave: usos simultâneos respeitam o limite, e usos JÁ bloqueados
  * não são gravados (ninguém consegue encher o banco). Varreduras de segurança de 14/11/2026.
  */
-export async function dentroDoLimite(chave: string, maximo: number, janelaMs: number): Promise<boolean> {
+export async function dentroDoLimite(chave: string, maximo: number, janelaMs: number, peso = 1): Promise<boolean> {
+  // "peso": quantos usos esta resposta gasta (ex.: 1 por CPF revelado). Ou cabem todos, ou nenhum é gravado.
+  const usos = Math.max(1, Math.floor(peso));
   const desde = new Date(Date.now() - janelaMs);
   const ok = await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'limite:' + chave}))`);
     const [{ total }] = await tx.select({ total: count() }).from(limitesUso).where(and(eq(limitesUso.chave, chave), gt(limitesUso.criadoEm, desde)));
-    if (total >= maximo) return false;
-    await tx.insert(limitesUso).values({ chave });
+    if (total + usos > maximo) return false;
+    await tx.insert(limitesUso).values(Array.from({ length: usos }, () => ({ chave })));
     return true;
   });
   // De vez em quando, apaga registros com mais de 1 dia (de qualquer chave).
@@ -35,7 +37,8 @@ export const MENSAGEM_CPF_JA_INSCRITO_GENERICA = 'Um dos CPFs já tem inscriçã
 
 export async function mensagemCpfJaInscrito(usuarioId: string, cpfs: string[]): Promise<string> {
   const { maximo, janelaMs } = LIMITE_CONSULTA_CPF;
-  if (!(await dentroDoLimite(`cpf:${usuarioId}`, maximo, janelaMs))) return MENSAGEM_CPF_JA_INSCRITO_GENERICA;
+  // Um uso POR CPF revelado: um lote com vários CPFs inscritos não pode valer como uma consulta só (oitava varredura).
+  if (!(await dentroDoLimite(`cpf:${usuarioId}`, maximo, janelaMs, cpfs.length))) return MENSAGEM_CPF_JA_INSCRITO_GENERICA;
   return `Já existe inscrição neste evento para o CPF ${cpfs.map(formatarCpf).join(', ')}.`;
 }
 

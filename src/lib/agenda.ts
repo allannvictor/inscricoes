@@ -14,8 +14,18 @@ function dataIcs(d: Date): string {
   return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-function escaparIcs(texto: string): string {
-  return texto.replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+/**
+ * Escape de texto no .ics (RFC 5545): barra, ponto e vírgula, vírgula e quebras de linha (\r\n, \r ou \n).
+ * Antes o ";" saía sem escape e um "\r" sozinho abria uma linha nova: dava para injetar um alarme ou um link
+ * no calendário de quem baixa o arquivo (oitava varredura, 14/11/2026). Outros caracteres de controle somem.
+ */
+export function escaparIcs(texto: string): string {
+  return texto
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, '');
 }
 
 /** Arquivo de calendário com o evento (duração estimada de 3 horas). */

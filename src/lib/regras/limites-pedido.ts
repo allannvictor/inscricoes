@@ -2,6 +2,11 @@
  * Pedidos aguardando Pix seguram vagas por 30 minutos. Sem limite, uma conta poderia criar pedidos sem parar
  * e esgotar um evento (ou bloquear o CPF de alguém). Achado da varredura de segurança de 14/11/2026.
  */
+/**
+ * Participantes por pedido: quem está inscrevendo e mais 3 (decisão do Allan, 14/11/2026, oitava varredura).
+ * Cada resposta "já existe inscrição para o CPF…" mostra no máximo 4 CPFs; quem quer inscrever mais gente faz outro pedido.
+ */
+export const MAX_PARTICIPANTES_POR_PEDIDO = 4;
 export const MAX_PENDENTES_POR_EVENTO = 2;
 export const MAX_PENDENTES_POR_CONTA = 5;
 /** Pessoas aguardando Pix por conta no mesmo evento, contando o pedido novo (segunda varredura, 14/11/2026). */

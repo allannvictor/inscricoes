@@ -76,6 +76,11 @@ describe('Formulário de evento', () => {
     const s = eventoFormSchema.parse({ ...base, dataHora: '9999-12-31T23:30', inscricoesAte: '9999-12-30', transferenciaAte: '9999-12-29' });
     expect(conferirEvento(s)).toHaveLength(3);
   });
+  it('recusa caracteres de controle no nome e no local (iam para o .ics; oitava varredura)', () => {
+    expect(eventoFormSchema.safeParse({ ...base, nome: 'Corrida\rBEGIN:VALARM' }).success).toBe(false);
+    expect(eventoFormSchema.safeParse({ ...base, local: 'Orla\nURL:x' }).success).toBe(false);
+    expect(eventoFormSchema.safeParse({ ...base, descricao: 'Linha 1\nLinha 2' }).success).toBe(true); // descrição pode ter quebra
+  });
   it('datas em Brasília ida e volta', () => {
     const d = dataHoraBrasilia('2027-01-17T06:00');
     expect(d.toISOString()).toBe('2027-01-17T09:00:00.000Z');

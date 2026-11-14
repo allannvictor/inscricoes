@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { anoDeEvento, dataDoCalendario, dataHoraDoCalendario, FUSO } from '@/lib/regras/datas';
-import { semCaractereNulo } from '@/lib/regras/texto';
+import { CONTROLE, semCaractereNulo } from '@/lib/regras/texto';
 
 /** Formulário de criar/editar evento. Datas chegam como no <input> e são do fuso de Brasília. */
 
@@ -20,9 +20,10 @@ export const distanciaFormSchema = z.object({
 });
 
 export const eventoFormSchema = z.object({
-  nome: z.string().trim().min(3, 'Informe o nome do evento').max(120),
+  // Nome e local são de uma linha só: sem caracteres de controle (iam para o .ics da agenda; oitava varredura).
+  nome: z.string().trim().min(3, 'Informe o nome do evento').max(120).refine((v) => !CONTROLE.test(v), 'O nome do evento tem um caractere inválido.'),
   dataHora: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Informe data e hora da largada'),
-  local: z.string().trim().min(2, 'Informe o local').max(200),
+  local: z.string().trim().min(2, 'Informe o local').max(200).refine((v) => !CONTROLE.test(v), 'O local tem um caractere inválido.'),
   descricao: z.string().trim().max(5000).optional().default(''),
   inscricoesAte: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe até quando vão as inscrições'),
   transferenciaAte: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).optional().default(''),

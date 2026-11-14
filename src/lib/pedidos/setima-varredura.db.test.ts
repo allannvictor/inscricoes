@@ -111,6 +111,33 @@ describe.skipIf(!temBanco)('sétima varredura: limites do cupom no "criar pedido
     expect((await criarPedido(curioso, semCupom)).ok).toBe(true);
   });
 
+  it('"criar pedido": cada CPF revelado gasta 1 uso do limite de 60 (oitava varredura)', async () => {
+    const { criarPedido } = await import('./servico');
+    const { MENSAGEM_CPF_JA_INSCRITO_GENERICA } = await import('@/lib/limites');
+    const { db } = await import('@/db');
+    const { limitesUso } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { evento: e, distancia } = await evento();
+    const dona = await novoUsuario('dona-de-3-cpfs');
+    const inscritos = [cpf(), cpf(), cpf()];
+    for (const c of inscritos) await inscricaoConfirmada(dona.id, c);
+    const curioso = await novoUsuario('curioso-lote');
+    const pessoa = (doc: string) => ({ distanciaId: distancia.id, nome: 'Pessoa de Teste', cpf: doc, email: `p${doc}+${sufixo}@exemplo.invalid`, nascimento: '1990-01-01', sexo: 'M', telefone: '(79) 99999-0000', camisa: 'M', contatoEmergencia: 'Mãe 79988887777' });
+    const lote = { eventoId: e.id, aceite: true, participantes: [pessoa(cpf()), ...inscritos.map(pessoa)] };
+    const usos = async () => (await db.select().from(limitesUso).where(eq(limitesUso.chave, `cpf:${curioso.id}`))).length;
+
+    const r = await criarPedido(curioso, lote);
+    expect(r.ok).toBe(false);
+    expect(await usos()).toBe(3); // 3 CPFs revelados = 3 usos
+
+    // Leva a conta a 58 usos: um lote com 3 inscritos não cabe mais, e a resposta é genérica.
+    await db.insert(limitesUso).values(Array.from({ length: 55 }, () => ({ chave: `cpf:${curioso.id}` })));
+    expect(await usos()).toBe(58);
+    const r2 = await criarPedido(curioso, lote);
+    expect(r2).toEqual({ ok: false, erros: [MENSAGEM_CPF_JA_INSCRITO_GENERICA] });
+    expect(await usos()).toBe(58); // nada gravado quando não cabe
+  });
+
   it('transferência: o CPF já inscrito só aparece dentro do limite de 60 por hora; a 61ª é genérica', async () => {
     const { transferirInscricao } = await import('@/lib/atleta/transferencia');
     const { MENSAGEM_CPF_JA_INSCRITO_GENERICA } = await import('@/lib/limites');

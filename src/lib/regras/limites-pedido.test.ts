@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { bloqueioDePedido, MAX_PENDENTES_POR_CONTA, MAX_PENDENTES_POR_EVENTO, MAX_PESSOAS_PENDENTES_POR_EVENTO } from './limites-pedido';
+import { bloqueioDePedido, MAX_PARTICIPANTES_POR_PEDIDO, MAX_PENDENTES_POR_CONTA, MAX_PENDENTES_POR_EVENTO, MAX_PESSOAS_PENDENTES_POR_EVENTO } from './limites-pedido';
+
+describe('participantes por pedido (decisão do Allan, 14/11/2026)', () => {
+  it('é você e mais 3', () => {
+    expect(MAX_PARTICIPANTES_POR_PEDIDO).toBe(4);
+  });
+});
 
 describe('bloqueioDePedido', () => {
   it('libera abaixo dos limites', () => {
