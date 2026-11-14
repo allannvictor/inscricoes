@@ -2,7 +2,7 @@
 
 > Memória do agente `especialista-produto`. Cada linha tem a fonte e o mês em que foi vista.
 > **Fato:** visto numa fonte · **Sinal:** indício ou caso isolado · **Hipótese:** opinião a validar.
-> Primeira coleta: 14/11/2026, só pela busca na web (a sessão não conseguiu abrir os sites dos concorrentes diretamente).
+> Primeira coleta: 14/11/2026, só pela busca na web. Depois dela, os sites dos concorrentes foram liberados na rede do ambiente, e os próximos radares podem abrir as páginas deles.
 
 ## Tamanho e comportamento do mercado
 

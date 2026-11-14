@@ -172,7 +172,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - Ele só propõe; nada do backlog entra no plano sem o Allan aprovar.
   - **Rotina semanal (decidida em 14/11):** toda **segunda às 7h40** (horário de Brasília), uma tarefa agendada ("Radar semanal de produto") abre uma sessão nova, roda o agente no modo radar e abre um **PR para o `staging`** só com `docs/produto/`. Também avisa por notificação no celular.
     - **Atenção:** a tarefa foi criada sem os conectores (GitHub). Se a sessão da segunda não conseguir enviar o branch ou abrir o PR, recriar a tarefa pela tela de tarefas agendadas do claude.ai, com o repositório `allannvictor/inscricoes` e o GitHub marcados.
-  - **Limite da rede:** a sessão na nuvem faz buscas na web, mas não abre os sites dos concorrentes (ticketsports, sympla, minhasinscricoes, runsignup, haid). Para um radar mais rico, esses endereços podem ser liberados na rede do ambiente.
+  - **Rede do ambiente (14/11):** os sites dos concorrentes foram liberados no ambiente "Projetos" (ticketsports, sympla, minhasinscricoes, centraldacorrida, haid e runsignup, com e sem `www`), e o agente consegue abrir as páginas deles. Para pesquisar outro site, é preciso liberar o endereço do mesmo jeito.
 
 ## 8. Dicas técnicas para a próxima sessão
 
