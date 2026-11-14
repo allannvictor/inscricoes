@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { novoParticipanteSchema } from '@/lib/atleta/transferencia-schema';
-import { participanteSchema } from './validacao';
+import { participanteSchema, pedidoSchema } from './validacao';
 
 const base = {
   distanciaId: '00000000-0000-4000-8000-000000000000',
@@ -32,5 +32,26 @@ describe('tamanho máximo dos campos (não dá para encher o banco)', () => {
   });
   it('recusa o caractere nulo (o erro do banco levaria dados ao log)', () => {
     expect(participanteSchema.safeParse({ ...base, nome: 'Ana\u0000' }).success).toBe(false);
+  });
+});
+
+describe('cupom do pedido (sexta varredura)', () => {
+  const pedido = (cupom?: unknown) => ({ eventoId: '00000000-0000-4000-8000-000000000000', aceite: true, participantes: [base], ...(cupom === undefined ? {} : { cupom }) });
+  it('aceita sem cupom, vazio e no formato do painel', () => {
+    expect(pedidoSchema.safeParse(pedido()).success).toBe(true);
+    expect(pedidoSchema.safeParse(pedido('')).success).toBe(true);
+    expect(pedidoSchema.safeParse(pedido('AMIGO10')).success).toBe(true);
+    expect(pedidoSchema.safeParse(pedido('amigo_10-x')).success).toBe(true);
+  });
+  it('recusa o caractere nulo e outros caracteres de controle', () => {
+    expect(pedidoSchema.safeParse(pedido('AMIGO\u000010')).success).toBe(false);
+    expect(pedidoSchema.safeParse(pedido('\u0000')).success).toBe(false);
+    expect(pedidoSchema.safeParse(pedido('AMI\u001bGO')).success).toBe(false);
+  });
+  it('recusa formatos que nenhum cupom tem (espaço, %, longo demais, tipo errado)', () => {
+    expect(pedidoSchema.safeParse(pedido('AMIGO 10')).success).toBe(false);
+    expect(pedidoSchema.safeParse(pedido('%')).success).toBe(false);
+    expect(pedidoSchema.safeParse(pedido('A'.repeat(31))).success).toBe(false);
+    expect(pedidoSchema.safeParse(pedido(['AMIGO10'])).success).toBe(false);
   });
 });

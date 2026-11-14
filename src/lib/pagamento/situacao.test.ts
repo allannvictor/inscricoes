@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { podePublicarEventos, simuladoPermitido, situacaoDoPagamento } from './situacao';
+import { podePublicarEventos, podeSimularPagamento, simuladoPermitido, situacaoDoPagamento } from './situacao';
 
 const cf = { slug: 'cf-assessoria', mpAccessToken: null, mpConectado: false };
 const outro = { slug: 'outro-clube', mpAccessToken: null, mpConectado: false };
@@ -38,5 +38,30 @@ describe('podePublicarEventos', () => {
   });
   it('na homologação, o Pix simulado vale', () => {
     expect(podePublicarEventos(outro, hml())).toBe(true);
+  });
+});
+
+describe('podeSimularPagamento (sexta varredura)', () => {
+  const pendente = { status: 'pendente', provedor: 'simulado' };
+  it('na homologação, pedido pendente e simulado de clube sem conta: pode', () => {
+    expect(podeSimularPagamento(pendente, outro, hml())).toBe(true);
+  });
+  it('clube que conectou uma conta real: não pode, mesmo com o pedido simulado', () => {
+    const conectado = { ...outro, mpAccessToken: 'v1.cifrado', mpConectado: true };
+    expect(podeSimularPagamento(pendente, conectado, hml())).toBe(false);
+    expect(podeSimularPagamento(pendente, cf, hml({ MP_ACCESS_TOKEN: 'x' }))).toBe(false);
+  });
+  it('pedido expirado, cancelado, pago ou em conflito: não pode', () => {
+    for (const status of ['expirado', 'cancelado', 'pago', 'pago_conflito']) {
+      expect(podeSimularPagamento({ status, provedor: 'simulado' }, outro, hml())).toBe(false);
+    }
+  });
+  it('pedido que não é do provedor simulado (inclusive o provisório "criando"): não pode', () => {
+    for (const provedor of ['criando', 'mercadopago', 'gratuito']) {
+      expect(podeSimularPagamento({ status: 'pendente', provedor }, outro, hml())).toBe(false);
+    }
+  });
+  it('em produção, nunca', () => {
+    expect(podeSimularPagamento(pendente, outro, prod({ PERMITIR_SIMULADO: '1' }))).toBe(false);
   });
 });

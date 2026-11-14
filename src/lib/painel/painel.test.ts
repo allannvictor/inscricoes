@@ -60,6 +60,16 @@ describe('Formulário de evento', () => {
     expect(erros).toContain('As inscrições precisam terminar antes da largada.');
     expect(erros.some((e) => e.includes('preço de sócio'))).toBe(true);
   });
+  it('recusa datas que não existem, sem erro 500 (sexta varredura)', () => {
+    const r = eventoFormSchema.parse({ ...base, dataHora: '2026-13-45T99:99', inscricoesAte: '2026-02-30', transferenciaAte: '2026-04-31' });
+    expect(conferirEvento(r)).toEqual([
+      'Data ou hora da largada inválida.',
+      'Data de fim das inscrições inválida.',
+      'Data de fim das transferências inválida.',
+    ]);
+    const s = eventoFormSchema.parse({ ...base, dataHora: '2027-01-17T24:00' });
+    expect(conferirEvento(s)).toEqual(['Data ou hora da largada inválida.']);
+  });
   it('datas em Brasília ida e volta', () => {
     const d = dataHoraBrasilia('2027-01-17T06:00');
     expect(d.toISOString()).toBe('2027-01-17T09:00:00.000Z');

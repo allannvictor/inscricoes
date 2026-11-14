@@ -28,6 +28,23 @@ export function situacaoDoPagamento(clube: ClubePagamento, env: NodeJS.ProcessEn
 }
 
 /**
+ * O botão "Simular Pix recebido" (modo teste) só confirma um pedido quando TUDO isto vale
+ * (sexta varredura de segurança, 14/11/2026):
+ * - o pedido ainda aguarda o Pix (pendente): expirado ou cancelado não volta a valer de graça;
+ * - o Pix dele foi criado pelo provedor simulado (o provisório "criando" não serve);
+ * - o clube, AGORA, está no modo simulado. Um clube que conectou uma conta real depois do pedido
+ *   não pode ter inscrição confirmada sem pagamento;
+ * - o ambiente permite o simulado (nunca em produção).
+ */
+export function podeSimularPagamento(
+  pedido: { status: string; provedor: string },
+  clube: ClubePagamento,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return pedido.status === 'pendente' && pedido.provedor === 'simulado' && simuladoPermitido(env) && situacaoDoPagamento(clube, env) === 'simulado';
+}
+
+/**
  * Um clube só publica evento quando consegue receber de verdade.
  * Fora da produção (homologação, desenvolvimento), o Pix simulado também vale.
  */

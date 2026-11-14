@@ -25,6 +25,7 @@ import { VALOR_CUPOM } from '@/lib/regras/cupom';
 import { CONTROLE, semCaractereNulo } from '@/lib/regras/texto';
 import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
 import { resumoDoErro } from '@/lib/log';
+import { ehUuid } from '@/lib/regras/uuid';
 
 type Resultado<T = object> = ({ ok: true } & T) | { ok: false; erros: string[] };
 const negado = { ok: false as const, erros: ['Você não tem acesso a isto.'] };
@@ -189,7 +190,7 @@ export async function removerArquivoEventoAcao(eventoId: string, tipo: 'capa' | 
 // ---------------------------------------------------------------- Inscritos
 
 export async function cancelarInscricaoAcao(inscricaoId: string): Promise<Resultado> {
-  if (!/^[0-9a-f-]{36}$/i.test(inscricaoId)) return negado;
+  if (!ehUuid(inscricaoId)) return negado;
   const [insc] = await db.select({ eventoId: inscricoes.eventoId, status: inscricoes.status }).from(inscricoes).where(eq(inscricoes.id, inscricaoId));
   if (!insc) return negado;
   const acesso = await verificarEvento(insc.eventoId);
@@ -234,7 +235,7 @@ export async function criarCupomAcao(eventoId: string, dados: z.input<typeof cup
 }
 
 export async function alternarCupomAcao(cupomId: string): Promise<Resultado> {
-  if (!/^[0-9a-f-]{36}$/i.test(cupomId)) return negado;
+  if (!ehUuid(cupomId)) return negado;
   const [cupom] = await db.select().from(cupons).where(eq(cupons.id, cupomId));
   if (!cupom || !(await verificarEvento(cupom.eventoId))) return negado;
   await db.update(cupons).set({ ativo: !cupom.ativo }).where(eq(cupons.id, cupomId));
@@ -376,7 +377,7 @@ export async function criarClubeAcao(dados: z.input<typeof novoClubeSchema>): Pr
 export async function removerOrganizadorAcao(clubeId: string, usuarioId: string): Promise<Resultado> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
-  if (!/^[0-9a-f-]{36}$/i.test(usuarioId)) return negado;
+  if (!ehUuid(usuarioId)) return negado;
   const lista = await db.select({ id: organizadores.usuarioId }).from(organizadores).where(eq(organizadores.clubeId, clubeId));
   if (lista.length <= 1 && lista.some((o) => o.id === usuarioId)) return { ok: false, erros: ['O clube precisa ter pelo menos um organizador.'] };
   await db.delete(organizadores).where(and(eq(organizadores.clubeId, clubeId), inArray(organizadores.usuarioId, [usuarioId])));

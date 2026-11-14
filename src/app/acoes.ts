@@ -16,11 +16,11 @@ import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { dentroDoLimite } from '@/lib/limites';
 import { CONTROLE } from '@/lib/regras/texto';
 import { acaoLiberadaNoPreLancamento } from '@/lib/pre-lancamento-acoes';
-import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
+import { criarPedido, LIMITE_CONSULTA_CPF, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { resumoDoErro } from '@/lib/log';
 
-const ehUuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
+import { ehUuid } from '@/lib/regras/uuid';
 // E-mail com no máximo 254 caracteres (limite do padrão; também evita gravar textos gigantes no banco).
 const emailValido = (e: unknown): e is string => typeof e === 'string' && !CONTROLE.test(e) && e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 // As ações podem ser chamadas direto, com qualquer tipo de valor: tipo errado vira resposta neutra, sem erro 500.
@@ -104,7 +104,7 @@ export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{
   const limpo = limparCpf(cpf);
   if (!validarCpf(limpo)) return nada;
   // Limite por conta: a consulta revela se um CPF é sócio ou está inscrito (dado pessoal, LGPD).
-  if (!(await dentroDoLimite(`cpf:${usuario.id}`, 60, 60 * 60 * 1000))) return nada;
+  if (!(await dentroDoLimite(`cpf:${usuario.id}`, LIMITE_CONSULTA_CPF.maximo, LIMITE_CONSULTA_CPF.janelaMs))) return nada;
   const [evento] = await db.select({ clubeId: eventos.clubeId, ativo: eventos.precoSocioAtivo }).from(eventos).where(eq(eventos.id, eventoId));
   if (!evento) return nada;
   const [inscrito] = await db

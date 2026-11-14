@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { clubes, eventos, type Clube, type Evento } from '@/db/schema';
 import { ehOrganizadorDoClube, podeAbrirPainel } from '@/lib/auth/permissoes';
 import { paraPermissao, usuarioAtual, type UsuarioAtual } from '@/lib/auth/sessao';
+import { ehUuid } from '@/lib/regras/uuid';
 
 /**
  * Guardas do painel. Toda página e toda ação do painel passa por aqui.
@@ -35,7 +36,7 @@ export async function exigirClube(slug: string): Promise<{ usuario: UsuarioAtual
 /** Para páginas: evento que pertence ao clube, ou 404. */
 export async function exigirEvento(slugClube: string, eventoId: string): Promise<{ usuario: UsuarioAtual; clube: Clube; evento: Evento }> {
   const { usuario, clube } = await exigirClube(slugClube);
-  if (!/^[0-9a-f-]{36}$/i.test(eventoId)) notFound();
+  if (!ehUuid(eventoId)) notFound();
   const [evento] = await db.select().from(eventos).where(and(eq(eventos.id, eventoId), eq(eventos.clubeId, clube.id)));
   if (!evento) notFound();
   return { usuario, clube, evento };
@@ -44,14 +45,14 @@ export async function exigirEvento(slugClube: string, eventoId: string): Promise
 /** Para ações (Server Actions): devolve null em vez de redirecionar. */
 export async function verificarClube(clubeId: string): Promise<{ usuario: UsuarioAtual; clube: Clube } | null> {
   const usuario = await usuarioAtual();
-  if (!usuario || !/^[0-9a-f-]{36}$/i.test(clubeId)) return null;
+  if (!usuario || !ehUuid(clubeId)) return null;
   const [clube] = await db.select().from(clubes).where(eq(clubes.id, clubeId));
   if (!clube || !ehOrganizadorDoClube(paraPermissao(usuario), clube.id)) return null;
   return { usuario, clube };
 }
 
 export async function verificarEvento(eventoId: string): Promise<{ usuario: UsuarioAtual; clube: Clube; evento: Evento } | null> {
-  if (!/^[0-9a-f-]{36}$/i.test(eventoId)) return null;
+  if (!ehUuid(eventoId)) return null;
   const [evento] = await db.select().from(eventos).where(eq(eventos.id, eventoId));
   if (!evento) return null;
   const ok = await verificarClube(evento.clubeId);

@@ -10,7 +10,7 @@ import { situacaoDoPagamento, type ClubePagamento, type SituacaoPagamento } from
 import type { ProvedorPagamento } from './tipos';
 import { resumoDoErro } from '@/lib/log';
 
-export { podePublicarEventos, situacaoDoPagamento, simuladoPermitido } from './situacao';
+export { podePublicarEventos, podeSimularPagamento, situacaoDoPagamento, simuladoPermitido } from './situacao';
 export type { SituacaoPagamento } from './situacao';
 
 type ClubeComTokens = ClubePagamento & { id: string; mpRefreshToken: string | null; mpTokenExpiraEm: Date | null };

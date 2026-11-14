@@ -20,10 +20,12 @@ export const participanteSchema = z.object({
 
 export const pedidoSchema = z.object({
   eventoId: z.string().uuid(),
-  cupom: z.string().trim().max(40).optional(),
+  // Mesmo formato dos códigos criados no painel (letras, números, - e _). O caractere nulo passava
+  // e dava erro no banco (sexta varredura de segurança, 14/11/2026).
+  cupom: z.string().trim().regex(/^[A-Za-z0-9_-]{0,30}$/, 'Cupom não encontrado.').optional(),
   aceite: z.literal(true, { message: 'Aceite o regulamento' }),
   participantes: z.array(participanteSchema).min(1, 'Adicione ao menos um participante').max(10, 'Máximo de 10 participantes por pedido'),
-});
+}).superRefine(semCaractereNulo);
 
 export type PedidoEntrada = z.infer<typeof pedidoSchema>;
 export type ParticipanteForm = z.infer<typeof participanteSchema>;

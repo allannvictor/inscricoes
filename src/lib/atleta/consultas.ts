@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/db';
 import { clubes, distancias, eventos, inscricoes, pedidos } from '@/db/schema';
 import type { UsuarioAtual } from '@/lib/auth/sessao';
+import { ehUuid } from '@/lib/regras/uuid';
 
 /**
  * Inscrições que o atleta pode ver em "Minhas inscrições":
@@ -35,7 +36,7 @@ export type MinhaInscricao = Awaited<ReturnType<typeof minhasInscricoes>>[number
 
 /** Uma inscrição com tudo que o comprovante e a transferência precisam. */
 export async function inscricaoCompleta(id: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!ehUuid(id)) return null;
   const [linha] = await db
     .select({ inscricao: inscricoes, transferida: sql<boolean>`exists (select 1 from "transferencias" where "transferencias"."inscricao_id" = "inscricoes"."id")`, distancia: distancias.nome, evento: eventos, clube: clubes, pedido: pedidos })
     .from(inscricoes)

@@ -2,6 +2,7 @@ import { BotaoDesconectarMp } from '@/components/painel/BotaoDesconectarMp';
 import { exigirClube } from '@/lib/painel/acesso';
 import { podePublicarEventos, situacaoDoPagamento } from '@/lib/pagamento';
 import { credenciaisApp } from '@/lib/pagamento/oauth-mercadopago';
+import { mensagemDoMapa } from '@/lib/regras/parametros';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pagamento', robots: { index: false } };
@@ -14,7 +15,7 @@ const ERROS: Record<string, string> = {
 
 const data = (d: Date | null) => (d ? new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short' }).format(d) : '');
 
-export default async function Pagamento({ params, searchParams }: { params: Promise<{ clube: string }>; searchParams: Promise<{ erro?: string; conectado?: string }> }) {
+export default async function Pagamento({ params, searchParams }: { params: Promise<{ clube: string }>; searchParams: Promise<{ erro?: string | string[]; conectado?: string | string[] }> }) {
   const { clube } = await exigirClube((await params).clube);
   const { erro, conectado } = await searchParams;
   const situacao = situacaoDoPagamento(clube);
@@ -26,7 +27,7 @@ export default async function Pagamento({ params, searchParams }: { params: Prom
       <section className="cartao">
         <h3 className="titulo-3">Conta de recebimento</h3>
         {conectado && <p className="selo selo-ok self-start">Mercado Pago conectado com sucesso.</p>}
-        {erro && <p className="erros" role="alert">{ERROS[erro] ?? 'Não foi possível conectar. Tente de novo.'}</p>}
+        {erro && <p className="erros" role="alert">{mensagemDoMapa(ERROS, erro) ?? 'Não foi possível conectar. Tente de novo.'}</p>}
 
         {situacao === 'conectado' && (
           <>

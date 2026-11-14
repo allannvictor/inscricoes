@@ -9,6 +9,7 @@ import { db } from '@/db';
 import { formatarDataHora } from '@/lib/regras/datas';
 import { formatarReais, nomeMotivo, type MotivoDesconto } from '@/lib/regras/preco';
 import { TemaClube } from '@/components/TemaClube';
+import { podeSimularPagamento } from '@/lib/pagamento';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pedido', robots: { index: false } };
@@ -92,7 +93,7 @@ export default async function Pedido({ params }: { params: Promise<{ id: string 
             copiaECola={pedido.pixCopiaECola ?? ''}
             qrBase64={pedido.pixQrBase64 ?? ''}
             expiraEm={pedido.expiraEm.toISOString()}
-            simulado={pedido.provedor === 'simulado'}
+            simulado={podeSimularPagamento(pedido, clube)}
           />
         </section>
       </div>

@@ -3,6 +3,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import { cache } from 'react';
 import { db } from '@/db';
 import { clubes, distancias, eventos, inscricoes, pedidos } from '@/db/schema';
+import { ehUuid } from '@/lib/regras/uuid';
 
 /** Evento pelo link. Rascunhos só aparecem com `incluirRascunho` (organizador conferindo antes de publicar). */
 export const eventoPorSlug = cache(async (slug: string, incluirRascunho = false) => {
@@ -26,7 +27,7 @@ export async function eventosAbertos() {
 }
 
 export async function pedidoCompleto(id: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!ehUuid(id)) return null;
   const [linha] = await db
     .select({ pedido: pedidos, evento: eventos, clube: clubes })
     .from(pedidos)
