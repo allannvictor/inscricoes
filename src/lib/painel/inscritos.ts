@@ -11,7 +11,8 @@ export async function listarInscritos(eventoId: string, filtros: { busca?: strin
   if (status === 'ativas') condicoes.push(inArray(inscricoes.status, ['confirmada', 'pendente', 'cancelada']));
   else if (['confirmada', 'pendente', 'cancelada', 'expirada'].includes(status)) condicoes.push(eq(inscricoes.status, status));
   if (filtros.distanciaId && /^[0-9a-f-]{36}$/i.test(filtros.distanciaId)) condicoes.push(eq(inscricoes.distanciaId, filtros.distanciaId));
-  const busca = filtros.busca?.trim();
+  // Sem caracteres de controle (o nulo dava erro no banco) e no máximo 100 caracteres.
+  const busca = filtros.busca?.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100);
   if (busca) {
     const digitos = limparCpf(busca);
     const opcoes: SQL[] = [ilike(inscricoes.nome, `%${busca.replace(/[%_]/g, '')}%`)];

@@ -243,10 +243,19 @@ Melhorias de experiência sugeridas, para qualquer direção:
     - preço com até 7 dígitos.
   - **Ações públicas** conferem o tipo dos valores: tipo errado vira uma resposta neutra, sem erro 500.
   - O teste ponta a ponta de inscrição tira o limite do cupom `AMIGO10`, para não esgotar no banco local.
+- **Quinta varredura (14/11): LIBERADO COM RESSALVAS** (3 baixos). O Allan pediu para corrigir e fazer outra varredura completa. Correções no PR #11:
+  - **Caractere nulo e de controle:**
+    - recusados nas ações públicas (`emailValido` e `ehTexto` usam `CONTROLE`);
+    - `semCaractereNulo` agora olha dentro de listas e objetos e vale também nos formulários do painel: evento, distâncias, cupom, perfil e novo clube;
+    - na lista de sócios, a busca de inscritos limpa esses caracteres, e `removerSocioAcao` confere o tipo.
+  - **Rede de segurança dos logs:** `src/instrumentation.ts` liga `protegerLogs` (`src/lib/log-protegido.ts`). Qualquer erro do banco com valores, mesmo os que o próprio Next registra, vira o resumo sem dados.
+  - **Valor do cupom:** `VALOR_CUPOM` em `src/lib/regras/cupom.ts`, sem `1e10`, `0x10` nem números gigantes.
+  - **Dependências:** `overrides` no `package.json` (`postcss` do `next` ≥ 8.5.33 e um único `zod`). O `npm audit --omit=dev` agora dá **0 vulnerabilidades**.
+  - **PR #12** (agente de produto) juntado ao branch, com o conflito do `CONTINUACAO.md` resolvido.
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
-    - **`npm audit`:** 5 vulnerabilidades altas em dependências de build ou internas (`postcss` do `next`, `zod` dentro de `@vercel/blob`), sem entrada do usuário. Acompanhar as atualizações do `next` e do `@vercel/blob`.
+    - **`npm audit`:** ✅ resolvido na 5ª varredura com `overrides`. Ao atualizar o `next` ou o `@vercel/blob`, conferir se os `overrides` ainda são necessários.
     - **Actions do CI fixadas por SHA.**
     - **Vercel Firewall:** limite de requisições como reforço.
 
@@ -273,7 +282,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (123 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (130 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.

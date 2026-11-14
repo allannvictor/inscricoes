@@ -21,6 +21,8 @@ import { emailConviteOrganizador } from '@/lib/email/modelos';
 import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { podePublicarEventos } from '@/lib/pagamento/situacao';
 import { normalizarCor } from '@/lib/regras/cores';
+import { VALOR_CUPOM } from '@/lib/regras/cupom';
+import { CONTROLE, semCaractereNulo } from '@/lib/regras/texto';
 import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
 import { resumoDoErro } from '@/lib/log';
 
@@ -206,9 +208,10 @@ export async function cancelarInscricaoAcao(inscricaoId: string): Promise<Result
 const cupomSchema = z.object({
   codigo: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,30}$/, 'Código: de 3 a 30 letras, números, - ou _ (sem espaços)'),
   tipo: z.enum(['percentual', 'valor']),
-  valor: z.string().trim().max(15),
+  // Até R$ 9.999.999,99 ou 100%. Sem notação científica (1e10) nem hexadecimal (0x10), que davam erro 500 ou valor estranho.
+  valor: z.string().trim().regex(VALOR_CUPOM, 'Informe o valor do desconto (ex.: 10 ou 10,50).'),
   limite: z.string().trim().refine((v) => v === '' || /^\d{1,6}$/.test(v), 'Limite deve ser um número (até 999.999)'),
-});
+}).superRefine(semCaractereNulo);
 
 export async function criarCupomAcao(eventoId: string, dados: z.input<typeof cupomSchema>): Promise<Resultado> {
   const acesso = await verificarEvento(eventoId);
@@ -244,7 +247,7 @@ export async function alternarCupomAcao(cupomId: string): Promise<Resultado> {
 export async function importarSociosAcao(clubeId: string, texto: string, substituir: boolean): Promise<Resultado<{ importados: number; invalidas: string[] }>> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
-  if (typeof texto !== 'string') return { ok: false, erros: ['Lista inválida.'] };
+  if (typeof texto !== 'string' || texto.includes('\u0000')) return { ok: false, erros: ['Lista inválida: tem um caractere estranho. Copie de novo da planilha.'] };
   if (texto.length > LIMITE_TEXTO_SOCIOS) return { ok: false, erros: ['Lista grande demais: envie no máximo 5.000 pessoas por vez.'] };
   const { validos, invalidas } = lerListaSocios(texto);
   if (validos.length > 5000) return { ok: false, erros: ['Lista grande demais: envie no máximo 5.000 pessoas por vez.'] };
@@ -263,6 +266,7 @@ export async function importarSociosAcao(clubeId: string, texto: string, substit
 export async function removerSocioAcao(clubeId: string, cpf: string): Promise<Resultado> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
+  if (typeof cpf !== 'string' || cpf.length > 20) return { ok: false, erros: ['CPF inválido.'] };
   await db.delete(socios).where(and(eq(socios.clubeId, clubeId), eq(socios.cpf, limparCpf(cpf))));
   atualizarPainel();
   return { ok: true };
@@ -277,7 +281,7 @@ const perfilSchema = z.object({
   email: z.union([z.literal(''), z.string().trim().max(254, 'E-mail longo demais').email('E-mail inválido')]),
   cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
   nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
-});
+}).superRefine(semCaractereNulo);
 
 export async function salvarPerfilAcao(clubeId: string, dados: z.input<typeof perfilSchema>): Promise<Resultado> {
   const acesso = await verificarClube(clubeId);
@@ -321,7 +325,7 @@ export async function adicionarOrganizadorAcao(clubeId: string, emailBruto: stri
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
   const email = typeof emailBruto === 'string' ? emailBruto.trim().toLowerCase() : '';
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erros: ['Digite um e-mail válido.'] };
+  if (email.length > 254 || CONTROLE.test(email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erros: ['Digite um e-mail válido.'] };
   await convidarOrganizador(acesso.clube, email);
   atualizarPainel();
   return { ok: true };
@@ -347,7 +351,7 @@ const novoClubeSchema = z.object({
   emailOrganizador: z.string().trim().toLowerCase().max(254, 'E-mail longo demais').email('Informe o e-mail do organizador'),
   cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
   nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
-});
+}).superRefine(semCaractereNulo);
 
 export async function criarClubeAcao(dados: z.input<typeof novoClubeSchema>): Promise<Resultado<{ slug: string }>> {
   const usuario = await usuarioAtual();

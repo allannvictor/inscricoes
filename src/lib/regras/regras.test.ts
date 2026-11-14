@@ -3,7 +3,7 @@ import { formatarCpf, limparCpf, mascararCpf, validarCpf } from './cpf';
 import { idadeEm, nascimentoValido } from './datas';
 import { categoria } from './categoria';
 import { ehIdoso, formatarReais, precoParticipante } from './preco';
-import { aplicarCupom } from './cupom';
+import { aplicarCupom, VALOR_CUPOM } from './cupom';
 import { calcularPedido } from './pedido';
 import { podeTransferir } from './transferencia';
 
@@ -135,5 +135,14 @@ describe('Transferência', () => {
   });
   it('só uma vez: inscrição já transferida não transfere de novo', () => {
     expect(podeTransferir({ status: 'confirmada', transferida: true }, prazo, new Date('2026-12-01T10:00:00-03:00'))).toBe(false);
+  });
+});
+
+describe('Valor do cupom digitado no painel', () => {
+  it('aceita valores normais', () => {
+    for (const v of ['10', '10,50', '9999999.99', '5']) expect(VALOR_CUPOM.test(v)).toBe(true);
+  });
+  it('recusa notação científica, hexadecimal e números enormes', () => {
+    for (const v of ['1e10', '0x10', '99999999999999', '-5', '0,001', '']) expect(VALOR_CUPOM.test(v)).toBe(false);
   });
 });

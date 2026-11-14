@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FUSO } from '@/lib/regras/datas';
+import { semCaractereNulo } from '@/lib/regras/texto';
 
 /** Formulário de criar/editar evento. Datas chegam como no <input> e são do fuso de Brasília. */
 
@@ -29,7 +30,7 @@ export const eventoFormSchema = z.object({
   pedeCamisa: z.boolean(),
   usaCategoria: z.boolean(),
   distancias: z.array(distanciaFormSchema).min(1, 'Adicione ao menos uma distância').max(10),
-});
+}).superRefine(semCaractereNulo);
 
 export type EventoForm = z.input<typeof eventoFormSchema>;
 

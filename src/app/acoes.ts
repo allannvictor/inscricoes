@@ -14,6 +14,7 @@ import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { dentroDoLimite } from '@/lib/limites';
+import { CONTROLE } from '@/lib/regras/texto';
 import { acaoLiberadaNoPreLancamento } from '@/lib/pre-lancamento-acoes';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
@@ -21,9 +22,9 @@ import { resumoDoErro } from '@/lib/log';
 
 const ehUuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
 // E-mail com no máximo 254 caracteres (limite do padrão; também evita gravar textos gigantes no banco).
-const emailValido = (e: unknown): e is string => typeof e === 'string' && e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+const emailValido = (e: unknown): e is string => typeof e === 'string' && !CONTROLE.test(e) && e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 // As ações podem ser chamadas direto, com qualquer tipo de valor: tipo errado vira resposta neutra, sem erro 500.
-const ehTexto = (v: unknown, max = 500): v is string => typeof v === 'string' && v.length <= max;
+const ehTexto = (v: unknown, max = 500): v is string => typeof v === 'string' && v.length <= max && !CONTROLE.test(v);
 
 export async function solicitarCodigoAcao(email: string): Promise<{ ok: boolean; erro?: string }> {
   if (!(await acaoLiberadaNoPreLancamento())) return { ok: false, erro: 'Inscrições em breve.' };
