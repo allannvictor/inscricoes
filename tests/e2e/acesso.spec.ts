@@ -65,9 +65,30 @@ test('senha opcional: criar em Meus dados, entrar com senha, errar e remover', a
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Minhas inscrições' })).toBeVisible();
 
-  // Remove a senha: entrar com senha deixa de funcionar.
-  await page.goto('/minha-conta');
-  await page.getByRole('region', { name: 'Acesso' }).getByRole('button', { name: 'Remover senha' }).click();
+  // Trocar a senha pede a senha atual: errada não troca.
+  const novaSenha = 'longao na orla de atalaia';
+  await page.getByRole('link', { name: 'Minha conta' }).click();
+  const acesso2 = page.getByRole('region', { name: 'Acesso' });
+  await acesso2.getByRole('button', { name: 'Trocar senha' }).click();
+  await acesso2.getByLabel('Senha atual').fill('nao e esta');
+  await acesso2.getByLabel('Nova senha').fill(novaSenha);
+  await acesso2.getByLabel('Repita a senha').fill(novaSenha);
+  await acesso2.getByRole('button', { name: 'Salvar senha' }).click();
+  await expect(acesso2.getByText('A senha atual está incorreta.')).toBeVisible();
+
+  // "Esqueci a senha atual": confirma com o código enviado ao e-mail (fixo nos testes) e troca.
+  await acesso2.getByRole('button', { name: 'Esqueci a senha atual' }).click();
+  await acesso2.getByLabel('Código enviado ao seu e-mail').fill('123456');
+  await acesso2.getByRole('button', { name: 'Salvar senha' }).click();
+  await expect(acesso2.getByText(/Senha salva/)).toBeVisible();
+
+  // Remover também pede a senha atual (a nova): entrar com senha deixa de funcionar.
+  await acesso2.getByRole('button', { name: 'Remover senha' }).click();
+  await acesso2.getByLabel('Senha atual').fill(senha); // a antiga, que já não vale
+  await acesso2.getByRole('button', { name: 'Confirmar remoção' }).click();
+  await expect(acesso2.getByText('A senha atual está incorreta.')).toBeVisible();
+  await acesso2.getByLabel('Senha atual').fill(novaSenha);
+  await acesso2.getByRole('button', { name: 'Confirmar remoção' }).click();
   await expect(page.getByText(/Senha removida/)).toBeVisible();
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible(); // espera o "Sair" terminar

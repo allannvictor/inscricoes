@@ -2,16 +2,29 @@
 import Link from 'next/link';
 import { IconeCalendario, IconeLocal } from '@/components/Icones';
 import { TemaClube } from '@/components/TemaClube';
+import { usuarioAtual } from '@/lib/auth/sessao';
 import { eventosAbertos, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { formatarDataHora, textoFaltam } from '@/lib/regras/datas';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Inicio() {
-  const lista = await eventosAbertos();
+  const [lista, usuario] = await Promise.all([eventosAbertos(), usuarioAtual()]);
   const agora = new Date();
   return (
     <div className="mx-auto flex max-w-[1120px] flex-col gap-4 px-4 py-5 lg:py-8">
+      {/* Para quem ainda não entrou: convite para criar a conta (pedido do Allan, 14/11/2026). */}
+      {!usuario && (
+        <section className="cartao flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="titulo-criar-conta">
+          <div className="flex flex-col gap-1">
+            <h2 id="titulo-criar-conta" className="titulo-3">Crie sua conta</h2>
+            <p className="text-sm text-suave">
+              É grátis e leva 1 minuto: digite seu e-mail e o código que enviamos. Com a conta, você se inscreve mais rápido e acompanha suas inscrições.
+            </p>
+          </div>
+          <Link href="/entrar?voltar=/minhas-inscricoes" className="botao botao-primario shrink-0 self-start sm:self-auto">Criar minha conta</Link>
+        </section>
+      )}
       <h1 className="titulo-2 lg:text-[2rem]">Próximos eventos</h1>
       {lista.length === 0 && <p className="text-suave">Nenhum evento com inscrições abertas agora.</p>}
       {/* Celular: uma coluna. Computador: grade de cartões. */}

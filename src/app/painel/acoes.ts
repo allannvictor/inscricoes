@@ -396,7 +396,7 @@ export async function desconectarMercadoPagoAcao(clubeId: string): Promise<Resul
   if (!acesso) return negado;
   await db
     .update(clubes)
-    .set({ mpAccessToken: null, mpRefreshToken: null, mpUserId: null, mpTokenExpiraEm: null, mpConectado: false, mpConectadoEm: null })
+    .set({ mpAccessToken: null, mpRefreshToken: null, mpUserId: null, mpTokenExpiraEm: null, mpConectado: false, mpConectadoEm: null, mpContaNome: null, mpContaApelido: null, mpContaEmail: null })
     .where(eq(clubes.id, clubeId));
   if (acesso.clube.mpConectado) await avisarMudancaContaMp({ clube: acesso.clube, acao: 'desconectada', porEmail: acesso.usuario.email });
   atualizarPainel();

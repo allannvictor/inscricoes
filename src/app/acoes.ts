@@ -7,11 +7,12 @@ import { redirect } from 'next/navigation';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { cupons, eventos, inscricoes, socios, usuarios } from '@/db/schema';
-import { solicitarCodigo, verificarCodigo } from '@/lib/auth/codigo-email';
+import { conferirCodigo, solicitarCodigo, verificarCodigo } from '@/lib/auth/codigo-email';
+import { comoObjeto } from '@/lib/regras/parametros';
 import { encerrarOutrasSessoes, encerrarSessao, usuarioAtual } from '@/lib/auth/sessao';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailAvisoSeguranca } from '@/lib/email/modelos';
-import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
+import { conferirSenha, entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { cupomDentroDoLimite, dentroDoLimite, LIMITE_CONSULTA_CPF, MENSAGEM_LIMITE_CUPOM } from '@/lib/limites';
 import { CONTROLE } from '@/lib/regras/texto';
@@ -51,13 +52,50 @@ export async function entrarComSenhaAcao(email: string, senha: string): Promise<
   return entrarComSenha(email, senha.slice(0, SENHA_MAXIMO));
 }
 
-/** Cria ou troca a senha de quem está logado. Ter entrado (por código, Google ou senha) já prova que o e-mail é da pessoa. */
-export async function definirSenhaAcao(senha: string): Promise<{ ok: boolean; erro?: string }> {
+/**
+ * Quem já tem senha precisa confirmar que é a pessoa para trocar ou remover a senha (pedido do Allan, 14/11/2026):
+ * - com a senha atual (mesmos limites do login: 5 erros a cada 15 minutos);
+ * - ou, se esqueceu, com um código enviado ao e-mail da conta.
+ * Devolve a mensagem de erro, ou null se a confirmação passou.
+ */
+async function confirmarSenhaAtual(usuario: { email: string; senhaHash: string | null }, confirmacaoBruta: unknown): Promise<string | null> {
+  if (!usuario.senhaHash) return null; // ainda não tem senha: criar a primeira não pede confirmação
+  const confirmacao = comoObjeto(confirmacaoBruta);
+  const { senhaAtual, codigo } = confirmacao;
+  if (ehTexto(senhaAtual, 10_000) && senhaAtual) {
+    const r = await conferirSenha(usuario.email, senhaAtual.slice(0, SENHA_MAXIMO));
+    if (r.ok) return null;
+    return r.erro.startsWith('Muitas') ? r.erro : 'A senha atual está incorreta.';
+  }
+  if (ehTexto(codigo, 20) && codigo) {
+    const r = await conferirCodigo(usuario.email, codigo);
+    return r.ok ? null : r.erro;
+  }
+  return 'Digite a senha atual. Se esqueceu, use "Esqueci a senha atual".';
+}
+
+/** "Esqueci a senha atual": manda um código para o e-mail da conta (mesmos limites do login). */
+export async function enviarCodigoSenhaAcao(): Promise<{ ok: boolean; erro?: string }> {
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
+  try {
+    const r = await solicitarCodigo(usuario.email);
+    return r.ok ? { ok: true } : { ok: false, erro: r.erro };
+  } catch (e) {
+    console.error('Falha ao pedir código (senha)', resumoDoErro(e));
+    return { ok: false, erro: 'Não conseguimos enviar o código agora. Tente de novo.' };
+  }
+}
+
+/** Cria ou troca a senha de quem está logado. Trocar pede a senha atual (ou um código enviado ao e-mail). */
+export async function definirSenhaAcao(senha: string, confirmacao?: unknown): Promise<{ ok: boolean; erro?: string }> {
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
   if (!ehTexto(senha, 10_000)) return { ok: false, erro: 'Senha inválida.' };
   const problema = problemaDaSenha(senha, usuario.email);
   if (problema) return { ok: false, erro: problema };
+  const recusa = await confirmarSenhaAtual(usuario, confirmacao);
+  if (recusa) return { ok: false, erro: recusa };
   await db.update(usuarios).set({ senhaHash: await gerarHashSenha(senha) }).where(eq(usuarios.id, usuario.id));
   // Quem tivesse uma sessão roubada perde o acesso; a pessoa recebe um aviso.
   await encerrarOutrasSessoes(usuario.id);
@@ -73,14 +111,17 @@ async function avisarSenha(email: string, acao: 'criada' | 'trocada' | 'removida
       `A senha da sua conta no Inscrições Fast foi ${acao} agora.`,
       acao === 'removida' ? 'Agora você entra só com o código enviado ao e-mail.' : 'Por segurança, saímos da sua conta nos outros aparelhos.',
     ],
-    seNaoFoiVoce: 'Entre com o código enviado a este e-mail, vá em Meus dados → Acesso e crie uma nova senha (ou remova a senha).',
+    seNaoFoiVoce: 'Entre com o código enviado a este e-mail, vá em Meus dados → Acesso → Trocar senha → "Esqueci a senha atual" e crie uma nova senha (ou remova a senha).',
   });
   await enviarEmail({ para: email, ...msg }).catch((e) => console.error('Aviso de senha não enviado', resumoDoErro(e)));
 }
 
-export async function removerSenhaAcao(): Promise<{ ok: boolean; erro?: string }> {
+export async function removerSenhaAcao(confirmacao?: unknown): Promise<{ ok: boolean; erro?: string }> {
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
+  // Remover também pede a senha atual (ou o código): é uma mudança no acesso da conta.
+  const recusa = await confirmarSenhaAtual(usuario, confirmacao);
+  if (recusa) return { ok: false, erro: recusa };
   await db.update(usuarios).set({ senhaHash: null }).where(eq(usuarios.id, usuario.id));
   await encerrarOutrasSessoes(usuario.id);
   await avisarSenha(usuario.email, 'removida');

@@ -50,6 +50,13 @@
       "when": 1794656610276,
       "tag": "0006_etapa6_seguranca",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794687592268,
+      "tag": "0007_conta_mp_conectada",
+      "breakpoints": true
     }
   ]
 }

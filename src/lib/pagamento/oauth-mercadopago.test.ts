@@ -44,3 +44,31 @@ describe('OAuth do Mercado Pago', () => {
     expect(precisaRenovar(null, agora)).toBe(false);
   });
 });
+
+describe('conta conectada (nome, apelido e e-mail mascarado)', () => {
+  it('mascara o e-mail', async () => {
+    const { mascararEmail } = await import('./oauth-mercadopago');
+    expect(mascararEmail('allan.santos@gmail.com')).toBe('al***@gmail.com');
+    expect(mascararEmail('a@b.com')).toBe('a***@b.com');
+    expect(mascararEmail('sem-arroba')).toBeNull();
+  });
+  it('lê só nome, apelido e e-mail mascarado de /users/me (nada de documento ou telefone)', async () => {
+    const { lerContaMp } = await import('./oauth-mercadopago');
+    const conta = lerContaMp({
+      id: 3845972840,
+      nickname: 'CLUBETESTE',
+      first_name: 'Clube',
+      last_name: 'Teste',
+      email: 'test_user_123@testuser.com',
+      identification: { type: 'CPF', number: '52998224725' },
+      phone: { number: '999990000' },
+    });
+    expect(conta).toEqual({ nome: 'Clube Teste', apelido: 'CLUBETESTE', emailMascarado: 'te***@testuser.com' });
+    expect(JSON.stringify(conta)).not.toMatch(/52998224725|999990000/);
+  });
+  it('resposta estranha não quebra', async () => {
+    const { lerContaMp } = await import('./oauth-mercadopago');
+    expect(lerContaMp(null)).toEqual({ nome: null, apelido: null, emailMascarado: null });
+    expect(lerContaMp({ first_name: 'A\nB', nickname: 5 })).toEqual({ nome: 'A B', apelido: null, emailMascarado: null });
+  });
+});

@@ -159,6 +159,21 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
   - seguir as pendências logo abaixo (variáveis da Preview e teste da etapa 6 no hml).
 - **Na próxima etapa:** corrigir os 2 itens da 9ª (ver "Já aceito pelo Allan") e rodar a 10ª varredura.
 
+**Teste da etapa 6 no hml (14/11, com o Allan):**
+- ✅ Preview com `ADMIN_EMAILS`, `MP_CLIENT_ID` e `MP_CLIENT_SECRET`. Na aplicação do Mercado Pago (`inscricoes-app`): URLs de redirecionamento do hml e do www, e PKCE = Sim.
+- ✅ Master criou o "Clube Teste" (`clube-teste`) e conectou uma **conta de teste do Mercado Pago** (vendedor "Clube teste hml"). A conexão OAuth funcionou.
+- ❌ Gerar o Pix do clube de teste deu **402** do Mercado Pago (API de Orders), mesmo com o nome "APRO". O log só mostrava "Mercado Pago 402".
+- **Ajustes pedidos pelo Allan (PR novo para o `staging`):**
+  1. **Log do Mercado Pago** com código, motivo do pagamento (`status_detail`) e mensagem técnica, sem dados pessoais (`src/lib/pagamento/erro-mercadopago.ts`). Depois do merge, tentar o Pix de novo e ler o log na Vercel (busca "Mercado Pago").
+  2. **Página inicial:** cartão "Crie sua conta" para quem não entrou. O título do login virou "Entre ou crie sua conta".
+  3. **Trocar ou remover a senha pede a senha atual** (mesmos limites do login), ou um código enviado ao e-mail em "Esqueci a senha atual" (`conferirSenha` e `conferirCodigo`).
+  4. **Conta Mercado Pago conectada** mostra titular, apelido, e-mail mascarado e número na tela de Pagamento.
+     - Migração `0007_conta_mp_conectada`, com colunas `mp_conta_*` em `clubes`.
+     - Clubes já conectados buscam os dados uma vez.
+  5. **Topo:** botão "Minha conta" no lugar do e-mail.
+- **Pendente:** Google (Parte 2 do passo a passo) e o Pix do clube de teste.
+- **Segurança:** os itens 3 e 4 mexem em login e no Mercado Pago. Eles entram na **10ª varredura**, na próxima etapa (decisão do Allan).
+
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
 1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
    - Onde: `src/lib/pedidos/servico.ts`, perto da mensagem "Já existe inscrição neste evento para o CPF…" (por volta das linhas 143 a 149). Ela sai antes de criar o pedido e não passa por `dentroDoLimite`.
@@ -414,7 +429,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (161 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (168 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push. **Confira o CI do PR (verde) antes de dizer "pronto para o merge".**
