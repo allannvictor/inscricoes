@@ -20,5 +20,8 @@ describe('Modo em breve', () => {
     expect(decidirAcesso({ ...base, caminho: '/em-breve/x', metodo: 'GET' })).toBe('em_breve');
     expect(decidirAcesso({ ...base, caminho: '/api/status', metodo: 'POST' })).toBe('em_breve');
     expect(decidirAcesso({ ...base, caminho: '/api/webhooks/mercadopago', metodo: 'POST' })).toBe('liberar');
+    // Endereço inventado sob /api/webhooks/ não abre (cairia na página "não encontrado", que executa ações).
+    expect(decidirAcesso({ ...base, caminho: '/api/webhooks/x', metodo: 'POST' })).toBe('em_breve');
+    expect(decidirAcesso({ ...base, caminho: '/api/webhooks/mercadopago/x', metodo: 'POST' })).toBe('em_breve');
   });
 });

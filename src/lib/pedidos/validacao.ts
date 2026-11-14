@@ -5,13 +5,15 @@ const texto = (min: number, msg: string) => z.string().trim().min(min, msg).max(
 export const participanteSchema = z.object({
   distanciaId: z.string().uuid('Escolha a distância'),
   nome: texto(3, 'Informe o nome completo'),
-  cpf: z.string().trim(),
+  // Tamanhos máximos em TODOS os campos: sem eles, dava para gravar megabytes num campo e encher o banco
+  // (terceira varredura de segurança, 14/11/2026).
+  cpf: z.string().trim().max(20, 'CPF inválido'),
   email: z.union([z.literal(''), z.string().trim().max(254, 'E-mail longo demais').email('E-mail inválido')]).optional(),
-  nascimento: z.string().trim(),
+  nascimento: z.string().trim().max(10, 'Data de nascimento inválida'),
   // Obrigatório só em evento com categoria (conferido em criarPedido).
   sexo: z.union([z.enum(['F', 'M']), z.literal('')]).optional(),
-  telefone: z.string().trim().refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
-  camisa: z.string().trim().optional(),
+  telefone: z.string().trim().max(20, 'WhatsApp inválido').refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
+  camisa: z.string().trim().max(5, 'Tamanho de camisa inválido').optional(),
   contatoEmergencia: texto(3, 'Informe o contato de emergência'),
 });
 

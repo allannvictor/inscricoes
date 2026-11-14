@@ -222,6 +222,13 @@ Melhorias de experiência sugeridas, para qualquer direção:
     - `/em-breve` e `/api/status` só aceitam leitura (GET) no modo "em breve";
     - no máximo 10 pessoas aguardando Pix por conta no mesmo evento;
     - testes de limite mais rigorosos: no mínimo 1 e no máximo 5 conferidas, código certo em paralelo abre 1 sessão só, bloqueadas não são gravadas, e os testes apagam o que criam.
+- **Terceira varredura (14/11): LIBERADO COM RESSALVAS** (nada crítico nem alto). O Allan pediu para corrigir as ressalvas antes do merge, e foi feito no PR #11:
+  - 🟠 **Encher o banco por campos sem tamanho máximo** (telefone, camisa, CPF, nascimento, e-mail da transferência). Agora todos têm máximo, no pedido, na transferência e em Meus dados. Testes em `src/lib/pedidos/validacao.test.ts`.
+    - O formato da transferência foi para `src/lib/atleta/transferencia-schema.ts`.
+  - 🟡 **Modo "em breve":** liberava qualquer endereço sob `/api/webhooks/`, e a página "não encontrado" executa as ações do site. Agora só o endereço exato `/api/webhooks/mercadopago`.
+  - 🟡 **Inscrição cancelada voltava a valer** se o Pix fosse pago depois. Agora o pagamento só confirma as não canceladas; se todas estiverem canceladas, o pedido vira `pago_conflito` para a organização resolver. Teste de banco em `src/lib/pedidos/confirmacao.db.test.ts`, que falha no código antigo.
+  - 🟡 **Códigos de evento ou usuário inválidos** em ações davam erro 500; agora dão uma resposta limpa.
+  - **Decisão do Allan:** depois de uma transferência, quem comprou continua vendo o nome, o CPF mascarado e a categoria de quem recebeu. Os dados completos nunca aparecem.
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
@@ -247,7 +254,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (108 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (118 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.

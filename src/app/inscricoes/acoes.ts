@@ -25,10 +25,10 @@ export async function transferirInscricaoAcao(inscricaoId: string, dados: unknow
 
 const meusDadosSchema = z.object({
   nome: z.string().trim().max(200),
-  cpf: z.string().trim(),
-  nascimento: z.string().trim(),
+  cpf: z.string().trim().max(20),
+  nascimento: z.string().trim().max(10),
   sexo: z.enum(['F', 'M', '']),
-  telefone: z.string().trim().max(30),
+  telefone: z.string().trim().max(20),
   camisa: z.string().trim().max(5),
   contatoEmergencia: z.string().trim().max(200),
 });

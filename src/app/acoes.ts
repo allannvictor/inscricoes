@@ -17,6 +17,7 @@ import { dentroDoLimite } from '@/lib/limites';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 
+const ehUuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
 // E-mail com no máximo 254 caracteres (limite do padrão; também evita gravar textos gigantes no banco).
 const emailValido = (e: string) => e.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
@@ -88,7 +89,7 @@ export async function sairAcao(): Promise<void> {
 export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{ socio: boolean; jaInscrito: boolean }> {
   const nada = { socio: false, jaInscrito: false };
   const usuario = await usuarioAtual();
-  if (!usuario) return nada;
+  if (!usuario || !ehUuid(eventoId)) return nada;
   const limpo = limparCpf(cpf);
   if (!validarCpf(limpo)) return nada;
   // Limite por conta: a consulta revela se um CPF é sócio ou está inscrito (dado pessoal, LGPD).
@@ -111,8 +112,9 @@ export async function verificarCpfAcao(eventoId: string, cpf: string): Promise<{
 export type CupomValidado = { ok: true; codigo: string; tipo: 'percentual' | 'valor'; valor: number } | { ok: false; erro: string };
 
 export async function validarCupomAcao(eventoId: string, codigo: string): Promise<CupomValidado> {
-  const c = codigo.trim().toUpperCase();
+  const c = codigo.trim().toUpperCase().slice(0, 40);
   if (!c) return { ok: false, erro: 'Digite o código do cupom.' };
+  if (!ehUuid(eventoId)) return { ok: false, erro: 'Cupom não encontrado.' };
   // Exige login e limita as tentativas, para ninguém adivinhar cupons testando códigos.
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre com seu e-mail para usar um cupom.' };

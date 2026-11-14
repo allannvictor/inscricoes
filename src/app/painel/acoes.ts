@@ -368,6 +368,7 @@ export async function criarClubeAcao(dados: z.input<typeof novoClubeSchema>): Pr
 export async function removerOrganizadorAcao(clubeId: string, usuarioId: string): Promise<Resultado> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
+  if (!/^[0-9a-f-]{36}$/i.test(usuarioId)) return negado;
   const lista = await db.select({ id: organizadores.usuarioId }).from(organizadores).where(eq(organizadores.clubeId, clubeId));
   if (lista.length <= 1 && lista.some((o) => o.id === usuarioId)) return { ok: false, erros: ['O clube precisa ter pelo menos um organizador.'] };
   await db.delete(organizadores).where(and(eq(organizadores.clubeId, clubeId), inArray(organizadores.usuarioId, [usuarioId])));

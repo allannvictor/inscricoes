@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, count, eq, gt, inArray, lt, max, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gt, inArray, lt, max, ne, sql } from 'drizzle-orm';
 import { db, type Tx } from '@/db';
 import { clubes, cupons, distancias, eventos, inscricoes, pedidos, socios, usuarios } from '@/db/schema';
 import type { UsuarioAtual } from '@/lib/auth/sessao';
@@ -256,7 +256,17 @@ export async function confirmarPagamento(pedidoId: string, taxaGatewayCentavos: 
 
     // Trava o evento para numerar as inscrições em sequência.
     await tx.select({ id: eventos.id }).from(eventos).where(eq(eventos.id, p.eventoId)).for('update');
-    const lista = await tx.select().from(inscricoes).where(eq(inscricoes.pedidoId, p.id)).orderBy(asc(inscricoes.criadoEm), asc(inscricoes.id));
+    // Inscrição cancelada pelo organizador NÃO volta a valer com um Pix pago depois (terceira varredura, 14/11/2026).
+    const lista = await tx
+      .select()
+      .from(inscricoes)
+      .where(and(eq(inscricoes.pedidoId, p.id), ne(inscricoes.status, 'cancelada')))
+      .orderBy(asc(inscricoes.criadoEm), asc(inscricoes.id));
+    if (lista.length === 0) {
+      // Dinheiro recebido, mas não sobrou nada para confirmar: a organização resolve (devolução ou nova inscrição).
+      await tx.update(pedidos).set({ status: 'pago_conflito', pagoEm: new Date(), taxaGatewayCentavos }).where(eq(pedidos.id, p.id));
+      return false;
+    }
 
     if (p.status !== 'pendente') {
       const conflitos = await tx

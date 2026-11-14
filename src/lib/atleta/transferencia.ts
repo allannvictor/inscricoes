@@ -1,6 +1,5 @@
 import 'server-only';
 import { and, eq, inArray, ne } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@/db';
 import { eventos, inscricoes, transferencias } from '@/db/schema';
 import { podeTransferirInscricao } from '@/lib/auth/permissoes';
@@ -19,19 +18,8 @@ import { inscricaoCompleta } from './consultas';
  * Os dados anteriores ficam guardados em `transferencias`.
  */
 
-export const novoParticipanteSchema = z.object({
-  nome: z.string().trim().min(3, 'Informe o nome completo').max(200),
-  cpf: z.string().trim(),
-  email: z.string().trim().email('Informe um e-mail válido (o novo participante recebe a confirmação)'),
-  nascimento: z.string().trim(),
-  // Obrigatório só em evento com categoria.
-  sexo: z.union([z.enum(['F', 'M']), z.literal('')]).optional(),
-  telefone: z.string().trim().refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
-  camisa: z.string().trim().optional(),
-  contatoEmergencia: z.string().trim().min(3, 'Informe o contato de emergência').max(200),
-});
-
-export type NovoParticipante = z.input<typeof novoParticipanteSchema>;
+export { novoParticipanteSchema, type NovoParticipante } from './transferencia-schema';
+import { novoParticipanteSchema } from './transferencia-schema';
 
 export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: string, entrada: unknown): Promise<{ ok: true } | { ok: false; erros: string[] }> {
   const dados = await inscricaoCompleta(inscricaoId);
