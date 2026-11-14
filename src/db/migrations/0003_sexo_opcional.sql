@@ -1,0 +1,1 @@
+ALTER TABLE "inscricoes" ALTER COLUMN "sexo" DROP NOT NULL;

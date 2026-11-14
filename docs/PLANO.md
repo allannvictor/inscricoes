@@ -11,6 +11,7 @@ O protótipo foi aprovado em conversa: `docs/prototipo.html` no repositório e n
 - **Dinheiro:** cai direto na conta Mercado Pago do clube (split). A plataforma nunca segura valores.
 - **Pagamento:** Pix primeiro. O cartão fica preparado para ligar depois.
 - **Login do atleta:** e-mail mais código de 6 dígitos, sem senha. A conta nasce na primeira inscrição.
+- **Cadastro reaproveitado (14/11/2026):** os dados do atleta (sexo inclusive) vêm do cadastro e aparecem em resumo. O sexo só é pedido em evento com categoria. Quem já foi inscrito pela conta aparece em "Quem você já inscreveu", para adicionar com um toque.
 - **Pedido:** vários participantes no mesmo pedido e no mesmo Pix.
 - **Preços:**
   - preço por distância;

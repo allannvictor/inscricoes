@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { FormularioInscricao } from '@/components/FormularioInscricao';
 import { LoginCodigo } from '@/components/LoginCodigo';
 import { codigoTesteAtivo } from '@/lib/ambiente';
+import { pessoasJaInscritas } from '@/lib/atleta/consultas';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { eventoPorSlug, inscricoesAbertas } from '@/lib/pedidos/consultas';
 import { dataLocal } from '@/lib/regras/datas';
@@ -53,8 +54,11 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
         .limit(1)
     : [];
 
+  const pessoasSalvas = await pessoasJaInscritas(usuario);
+
   return (
     <FormularioInscricao
+      pessoasSalvas={pessoasSalvas}
       jaInscrito={
         minha
           ? { numero: minha.numero, pago: minha.status === 'confirmada', pedidoId: minha.compradorId === usuario.id ? minha.pedidoId : null }

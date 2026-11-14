@@ -85,6 +85,22 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   await expect(bruno.page.getByText('Bruno Atleta')).toBeVisible();
   await expect(bruno.page.getByText('Ana Atleta')).toHaveCount(0);
 
+  // Na próxima inscrição (outra prova), os dados da Ana vêm do cadastro, em resumo,
+  // e o Bruno aparece em "Quem você já inscreveu".
+  await page.goto('/eventos/simuladao-run-da-cf-maratona-de-aracaju/inscricao');
+  const eu = page.getByRole('region', { name: 'Seus dados' });
+  await expect(eu.getByText('Ana Atleta')).toBeVisible();
+  await expect(eu.getByText(/Categoria: Feminino/)).toBeVisible();
+  await expect(eu.getByLabel('CPF')).toHaveCount(0);
+  await page.getByRole('button', { name: '+ Bruno Atleta' }).click();
+  const outro = page.getByRole('region', { name: 'Participante 2' });
+  await expect(outro.getByLabel('Nome completo')).toHaveValue('Bruno Atleta');
+  await expect(outro.getByLabel('Sexo')).toHaveValue('M');
+  await expect(page.getByRole('button', { name: '+ Bruno Atleta' })).toHaveCount(0);
+  await eu.getByRole('button', { name: 'Alterar' }).click();
+  await expect(eu.getByLabel('CPF')).toBeVisible();
+  await page.goto('/minhas-inscricoes');
+
   // Ana transfere a inscrição do Bruno para a Carla.
   const cartaoBruno = page.locator('section', { hasText: 'Bruno Atleta' });
   const linkTransferir = await cartaoBruno.getByRole('link', { name: 'Transferir' }).getAttribute('href');

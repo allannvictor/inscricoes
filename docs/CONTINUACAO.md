@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 13/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6 e #7 com merge). O Allan está testando a etapa 3 lá; as abas de "Minhas inscrições" foram o primeiro ajuste pedido.
+> Última atualização: 14/11/2026, durante a etapa 3. A homologação está aberta ao público e publica o `staging` (PRs #6, #7 e #8 com merge). O Allan está testando a etapa 3 lá. Ajustes pedidos: abas de "Minhas inscrições" (feito) e "sexo vem do cadastro" (PR para o `staging`).
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -108,9 +108,15 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - Agora tem 3 abas: **Inscrito** (provas futuras, confirmadas ou aguardando Pix; Pix pendente no topo), **Cancelados** (qualquer data, sem botões) e **Passadas** (provas que já aconteceram, com comprovante).
    - Cada prova vira **um cartão** com os participantes dentro. "Pagar com Pix" aparece uma vez por pedido.
    - Regras em `src/lib/atleta/abas.ts`, com testes.
+   - [PR #8](https://github.com/allannvictor/inscricoes/pull/8) com merge no `staging` e publicado no hml (versão `6053d46`). Falta o Allan conferir.
+3. 🟡 **Ajuste pedido pelo Allan (14/11): o sexo vem do cadastro, não é escolhido a cada inscrição.** Ele aprovou 3 itens:
+   - **"Você" em resumo:** com cadastro completo para o evento, aparece um cartão (nome, CPF mascarado, nascimento, sexo, WhatsApp, camisa e categoria já calculada) com "Alterar". Só se escolhe a distância. Sem cadastro, os campos aparecem como antes e ficam salvos.
+   - **Sexo só em evento com categoria:** sem categoria, o campo some do formulário e da transferência, e não é obrigatório. No banco, `inscricoes.sexo` passou a aceitar vazio (migração `0003_sexo_opcional`). Na planilha, fica em branco. A inscrição não apaga o sexo e a camisa que já estão no cadastro quando o evento não pergunta.
+   - **"Quem você já inscreveu":** botões "+ Fulano" com as pessoas que a conta já inscreveu. Os dados vêm da inscrição mais recente de cada CPF (`pessoasJaInscritas` em `src/lib/atleta/consultas.ts`).
+   - Regra única do que falta preencher: `src/lib/regras/participante.ts`, com testes.
    - Está num PR para o `staging`. Falta o merge e o teste do Allan no hml.
-3. Continuar os testes da **etapa 3** no hml e corrigir o que o Allan apontar.
-4. Aprovada a etapa 3, abrir o PR **`staging` → `main`**. Depois do merge, recomeçar o branch de trabalho do `staging` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
+4. Continuar os testes da **etapa 3** no hml e corrigir o que o Allan apontar.
+5. Aprovada a etapa 3, abrir o PR **`staging` → `main`**. Depois do merge, recomeçar o branch de trabalho do `staging` e perguntar qual etapa seguir. A sugestão é fazer a **etapa 4 (visual) junto com a 5 (computador)**, porque mexem nas mesmas telas.
 
 ## 6. Etapa 4: identidade visual (nova)
 
@@ -155,7 +161,7 @@ Na implementação, precisa entrar um campo **"cor de destaque"** no Perfil do c
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (unitários, 62);
+  - `npm test` (unitários, 67);
   - `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (5 de ponta a ponta);
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.

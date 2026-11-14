@@ -8,7 +8,8 @@ export const participanteSchema = z.object({
   cpf: z.string().trim(),
   email: z.union([z.literal(''), z.string().trim().email('E-mail inválido')]).optional(),
   nascimento: z.string().trim(),
-  sexo: z.enum(['F', 'M'], { message: 'Informe o sexo' }),
+  // Obrigatório só em evento com categoria (conferido em criarPedido).
+  sexo: z.union([z.enum(['F', 'M']), z.literal('')]).optional(),
   telefone: z.string().trim().refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
   camisa: z.string().trim().optional(),
   contatoEmergencia: texto(3, 'Informe o contato de emergência'),

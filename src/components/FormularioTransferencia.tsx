@@ -6,7 +6,7 @@ import { transferirInscricaoAcao } from '@/app/inscricoes/acoes';
 import { TAMANHOS_CAMISA, mascaraTelefone } from '@/lib/mascaras';
 import { formatarCpf, limparCpf } from '@/lib/regras/cpf';
 
-export function FormularioTransferencia({ inscricaoId, pedeCamisa, hoje }: { inscricaoId: string; pedeCamisa: boolean; hoje: string }) {
+export function FormularioTransferencia({ inscricaoId, pedeCamisa, usaCategoria, hoje }: { inscricaoId: string; pedeCamisa: boolean; usaCategoria: boolean; hoje: string }) {
   const [f, setF] = useState({ nome: '', cpf: '', email: '', nascimento: '', sexo: '' as '' | 'F' | 'M', telefone: '', camisa: '', contatoEmergencia: '' });
   const [erros, setErros] = useState<string[]>([]);
   const [feito, setFeito] = useState(false);
@@ -63,12 +63,14 @@ export function FormularioTransferencia({ inscricaoId, pedeCamisa, hoje }: { ins
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         <div className="campo"><label htmlFor="t-nasc">Nascimento</label><input id="t-nasc" className="entrada" type="date" max={hoje} value={f.nascimento} onChange={(e) => campo('nascimento', e.target.value)} required /></div>
-        <div className="campo">
-          <label htmlFor="t-sexo">Sexo</label>
-          <select id="t-sexo" className="entrada" value={f.sexo} onChange={(e) => campo('sexo', e.target.value)} required>
-            <option value="">Selecione</option><option value="F">Feminino</option><option value="M">Masculino</option>
-          </select>
-        </div>
+        {usaCategoria && (
+          <div className="campo">
+            <label htmlFor="t-sexo">Sexo</label>
+            <select id="t-sexo" className="entrada" value={f.sexo} onChange={(e) => campo('sexo', e.target.value)} required>
+              <option value="">Selecione</option><option value="F">Feminino</option><option value="M">Masculino</option>
+            </select>
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         <div className="campo"><label htmlFor="t-tel">WhatsApp</label><input id="t-tel" className="entrada" inputMode="tel" value={f.telefone} onChange={(e) => campo('telefone', mascaraTelefone(e.target.value))} required /></div>

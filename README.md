@@ -81,6 +81,8 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Cores e fontes | `src/app/globals.css` (bloco `@theme`) |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
+| O que é obrigatório por pessoa (sexo só com categoria, camisa só se o evento pede) e quando "Você" aparece em resumo | `src/lib/regras/participante.ts` |
+| "Quem você já inscreveu" (botões para adicionar de novo) | `pessoasJaInscritas` em `src/lib/atleta/consultas.ts` |
 | Tela do Pix e confirmação | `src/app/pedidos/[id]/page.tsx` e `src/components/PixPagamento.tsx` |
 | Quem acessa o painel (organizador, master) | `src/lib/auth/permissoes.ts` e `src/lib/painel/acesso.ts` |
 | Ações do painel (salvar evento, cancelar, cupons, sócios…) | `src/app/painel/acoes.ts` |

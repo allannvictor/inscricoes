@@ -154,9 +154,9 @@ export function FormularioEvento(props: { clubeId: string; clubeSlug: string; ev
         </label>
         <label className="flex items-start gap-2.5">
           <input type="checkbox" className="mt-1 h-[18px] w-[18px] accent-acao" checked={f.usaCategoria} onChange={(e) => campo('usaCategoria', e.target.checked)} />
-          <span><b>Categoria por idade</b><br /><span className="text-sm text-suave">Calculada pelo nascimento: até 17, 18–29, 30–39, 40–49, 50–59, 60+ (idade no dia da prova).</span></span>
+          <span><b>Categoria por idade e sexo</b><br /><span className="text-sm text-suave">Calculada pelo nascimento e pelo sexo: até 17, 18–29, 30–39, 40–49, 50–59, 60+ (idade no dia da prova). Com categoria, o formulário pede o sexo.</span></span>
         </label>
-        <p className="text-sm text-suave">Nome, CPF, nascimento, sexo, WhatsApp e contato de emergência são sempre pedidos.</p>
+        <p className="text-sm text-suave">Nome, CPF, nascimento, WhatsApp e contato de emergência são sempre pedidos. O sexo só é pedido em evento com categoria.</p>
       </section>
 
       <div className="flex flex-wrap items-center gap-3">

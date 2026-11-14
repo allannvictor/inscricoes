@@ -55,12 +55,13 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
 
   // 3. Regras por participante
   const erros: string[] = [];
-  const participantes = entrada.participantes.map((p) => ({ ...p, cpf: limparCpf(p.cpf), email: p.email?.toLowerCase() || null }));
+  const participantes = entrada.participantes.map((p) => ({ ...p, sexo: (p.sexo || '') as 'F' | 'M' | '', cpf: limparCpf(p.cpf), email: p.email?.toLowerCase() || null }));
   participantes.forEach((p, i) => {
     const quem = i === 0 ? 'Você' : `Participante ${i + 1}`;
     if (!listaDistancias.some((d) => d.id === p.distanciaId)) erros.push(`${quem}: escolha a distância.`);
     if (!validarCpf(p.cpf)) erros.push(`${quem}: CPF inválido.`);
     if (!nascimentoValido(p.nascimento, hoje)) erros.push(`${quem}: data de nascimento inválida.`);
+    if (evento.usaCategoria && !p.sexo) erros.push(`${quem}: informe o sexo (este evento tem categoria).`);
     if (evento.pedeCamisa && !p.camisa) erros.push(`${quem}: escolha o tamanho da camisa.`);
   });
   const cpfs = participantes.map((p) => p.cpf);
@@ -152,7 +153,7 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
           cpf: p.cpf,
           email: i === 0 ? usuario.email : p.email,
           nascimento: p.nascimento,
-          sexo: p.sexo,
+          sexo: p.sexo || null,
           telefone: p.telefone,
           camisa: evento.pedeCamisa ? (p.camisa ?? null) : null,
           contatoEmergencia: p.contatoEmergencia,
@@ -175,7 +176,16 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   if (!usuario.cpf || usuario.cpf === eu.cpf) {
     await db
       .update(usuarios)
-      .set({ nome: eu.nome, cpf: eu.cpf, nascimento: eu.nascimento, sexo: eu.sexo, telefone: eu.telefone, camisa: eu.camisa || null, contatoEmergencia: eu.contatoEmergencia })
+      .set({
+        nome: eu.nome,
+        cpf: eu.cpf,
+        nascimento: eu.nascimento,
+        // Evento sem categoria ou sem camisa não pergunta: mantém o que já estava no cadastro.
+        sexo: eu.sexo || usuario.sexo,
+        telefone: eu.telefone,
+        camisa: eu.camisa || usuario.camisa,
+        contatoEmergencia: eu.contatoEmergencia,
+      })
       .where(eq(usuarios.id, usuario.id));
   }
 

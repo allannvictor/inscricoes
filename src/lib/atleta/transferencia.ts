@@ -24,7 +24,8 @@ export const novoParticipanteSchema = z.object({
   cpf: z.string().trim(),
   email: z.string().trim().email('Informe um e-mail válido (o novo participante recebe a confirmação)'),
   nascimento: z.string().trim(),
-  sexo: z.enum(['F', 'M'], { message: 'Informe o sexo' }),
+  // Obrigatório só em evento com categoria.
+  sexo: z.union([z.enum(['F', 'M']), z.literal('')]).optional(),
   telefone: z.string().trim().refine((v) => v.replace(/\D/g, '').length >= 10, 'Informe o WhatsApp com DDD'),
   camisa: z.string().trim().optional(),
   contatoEmergencia: z.string().trim().min(3, 'Informe o contato de emergência').max(200),
@@ -50,6 +51,7 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
   if (novo.cpf === inscricao.cpf) erros.push('Este CPF já é o da inscrição. Informe o CPF da pessoa que vai receber.');
   if (!nascimentoValido(novo.nascimento, dataLocal(new Date()))) erros.push('Data de nascimento inválida.');
   if (evento.pedeCamisa && !novo.camisa) erros.push('Escolha o tamanho da camisa.');
+  if (evento.usaCategoria && !novo.sexo) erros.push('Informe o sexo (este evento tem categoria).');
   if (erros.length) return { ok: false, erros };
 
   const anteriores = {
@@ -84,11 +86,11 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
           cpf: novo.cpf,
           email: novo.email,
           nascimento: novo.nascimento,
-          sexo: novo.sexo,
+          sexo: novo.sexo || null,
           telefone: novo.telefone,
           camisa: evento.pedeCamisa ? (novo.camisa ?? null) : null,
           contatoEmergencia: novo.contatoEmergencia,
-          categoria: evento.usaCategoria ? categoria(novo.nascimento, novo.sexo, dataLocal(evento.dataHora)) : null,
+          categoria: evento.usaCategoria && novo.sexo ? categoria(novo.nascimento, novo.sexo, dataLocal(evento.dataHora)) : null,
         })
         .where(eq(inscricoes.id, inscricao.id));
     });
