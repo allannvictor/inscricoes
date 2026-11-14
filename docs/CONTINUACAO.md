@@ -416,7 +416,10 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - `npm test` (161 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
-  - o CI do GitHub roda tudo a cada push.
+  - o CI do GitHub roda tudo a cada push. **Confira o CI do PR (verde) antes de dizer "pronto para o merge".**
+    - Lição de 14/11: o ponta a ponta na versão compilada exige `SESSION_SECRET`. No CI não há `.env.local`, e os 16 testes falhavam no login (desde o PR #11).
+    - Correção: valor fixo **só de teste** no `playwright.config.ts`.
+    - Para imitar o CI localmente: tirar o `.env.local` e rodar com `CI=1`.
 - **Migrações:** editar `src/db/schema.ts` → `npx drizzle-kit generate --name <nome>` → `npm run db:migrate`. Na Vercel, o `vercel-build` aplica as migrações sozinho.
 - **Login nos testes:** limite de 5 códigos por hora por e-mail. Com `LOGIN_CODIGO_TESTE` (só fora de produção ou em Preview), nenhum e-mail é enviado.
 - **Subconsultas com `sql`:** escrever a coluna qualificada (`"eventos"."id"`), não `${eventos.id}`. O Drizzle gera `"id"` sem tabela, o que causa erro ou contagem errada.

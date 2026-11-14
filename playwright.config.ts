@@ -14,7 +14,14 @@ config();
  */
 const producao = !!process.env.CI || process.env.E2E_PRODUCAO === '1';
 const comum = { LOGIN_CODIGO_TESTE: '123456', MP_ACCESS_TOKEN: '', MP_CLIENT_ID: '', GOOGLE_CLIENT_ID: '', ADMIN_EMAILS: 'master@exemplo.com', PRE_LANCAMENTO: '' };
-const comoHomologacao = { VERCEL_ENV: 'preview', PERMITIR_SIMULADO: '1', DATABASE_URL_PREVIEW: process.env.DATABASE_URL ?? '' };
+// A versão compilada roda com NODE_ENV=production e exige SESSION_SECRET (src/lib/auth/cripto.ts).
+// No CI não há .env.local: usa um valor fixo SÓ de teste (não é segredo de nenhum ambiente real).
+const comoHomologacao = {
+  VERCEL_ENV: 'preview',
+  PERMITIR_SIMULADO: '1',
+  DATABASE_URL_PREVIEW: process.env.DATABASE_URL ?? '',
+  SESSION_SECRET: process.env.SESSION_SECRET || 'segredo-fixo-so-para-os-testes-ponta-a-ponta-nao-usar-em-producao',
+};
 
 export default defineConfig({
   testDir: './tests/e2e',
