@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dataDoCalendario, dataHoraDoCalendario, FUSO } from '@/lib/regras/datas';
+import { anoDeEvento, dataDoCalendario, dataHoraDoCalendario, FUSO } from '@/lib/regras/datas';
 import { semCaractereNulo } from '@/lib/regras/texto';
 
 /** Formulário de criar/editar evento. Datas chegam como no <input> e são do fuso de Brasília. */
@@ -63,9 +63,10 @@ export function conferirEvento(e: z.output<typeof eventoFormSchema>): string[] {
   const erros: string[] = [];
   // Datas que não existem ("2026-13-45T99:99", "2026-02-30") viravam data inválida e erro 500 ao gravar
   // (sexta varredura de segurança, 14/11/2026). Confere antes de comparar.
-  if (!dataHoraDoCalendario(e.dataHora)) erros.push('Data ou hora da largada inválida.');
-  if (!dataDoCalendario(e.inscricoesAte)) erros.push('Data de fim das inscrições inválida.');
-  if (e.transferenciaAte && !dataDoCalendario(e.transferenciaAte)) erros.push('Data de fim das transferências inválida.');
+  // Ano fora de 2000 a 2100 (ex.: 0000, 9999) também dava erro 500 (sétima varredura).
+  if (!dataHoraDoCalendario(e.dataHora) || !anoDeEvento(e.dataHora)) erros.push('Data ou hora da largada inválida.');
+  if (!dataDoCalendario(e.inscricoesAte) || !anoDeEvento(e.inscricoesAte)) erros.push('Data de fim das inscrições inválida.');
+  if (e.transferenciaAte && (!dataDoCalendario(e.transferenciaAte) || !anoDeEvento(e.transferenciaAte))) erros.push('Data de fim das transferências inválida.');
   if (erros.length) return erros;
   const largada = dataHoraBrasilia(e.dataHora);
   if (fimDoDiaBrasilia(e.inscricoesAte) > largada) erros.push('As inscrições precisam terminar antes da largada.');

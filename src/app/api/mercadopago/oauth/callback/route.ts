@@ -8,6 +8,9 @@ import { verificarClube } from '@/lib/painel/acesso';
 import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { credenciaisApp, trocarCodigo, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
 import { resumoDoErro } from '@/lib/log';
+import { lerCookieJson } from '@/lib/regras/parametros';
+import { ehSlug } from '@/lib/regras/slug';
+import { ehUuid } from '@/lib/regras/uuid';
 
 const COOKIE_OAUTH_MP = 'mp_oauth';
 
@@ -19,13 +22,9 @@ export async function GET(req: Request) {
   jar.delete({ name: COOKIE_OAUTH_MP, path: '/api/mercadopago/oauth' });
   const base = process.env.APP_URL ?? url.origin;
 
-  let salvo: { state: string; verificador: string; clubeId: string; slug: string } | null = null;
-  try {
-    salvo = bruto ? JSON.parse(bruto) : null;
-  } catch {
-    salvo = null;
-  }
-  if (!salvo) return NextResponse.redirect(`${base}/painel?erro=mp-expirou`);
+  // Cookie adulterado (sem os campos em texto, id ou endereço inválidos) vale como expirado, sem erro 500.
+  const salvo = lerCookieJson(bruto, ['state', 'verificador', 'clubeId', 'slug'] as const);
+  if (!salvo || !ehUuid(salvo.clubeId) || !ehSlug(salvo.slug)) return NextResponse.redirect(`${base}/painel?erro=mp-expirou`);
   const voltar = `${base}/painel/c/${salvo.slug}/pagamento`;
 
   const state = url.searchParams.get('state') ?? '';

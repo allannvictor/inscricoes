@@ -132,7 +132,7 @@ test('área do atleta: minhas inscrições, comprovante, transferência e meus d
   await form.getByLabel('Contato de emergência').fill('Filho 11944445555');
   await form.getByRole('button', { name: 'Transferir inscrição' }).click();
   await form.getByRole('button', { name: 'Confirmar transferência' }).click();
-  await expect(page.getByText(/já tem inscrição neste evento/)).toBeVisible();
+  await expect(page.getByText(/Já existe inscrição neste evento para o CPF/)).toBeVisible();
   await form.getByLabel('CPF').fill(cpfC);
   await form.getByRole('button', { name: 'Transferir inscrição' }).click();
   await form.getByRole('button', { name: 'Confirmar transferência' }).click();

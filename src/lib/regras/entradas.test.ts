@@ -75,3 +75,30 @@ describe('datas do calendário', () => {
     expect(nascimentoValido('1990-02-30', '2026-11-14')).toBe(false);
   });
 });
+
+describe('sétima varredura', () => {
+  it('ehSlug: só letras minúsculas, números e hífen', async () => {
+    const { ehSlug } = await import('./slug');
+    expect(ehSlug('simulado-10k-dezembro')).toBe(true);
+    expect(ehSlug('cf-assessoria')).toBe(true);
+    for (const v of ['\u0000', 'a\u0000b', '', 'Maiuscula', 'com espaço', 'a/b', '%00', 'a'.repeat(81), undefined, ['cf']]) {
+      expect(ehSlug(v)).toBe(false);
+    }
+  });
+  it('lerCookieJson: cookie adulterado vira null', async () => {
+    const { lerCookieJson } = await import('./parametros');
+    const campos = ['state', 'verificador'] as const;
+    expect(lerCookieJson('{"state":"s","verificador":"v","extra":1}', campos)).toEqual({ state: 's', verificador: 'v' });
+    for (const bruto of [undefined, '', '5', '"x"', '{}', 'null', '[]', '{"state":1,"verificador":"v"}', '{"state":"s"}', '{"state":"","verificador":"v"}', '{quebrado', 'x'.repeat(5000)]) {
+      expect(lerCookieJson(bruto, campos)).toBeNull();
+    }
+  });
+  it('anoDeEvento: só de 2000 a 2100', async () => {
+    const { anoDeEvento } = await import('./datas');
+    expect(anoDeEvento('2026-12-13')).toBe(true);
+    expect(anoDeEvento('2100-12-31T23:30')).toBe(true);
+    expect(anoDeEvento('0000-01-01')).toBe(false);
+    expect(anoDeEvento('9999-12-31T23:30')).toBe(false);
+    expect(anoDeEvento('1999-12-31')).toBe(false);
+  });
+});

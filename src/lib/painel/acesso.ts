@@ -6,6 +6,7 @@ import { clubes, eventos, type Clube, type Evento } from '@/db/schema';
 import { ehOrganizadorDoClube, podeAbrirPainel } from '@/lib/auth/permissoes';
 import { paraPermissao, usuarioAtual, type UsuarioAtual } from '@/lib/auth/sessao';
 import { ehUuid } from '@/lib/regras/uuid';
+import { ehSlug } from '@/lib/regras/slug';
 
 /**
  * Guardas do painel. Toda página e toda ação do painel passa por aqui.
@@ -27,6 +28,7 @@ export async function clubesDoUsuario(usuario: UsuarioAtual): Promise<Clube[]> {
 
 /** Para páginas: usuário + clube, ou 404. */
 export async function exigirClube(slug: string): Promise<{ usuario: UsuarioAtual; clube: Clube }> {
+  if (!ehSlug(slug)) notFound();
   const usuario = await exigirPainel(`/painel/c/${slug}`);
   const [clube] = await db.select().from(clubes).where(eq(clubes.slug, slug));
   if (!clube || !ehOrganizadorDoClube(paraPermissao(usuario), clube.id)) notFound();

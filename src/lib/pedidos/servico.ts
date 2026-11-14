@@ -6,38 +6,28 @@ import type { UsuarioAtual } from '@/lib/auth/sessao';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailConfirmacao } from '@/lib/email/modelos';
 import { provedorDoClube } from '@/lib/pagamento';
-import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
+import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { dataLocal, formatarDataHora, nascimentoValido } from '@/lib/regras/datas';
 import { bloqueioDePedido } from '@/lib/regras/limites-pedido';
 import { calcularPedido } from '@/lib/regras/pedido';
 import { ErroNegocio } from './erros';
 import { pedidoSchema } from './validacao';
 import { resumoDoErro } from '@/lib/log';
-import { dentroDoLimite } from '@/lib/limites';
+import { cupomDentroDoLimite, LIMITE_CONSULTA_CPF, MENSAGEM_CPF_JA_INSCRITO_GENERICA, MENSAGEM_LIMITE_CUPOM, mensagemCpfJaInscrito } from '@/lib/limites';
+
+export { LIMITE_CONSULTA_CPF, MENSAGEM_CPF_JA_INSCRITO_GENERICA };
 
 /** Tempo que as vagas ficam reservadas esperando o Pix. */
 export const MINUTOS_RESERVA = 30;
 const ATIVAS = ['pendente', 'confirmada'] as const;
 
-/**
- * Dizer QUAL CPF já tem inscrição revela um dado pessoal (LGPD). Por isso essa resposta usa o mesmo limite
- * da consulta de CPF do formulário (60 por hora por conta, chave "cpf:<conta>"). Passado o limite, a resposta
- * é genérica, sem o CPF (sexta varredura de segurança, 14/11/2026).
- */
-export const LIMITE_CONSULTA_CPF = { maximo: 60, janelaMs: 60 * 60 * 1000 } as const;
-export const MENSAGEM_CPF_JA_INSCRITO_GENERICA = 'Um dos CPFs já tem inscrição neste evento.';
-
+/** CPF já inscrito: a mensagem com o CPF sai fora da transação, pelo limite de mensagemCpfJaInscrito. */
 class ErroCpfJaInscrito extends Error {
   constructor(readonly cpfs: string[]) {
     super('CPF já inscrito');
   }
 }
 
-async function mensagemCpfJaInscrito(usuarioId: string, cpfs: string[]): Promise<string> {
-  const { maximo, janelaMs } = LIMITE_CONSULTA_CPF;
-  if (!(await dentroDoLimite(`cpf:${usuarioId}`, maximo, janelaMs))) return MENSAGEM_CPF_JA_INSCRITO_GENERICA;
-  return `Já existe inscrição neste evento para o CPF ${cpfs.map(formatarCpf).join(', ')}.`;
-}
 
 /**
  * Marca como expirados os pedidos pendentes cujo prazo do Pix acabou, liberando as vagas.
@@ -103,6 +93,8 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
   let cupom: typeof cupons.$inferSelect | null = null;
   const codigoCupom = entrada.cupom?.toUpperCase();
   if (codigoCupom) {
+    // Mesmo limite da tela de cupom: senão daria para adivinhar cupons por aqui (sétima varredura).
+    if (!(await cupomDentroDoLimite(usuario.id))) return { ok: false, erros: [MENSAGEM_LIMITE_CUPOM] };
     [cupom] = await db.select().from(cupons).where(and(eq(cupons.eventoId, evento.id), eq(cupons.codigo, codigoCupom), eq(cupons.ativo, true)));
     if (!cupom) return { ok: false, erros: ['Cupom não encontrado.'] };
   }

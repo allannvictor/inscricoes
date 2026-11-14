@@ -13,10 +13,10 @@ import { enviarEmail } from '@/lib/email/enviar';
 import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
-import { dentroDoLimite } from '@/lib/limites';
+import { cupomDentroDoLimite, dentroDoLimite, LIMITE_CONSULTA_CPF, MENSAGEM_LIMITE_CUPOM } from '@/lib/limites';
 import { CONTROLE } from '@/lib/regras/texto';
 import { acaoLiberadaNoPreLancamento } from '@/lib/pre-lancamento-acoes';
-import { criarPedido, LIMITE_CONSULTA_CPF, type ResultadoCriacao } from '@/lib/pedidos/servico';
+import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 import { resumoDoErro } from '@/lib/log';
 
@@ -131,7 +131,7 @@ export async function validarCupomAcao(eventoId: string, codigo: string): Promis
   // Exige login e limita as tentativas, para ninguém adivinhar cupons testando códigos.
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre com seu e-mail para usar um cupom.' };
-  if (!(await dentroDoLimite(`cupom:${usuario.id}`, 20, 60 * 60 * 1000))) return { ok: false, erro: 'Muitas tentativas de cupom. Espere um pouco.' };
+  if (!(await cupomDentroDoLimite(usuario.id))) return { ok: false, erro: MENSAGEM_LIMITE_CUPOM };
   const [cupom] = await db.select().from(cupons).where(and(eq(cupons.eventoId, eventoId), eq(cupons.codigo, c), eq(cupons.ativo, true)));
   if (!cupom) return { ok: false, erro: 'Cupom não encontrado.' };
   return { ok: true, codigo: c, tipo: cupom.tipo as 'percentual' | 'valor', valor: cupom.valor };

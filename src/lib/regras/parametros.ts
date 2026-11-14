@@ -21,3 +21,20 @@ export function mensagemDoMapa(mapa: Record<string, string>, chave: unknown): st
 export function comoObjeto(valor: unknown): Record<string, unknown> {
   return valor && typeof valor === 'object' && !Array.isArray(valor) ? (valor as Record<string, unknown>) : {};
 }
+
+/**
+ * Cookie temporário em JSON (OAuth do Mercado Pago e do Google) com os campos pedidos, todos em texto.
+ * Cookie adulterado (`5`, `"x"`, `{}`, `{"state":1}`) vira null, em vez de erro 500 (sétima varredura, 14/11/2026).
+ */
+export function lerCookieJson<K extends string>(bruto: string | undefined, campos: readonly K[]): Record<K, string> | null {
+  if (!bruto || bruto.length > 4000) return null;
+  let valor: unknown;
+  try {
+    valor = JSON.parse(bruto);
+  } catch {
+    return null;
+  }
+  const obj = comoObjeto(valor);
+  for (const c of campos) if (typeof obj[c] !== 'string' || !obj[c]) return null;
+  return Object.fromEntries(campos.map((c) => [c, obj[c] as string])) as Record<K, string>;
+}

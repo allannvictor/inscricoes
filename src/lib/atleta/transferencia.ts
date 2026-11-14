@@ -7,7 +7,8 @@ import { paraPermissao, type UsuarioAtual } from '@/lib/auth/sessao';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailTransferenciaEnviada, emailTransferenciaRecebida } from '@/lib/email/modelos';
 import { categoria } from '@/lib/regras/categoria';
-import { formatarCpf, limparCpf, validarCpf } from '@/lib/regras/cpf';
+import { limparCpf, validarCpf } from '@/lib/regras/cpf';
+import { mensagemCpfJaInscrito } from '@/lib/limites';
 import { dataLocal, formatarDataHora, nascimentoValido } from '@/lib/regras/datas';
 import { podeTransferir } from '@/lib/regras/transferencia';
 import { inscricaoCompleta } from './consultas';
@@ -21,6 +22,9 @@ import { inscricaoCompleta } from './consultas';
 export { novoParticipanteSchema, type NovoParticipante } from './transferencia-schema';
 import { novoParticipanteSchema } from './transferencia-schema';
 import { resumoDoErro } from '@/lib/log';
+
+/** CPF de quem recebe já inscrito: a mensagem com o CPF passa pelo limite de mensagemCpfJaInscrito (sétima varredura). */
+class ErroCpfOcupado extends Error {}
 
 export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: string, entrada: unknown): Promise<{ ok: true } | { ok: false; erros: string[] }> {
   const dados = await inscricaoCompleta(inscricaoId);
@@ -77,7 +81,7 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
         .select({ id: inscricoes.id })
         .from(inscricoes)
         .where(and(eq(inscricoes.eventoId, evento.id), eq(inscricoes.cpf, novo.cpf), inArray(inscricoes.status, ['pendente', 'confirmada']), ne(inscricoes.id, inscricao.id)));
-      if (ocupado) throw new Error(`O CPF ${formatarCpf(novo.cpf)} já tem inscrição neste evento.`);
+      if (ocupado) throw new ErroCpfOcupado();
 
       await tx.insert(transferencias).values({ inscricaoId: inscricao.id, dadosAnteriores: anteriores, feitaPor: usuario.id });
       await tx
@@ -96,6 +100,7 @@ export async function transferirInscricao(usuario: UsuarioAtual, inscricaoId: st
         .where(eq(inscricoes.id, inscricao.id));
     });
   } catch (e) {
+    if (e instanceof ErroCpfOcupado) return { ok: false, erros: [await mensagemCpfJaInscrito(usuario.id, [novo.cpf])] };
     if (e instanceof Error && (e.message.startsWith('O CPF') || e.message.startsWith('Esta inscrição'))) return { ok: false, erros: [e.message] };
     if (typeof e === 'object' && e && 'code' in e && e.code === '23505') return { ok: false, erros: ['Este CPF já tem inscrição neste evento.'] };
     throw e;

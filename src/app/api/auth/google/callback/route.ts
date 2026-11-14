@@ -5,6 +5,7 @@ import { credenciaisGoogle, trocarCodigoGoogle, urlRetornoGoogle } from '@/lib/a
 import { entrarComGoogle } from '@/lib/auth/google-login';
 import { destinoInterno } from '@/lib/regras/redirecionamento';
 import { resumoDoErro } from '@/lib/log';
+import { lerCookieJson } from '@/lib/regras/parametros';
 
 /** Volta do Google: confere o state, troca o código e entra (ou cria a conta). */
 export async function GET(req: Request) {
@@ -14,12 +15,8 @@ export async function GET(req: Request) {
   const bruto = jar.get('google_oauth')?.value;
   jar.delete({ name: 'google_oauth', path: '/api/auth/google' });
 
-  let salvo: { state: string; verificador: string; voltar: string } | null = null;
-  try {
-    salvo = bruto ? JSON.parse(bruto) : null;
-  } catch {
-    salvo = null;
-  }
+  // Cookie adulterado (sem os campos em texto) vale como falha de login, sem erro 500 (sétima varredura).
+  const salvo = lerCookieJson(bruto, ['state', 'verificador', 'voltar'] as const);
   const voltar = destinoInterno(salvo?.voltar);
   const falhou = (motivo: string) => NextResponse.redirect(`${base}/entrar?erro=${motivo}&voltar=${encodeURIComponent(voltar)}`);
 

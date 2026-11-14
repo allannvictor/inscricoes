@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { clubes } from '@/db/schema';
 import { pkce, tokenAleatorio } from '@/lib/auth/cripto';
 import { verificarClube } from '@/lib/painel/acesso';
+import { ehSlug } from '@/lib/regras/slug';
 import { credenciaisApp, urlAutorizacao, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
 
 // Cookie temporário (10 min) com o state e o verificador PKCE; lido em /api/mercadopago/oauth/callback.
@@ -13,6 +14,7 @@ const COOKIE_OAUTH_MP = 'mp_oauth';
 /** "Conectar Mercado Pago": leva o organizador para autorizar o site na conta do clube. */
 export async function GET(_: Request, { params }: { params: Promise<{ clube: string }> }) {
   const { clube: slug } = await params;
+  if (!ehSlug(slug)) return new NextResponse('Não encontrado', { status: 404 });
   const [clube] = await db.select({ id: clubes.id }).from(clubes).where(eq(clubes.slug, slug));
   if (!clube || !(await verificarClube(clube.id))) return new NextResponse('Não encontrado', { status: 404 });
   const app = credenciaisApp();

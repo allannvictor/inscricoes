@@ -4,9 +4,11 @@ import { cache } from 'react';
 import { db } from '@/db';
 import { clubes, distancias, eventos, inscricoes, pedidos } from '@/db/schema';
 import { ehUuid } from '@/lib/regras/uuid';
+import { ehSlug } from '@/lib/regras/slug';
 
 /** Evento pelo link. Rascunhos só aparecem com `incluirRascunho` (organizador conferindo antes de publicar). */
 export const eventoPorSlug = cache(async (slug: string, incluirRascunho = false) => {
+  if (!ehSlug(slug)) return null;
   const [linha] = await db
     .select({ evento: eventos, clube: clubes })
     .from(eventos)

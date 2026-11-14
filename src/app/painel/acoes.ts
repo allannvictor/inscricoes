@@ -167,6 +167,8 @@ export async function duplicarEventoAcao(eventoId: string): Promise<Resultado<{ 
 export async function enviarArquivoEventoAcao(eventoId: string, tipo: 'capa' | 'regulamento', formulario: FormData): Promise<Resultado<{ url: string }>> {
   const acesso = await verificarEvento(eventoId);
   if (!acesso) return negado;
+  // A ação pode ser chamada direto, sem FormData: resposta limpa em vez de TypeError (sétima varredura).
+  if (!(formulario instanceof FormData)) return { ok: false, erros: ['Escolha um arquivo.'] };
   const arquivo = formulario.get('arquivo');
   if (!(arquivo instanceof File) || arquivo.size === 0) return { ok: false, erros: ['Escolha um arquivo.'] };
   try {
@@ -310,6 +312,8 @@ export async function salvarPerfilAcao(clubeId: string, dados: z.input<typeof pe
 export async function enviarFotoClubeAcao(clubeId: string, formulario: FormData): Promise<Resultado<{ url: string }>> {
   const acesso = await verificarClube(clubeId);
   if (!acesso) return negado;
+  // A ação pode ser chamada direto, sem FormData: resposta limpa em vez de TypeError (sétima varredura).
+  if (!(formulario instanceof FormData)) return { ok: false, erros: ['Escolha um arquivo.'] };
   const arquivo = formulario.get('arquivo');
   if (!(arquivo instanceof File) || arquivo.size === 0) return { ok: false, erros: ['Escolha uma imagem.'] };
   try {

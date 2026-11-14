@@ -70,6 +70,12 @@ describe('Formulário de evento', () => {
     const s = eventoFormSchema.parse({ ...base, dataHora: '2027-01-17T24:00' });
     expect(conferirEvento(s)).toEqual(['Data ou hora da largada inválida.']);
   });
+  it('recusa anos fora de 2000 a 2100 (ano 0000 e fim de 9999 davam erro 500; sétima varredura)', () => {
+    const r = eventoFormSchema.parse({ ...base, dataHora: '0000-01-02T10:00', inscricoesAte: '0000-01-01', transferenciaAte: '' });
+    expect(conferirEvento(r)).toEqual(['Data ou hora da largada inválida.', 'Data de fim das inscrições inválida.']);
+    const s = eventoFormSchema.parse({ ...base, dataHora: '9999-12-31T23:30', inscricoesAte: '9999-12-30', transferenciaAte: '9999-12-29' });
+    expect(conferirEvento(s)).toHaveLength(3);
+  });
   it('datas em Brasília ida e volta', () => {
     const d = dataHoraBrasilia('2027-01-17T06:00');
     expect(d.toISOString()).toBe('2027-01-17T09:00:00.000Z');
