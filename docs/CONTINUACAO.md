@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) para o `staging`, aguardando merge e teste no hml.
+> Última atualização: 14/11/2026. Etapa 3 aprovada pelo Allan e **parada no `staging`** (ainda não foi para a produção, por decisão dele). **Etapas 4 + 5 feitas** no [PR #10](https://github.com/allannvictor/inscricoes/pull/10) com merge no `staging` e publicadas no hml (versão `012915a`). Falta o Allan testar e escolher a cor e o nome do preço especial da CF.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -116,7 +116,7 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - Regra única do que falta preencher: `src/lib/regras/participante.ts`, com testes.
    - [PR #9](https://github.com/allannvictor/inscricoes/pull/9) com merge no `staging` e publicado no hml (versão `9cb248c`; a migração `0003_sexo_opcional` foi aplicada no banco de homologação pelo deploy). Falta o Allan conferir.
 4. ✅ Etapa 3 aprovada (14/11). O Allan decidiu **deixar no `staging`** por enquanto; o PR `staging` → `main` sai quando ele pedir.
-5. 🟡 **Etapas 4 + 5 juntas** (autorizadas em 14/11, direção B + C do canvas): PR para o `staging`. Falta o merge e o teste do Allan no hml (celular e computador). Detalhes na seção 6.
+5. 🟡 **Etapas 4 + 5 juntas** (autorizadas em 14/11, direção B + C do canvas): PR para o `staging`. PR #10 com merge no `staging` e publicado no hml (versão `012915a`; migração `0004_visual_do_clube` aplicada). Falta o teste do Allan (celular e computador). Detalhes na seção 6.
 
 ## 6. Etapa 4: identidade visual (nova)
 
