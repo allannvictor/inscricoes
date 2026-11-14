@@ -99,6 +99,9 @@ O agente `especialista-produto` (`.claude/agents/especialista-produto.md`) pesqu
 | Limites: participantes por pedido (você e mais 3), pedidos aguardando Pix, consultas de CPF (1 uso por CPF revelado), cupom, tentativas de código e senha | `src/lib/regras/limites-pedido.ts`, `src/lib/limites.ts`, `src/lib/auth/codigo-email.ts`, `src/lib/auth/senha.ts` |
 | Quem vê uma inscrição (o CPF não dá acesso) | `podeVerInscricao` em `src/lib/auth/permissoes.ts` |
 | Cabeçalhos de segurança | `next.config.ts` |
+| O que vai para o log quando o Mercado Pago recusa (só códigos, sem dados pessoais) | `src/lib/pagamento/erro-mercadopago.ts` |
+| Dados da conta Mercado Pago conectada (titular, apelido, e-mail mascarado) | `buscarContaMp` em `src/lib/pagamento/oauth-mercadopago.ts` e `contaMpDoClube` em `src/lib/pagamento/index.ts` |
+| Trocar ou remover a senha (pede a senha atual ou um código no e-mail) | `src/components/FormularioSenha.tsx` e `definirSenhaAcao` em `src/app/acoes.ts` |
 | Ids (UUID de verdade) e parâmetros da URL (`?erro=`, `?busca=`) sem erro 500 | `src/lib/regras/uuid.ts` e `src/lib/regras/parametros.ts` |
 | Quando o botão "Simular Pix" vale (só homologação/local, pedido pendente, clube sem conta) | `podeSimularPagamento` em `src/lib/pagamento/situacao.ts` |
 | Revisão de segurança antes da produção (agente) | `.claude/agents/revisor-seguranca.md` |

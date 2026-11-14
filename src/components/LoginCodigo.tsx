@@ -110,7 +110,7 @@ export function LoginCodigo({ destino, modoTeste = false, google = false, erroIn
             pedirCodigo();
           }}
         >
-          <h1 className="titulo-2">Entre com seu e-mail</h1>
+          <h1 className="titulo-2">Entre ou crie sua conta</h1>
           <p className="text-suave">Enviamos um código de 6 dígitos. Se for sua primeira vez, sua conta é criada agora.</p>
           <div className="campo">
             <label htmlFor="email">E-mail</label>

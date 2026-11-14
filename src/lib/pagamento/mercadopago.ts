@@ -1,4 +1,5 @@
 import 'server-only';
+import { resumoErroMercadoPago } from './erro-mercadopago';
 import { traduzirStatusOrder } from './status-order';
 import type { ConsultaPagamento, CriarPixEntrada, DadosPix, ProvedorPagamento } from './tipos';
 
@@ -26,8 +27,8 @@ export function criarMercadoPago(accessToken: string): ProvedorPagamento {
     });
     const corpo = await resposta.json().catch(() => ({}));
     if (!resposta.ok) {
-      // Só o status e o código do erro: a resposta pode repetir os dados do pagador (e-mail, CPF).
-      console.error('Mercado Pago', resposta.status, String((corpo as { error?: unknown; code?: unknown }).error ?? (corpo as { code?: unknown }).code ?? '').slice(0, 60));
+      // Só códigos e motivos técnicos, sem dados pessoais (a resposta pode repetir e-mail, nome e CPF do pagador).
+      console.error('Mercado Pago', resumoErroMercadoPago(resposta.status, corpo));
       throw new Error('O Mercado Pago não respondeu como esperado. Tente de novo em instantes.');
     }
     return corpo;

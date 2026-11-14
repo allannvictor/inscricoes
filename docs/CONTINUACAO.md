@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo e 1 observação técnica), e o Allan **aceitou os dois** para rever na próxima etapa. **PR #14 pronto para o merge no `staging`** (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
+> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo e 1 observação técnica), e o Allan **aceitou os dois** para rever na próxima etapa. ✅ **PR #14 com merge no `staging`** (14/11, CI verde). Falta: fechar o #11, configurar a Preview e testar a etapa 6 no hml (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -86,7 +86,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
 | **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 9ª varredura: LIBERADO COM RESSALVAS (ressalvas aceitas pelo Allan). **Pronto para o merge no `staging`** |
+| **6. Cadastro de clubes + login novo** | 🟡 [PR #14](https://github.com/allannvictor/inscricoes/pull/14) para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). ✅ **No `staging`** (merge em 14/11). Falta o teste do Allan no hml, depois de configurar a Preview |
 | 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
 | 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
@@ -151,12 +151,28 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
      - Teste: com 60 usos, um pedido com 1 CPF inscrito não revela nada.
   2. **Observação técnica (não é de segurança):** na versão compilada, o `.ics` sai com quebras `\n` em vez de `\r\n` (o minificador mexe no `join('\r\n')`). Algum aplicativo de agenda mais rígido pode recusar o arquivo.
      - Correção: trocar para `\r\n` na rota, na hora de responder, com teste.
-- ✅ **Decisão do Allan (14/11):** deixar os 2 itens da 9ª como estão e rodar a próxima varredura mais à frente, na próxima etapa. **PR #14 pronto para o merge no `staging`.**
+- ✅ **Decisão do Allan (14/11):** deixar os 2 itens da 9ª como estão e rodar a próxima varredura mais à frente, na próxima etapa.
+- ✅ **PR #14 com merge no `staging` (14/11)**, com o CI verde. O CI dos PRs #11 e #14 falhava por falta de `SESSION_SECRET` no ponta a ponta; isso foi corrigido no próprio #14.
 - **Depois do merge do PR #14:**
   - fechar o #11 sem merge;
   - recomeçar o branch de trabalho a partir do `staging`;
   - seguir as pendências logo abaixo (variáveis da Preview e teste da etapa 6 no hml).
 - **Na próxima etapa:** corrigir os 2 itens da 9ª (ver "Já aceito pelo Allan") e rodar a 10ª varredura.
+
+**Teste da etapa 6 no hml (14/11, com o Allan):**
+- ✅ Preview com `ADMIN_EMAILS`, `MP_CLIENT_ID` e `MP_CLIENT_SECRET`. Na aplicação do Mercado Pago (`inscricoes-app`): URLs de redirecionamento do hml e do www, e PKCE = Sim.
+- ✅ Master criou o "Clube Teste" (`clube-teste`) e conectou uma **conta de teste do Mercado Pago** (vendedor "Clube teste hml"). A conexão OAuth funcionou.
+- ❌ Gerar o Pix do clube de teste deu **402** do Mercado Pago (API de Orders), mesmo com o nome "APRO". O log só mostrava "Mercado Pago 402".
+- **Ajustes pedidos pelo Allan (PR novo para o `staging`):**
+  1. **Log do Mercado Pago** com código, motivo do pagamento (`status_detail`) e mensagem técnica, sem dados pessoais (`src/lib/pagamento/erro-mercadopago.ts`). Depois do merge, tentar o Pix de novo e ler o log na Vercel (busca "Mercado Pago").
+  2. **Página inicial:** cartão "Crie sua conta" para quem não entrou. O título do login virou "Entre ou crie sua conta".
+  3. **Trocar ou remover a senha pede a senha atual** (mesmos limites do login), ou um código enviado ao e-mail em "Esqueci a senha atual" (`conferirSenha` e `conferirCodigo`).
+  4. **Conta Mercado Pago conectada** mostra titular, apelido, e-mail mascarado e número na tela de Pagamento.
+     - Migração `0007_conta_mp_conectada`, com colunas `mp_conta_*` em `clubes`.
+     - Clubes já conectados buscam os dados uma vez.
+  5. **Topo:** botão "Minha conta" no lugar do e-mail.
+- **Pendente:** Google (Parte 2 do passo a passo) e o Pix do clube de teste.
+- **Segurança:** os itens 3 e 4 mexem em login e no Mercado Pago. Eles entram na **10ª varredura**, na próxima etapa (decisão do Allan).
 
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
 1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
@@ -413,7 +429,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (161 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (168 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push. **Confira o CI do PR (verde) antes de dizer "pronto para o merge".**

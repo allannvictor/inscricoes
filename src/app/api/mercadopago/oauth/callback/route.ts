@@ -6,7 +6,7 @@ import { clubes } from '@/db/schema';
 import { cifrar, iguais } from '@/lib/auth/cripto';
 import { verificarClube } from '@/lib/painel/acesso';
 import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
-import { credenciaisApp, trocarCodigo, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
+import { buscarContaMp, credenciaisApp, trocarCodigo, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
 import { resumoDoErro } from '@/lib/log';
 import { lerCookieJson } from '@/lib/regras/parametros';
 import { ehSlug } from '@/lib/regras/slug';
@@ -39,6 +39,8 @@ export async function GET(req: Request) {
   try {
     const t = await trocarCodigo(app, { code, verificador: salvo.verificador, redirectUri: urlRetornoMercadoPago() });
     novoUsuarioMp = t.userId;
+    // Nome, apelido e e-mail mascarado da conta, para o organizador saber em qual conta o Pix cai.
+    const conta = await buscarContaMp(t.accessToken);
     await db
       .update(clubes)
       .set({
@@ -48,6 +50,9 @@ export async function GET(req: Request) {
         mpTokenExpiraEm: t.expiraEm,
         mpConectado: true,
         mpConectadoEm: new Date(),
+        mpContaNome: conta?.nome ?? null,
+        mpContaApelido: conta?.apelido ?? null,
+        mpContaEmail: conta?.emailMascarado ?? null,
       })
       .where(eq(clubes.id, salvo.clubeId));
   } catch (e) {

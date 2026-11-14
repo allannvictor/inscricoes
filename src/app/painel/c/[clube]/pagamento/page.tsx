@@ -1,6 +1,7 @@
 import { BotaoDesconectarMp } from '@/components/painel/BotaoDesconectarMp';
 import { exigirClube } from '@/lib/painel/acesso';
-import { podePublicarEventos, situacaoDoPagamento } from '@/lib/pagamento';
+import { contaMpDoClube, podePublicarEventos, situacaoDoPagamento } from '@/lib/pagamento';
+import type { ContaMp } from '@/lib/pagamento/oauth-mercadopago';
 import { credenciaisApp } from '@/lib/pagamento/oauth-mercadopago';
 import { mensagemDoMapa } from '@/lib/regras/parametros';
 
@@ -21,6 +22,7 @@ export default async function Pagamento({ params, searchParams }: { params: Prom
   const situacao = situacaoDoPagamento(clube);
   const app = !!credenciaisApp();
   const linkConectar = `/painel/c/${clube.slug}/pagamento/conectar`;
+  const conta = await contaMpDoClube(clube);
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -33,9 +35,8 @@ export default async function Pagamento({ params, searchParams }: { params: Prom
           <>
             <span className="selo selo-ok self-start">Mercado Pago conectado</span>
             <p>Os Pix das inscrições caem direto na conta Mercado Pago do clube. A plataforma nunca segura o dinheiro.</p>
-            <p className="text-sm text-suave">
-              Conta nº {clube.mpUserId ?? '—'} · conectada em {data(clube.mpConectadoEm)}. A conexão é renovada sozinha.
-            </p>
+            <DadosDaConta conta={conta} numero={clube.mpUserId} />
+            <p className="text-sm text-suave">Conectada em {data(clube.mpConectadoEm)}. A conexão é renovada sozinha.</p>
             <div className="flex flex-wrap gap-2">
               {app && <a className="botao botao-borda botao-pequeno" href={linkConectar}>Conectar outra conta</a>}
               <BotaoDesconectarMp clubeId={clube.id} />
@@ -47,6 +48,7 @@ export default async function Pagamento({ params, searchParams }: { params: Prom
           <>
             <span className="selo selo-ok self-start">Conta configurada no site</span>
             <p>Os Pix caem na conta Mercado Pago configurada na hospedagem do site para este clube.</p>
+            <DadosDaConta conta={conta} numero={null} />
             {app && (
               <>
                 <p className="text-sm text-suave">Se preferir, conecte a conta do clube por aqui. Depois de conectada, ela passa a valer no lugar da configurada no site.</p>
@@ -81,5 +83,19 @@ export default async function Pagamento({ params, searchParams }: { params: Prom
         <p className="text-sm text-suave">Reembolsos, quando necessários, são feitos pelo app ou site do Mercado Pago. Depois, cancele a inscrição na lista de inscritos.</p>
       </section>
     </div>
+  );
+}
+
+/** Nome, apelido, e-mail mascarado e número da conta que recebe os Pix (nada sensível). */
+function DadosDaConta({ conta, numero }: { conta: ContaMp | null; numero: string | null }) {
+  if (!conta && !numero) return null;
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl bg-[color:var(--color-fundo-pagina)] p-3 text-sm" aria-label="Conta que recebe os Pix">
+      {conta?.nome && (<><dt className="text-suave">Titular</dt><dd className="font-semibold">{conta.nome}</dd></>)}
+      {conta?.apelido && (<><dt className="text-suave">Apelido</dt><dd>{conta.apelido}</dd></>)}
+      {conta?.emailMascarado && (<><dt className="text-suave">E-mail</dt><dd>{conta.emailMascarado}</dd></>)}
+      {numero && (<><dt className="text-suave">Conta nº</dt><dd>{numero}</dd></>)}
+      {!conta && <dd className="col-span-2 text-suave">Não foi possível buscar o nome da conta agora.</dd>}
+    </dl>
   );
 }

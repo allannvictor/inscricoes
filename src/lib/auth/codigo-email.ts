@@ -77,6 +77,24 @@ function codigoDeTeste(codigo: string): boolean {
 
 export async function verificarCodigo(emailBruto: string, codigoBruto: string): Promise<{ ok: true } | { ok: false; erro: string }> {
   const email = normalizarEmail(emailBruto);
+  const conferido = await conferirCodigo(email, codigoBruto);
+  if (!conferido.ok) return conferido;
+
+  const [usuario] = await db
+    .insert(usuarios)
+    .values({ email })
+    .onConflictDoUpdate({ target: usuarios.email, set: { email } })
+    .returning({ id: usuarios.id });
+  await criarSessao(usuario.id);
+  return { ok: true };
+}
+
+/**
+ * Confere (e gasta) um código enviado ao e-mail, sem abrir sessão: 5 tentativas por código, uso único.
+ * Usada no login e, em Meus dados, para trocar ou remover a senha quando a pessoa esqueceu a senha atual.
+ */
+export async function conferirCodigo(emailBruto: string, codigoBruto: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const email = normalizarEmail(emailBruto);
   const codigo = codigoBruto.replace(/\D/g, '');
   if (codigo.length !== 6) return { ok: false, erro: 'O código tem 6 dígitos.' };
 
@@ -105,12 +123,5 @@ export async function verificarCodigo(emailBruto: string, codigoBruto: string): 
       .returning({ id: codigosLogin.id });
     if (!usado) return { ok: false, erro: 'Este código já foi usado. Peça um novo.' };
   }
-
-  const [usuario] = await db
-    .insert(usuarios)
-    .values({ email })
-    .onConflictDoUpdate({ target: usuarios.email, set: { email } })
-    .returning({ id: usuarios.id });
-  await criarSessao(usuario.id);
   return { ok: true };
 }

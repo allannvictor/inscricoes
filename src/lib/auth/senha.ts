@@ -29,6 +29,17 @@ export function gerarHashSenha(senha: string): Promise<string> {
 }
 
 export async function entrarComSenha(emailBruto: string, senha: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const r = await conferirSenha(emailBruto, senha);
+  if (!r.ok) return r;
+  await criarSessao(r.usuarioId);
+  return { ok: true };
+}
+
+/**
+ * Confere a senha de um e-mail, com os MESMOS limites do login (5 erros por e-mail e 30 por IP a cada 15 minutos).
+ * Usada no login e para trocar ou remover a senha em Meus dados, que agora pedem a senha atual (pedido do Allan, 14/11/2026).
+ */
+export async function conferirSenha(emailBruto: string, senha: string): Promise<{ ok: true; usuarioId: string } | { ok: false; erro: string }> {
   const email = normalizarEmail(emailBruto);
   const desde = new Date(Date.now() - JANELA_MS);
   const ipHash = await hashDoIp();
@@ -64,8 +75,7 @@ export async function entrarComSenha(emailBruto: string, senha: string): Promise
 
   // Acertou: zera as tentativas deste e-mail (inclusive a desta vez).
   await db.delete(tentativasSenha).where(eq(tentativasSenha.email, email));
-  await criarSessao(usuario.id);
-  return { ok: true };
+  return { ok: true, usuarioId: usuario.id };
 }
 
 /** De vez em quando, apaga tentativas com mais de 1 dia (não servem para nada depois da janela de 15 minutos). */

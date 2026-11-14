@@ -39,6 +39,10 @@ export const clubes = pgTable('clubes', {
   mpConectado: boolean('mp_conectado').notNull().default(false),
   mpTokenExpiraEm: timestamp('mp_token_expira_em', { withTimezone: true }),
   mpConectadoEm: timestamp('mp_conectado_em', { withTimezone: true }),
+  // Quem é a conta conectada (só para mostrar ao organizador): nome, apelido e e-mail MASCARADO.
+  mpContaNome: text('mp_conta_nome'),
+  mpContaApelido: text('mp_conta_apelido'),
+  mpContaEmail: text('mp_conta_email'),
   // Comissão da plataforma (etapa 6). 'nenhuma' | 'percentual' | 'fixa'
   comissaoTipo: text('comissao_tipo').notNull().default('nenhuma'),
   comissaoValor: integer('comissao_valor').notNull().default(0),
