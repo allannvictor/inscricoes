@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026 (fim da sessão). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #11](https://github.com/allannvictor/inscricoes/pull/11), AINDA NÃO pronto para o merge:** faltam 4 correções baixas da 6ª varredura de segurança e a 7ª varredura completa (ver **seção 5, "Para a próxima sessão"**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
+> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6:** os 4 baixos da 6ª varredura foram corrigidos, e a 7ª varredura completa deu **LIBERADO COM RESSALVAS** (5 baixos novos). O trabalho está no branch `claude/zealous-tesla-5e85gx`, num **PR novo que substitui o #11**. **Aguardando o Allan decidir** se corrige os 5 baixos antes do merge (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -86,7 +86,7 @@ claude/… (trabalho) ──PR──▶ staging (= homologação) ──PR──
 | 3. Área do atleta | ✅ aprovada no hml (PRs #6 a #9). **Fica no `staging`**: o PR `staging` → `main` só quando o Allan pedir |
 | **4. Identidade visual (layout novo)** | 🟡 feita junto com a 5 ([PR #10](https://github.com/allannvictor/inscricoes/pull/10), no `staging` e no hml); falta o teste do Allan (ver seção 6) |
 | **5. Versão para computador (páginas do atleta)** | 🟡 idem |
-| **6. Cadastro de clubes + login novo** | 🟡 [PR #11](https://github.com/allannvictor/inscricoes/pull/11) para o `staging`, **ainda não pronto**: faltam 4 correções baixas e a 7ª varredura (seção 5, "Para a próxima sessão") |
+| **6. Cadastro de clubes + login novo** | 🟡 PR novo do branch `claude/zealous-tesla-5e85gx` para o `staging` (**substitui o [#11](https://github.com/allannvictor/inscricoes/pull/11)**). 7ª varredura: LIBERADO COM RESSALVAS (5 baixos); aguardando a decisão do Allan (seção 5) |
 | 7. Uso real / lançamento | 🟡 parte feita (domínio, e-mail, Mercado Pago de produção); falta o resto, ver seção 7 |
 | 8. Extras | ⏳ cartão, check-in com QR, lotes de preço por data, formulário em etapas… |
 | 9. Plataforma aberta | ⏳ cadastro aberto de clubes, comissão da plataforma, página do clube, domínio próprio |
@@ -110,18 +110,25 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 
 ## 5. Próximo passo imediato
 
-### ⏭️ Para a próxima sessão (decidido pelo Allan em 14/11)
+### ⏭️ Para a próxima sessão
 
-**Objetivo:** fechar o PR #11 (etapa 6).
-1. Corrigir os 4 itens BAIXOS da **6ª varredura** de segurança (lista abaixo), com testes.
-2. Rodar a **7ª varredura completa** com o agente `revisor-seguranca`.
-3. Se sair LIBERADO, ou LIBERADO COM RESSALVAS só com itens já aceitos, avisar o Allan que o PR #11 está **pronto para o merge no `staging`**.
+**Situação (14/11, tarde):**
+- Os 4 baixos da 6ª varredura foram **corrigidos**, com testes (lista abaixo, ✅). Commit `7cc6767`.
+- **Branch:** `claude/zealous-tesla-5e85gx`. A sessão não tinha permissão para enviar ao branch do PR #11, então abriu um **PR novo para o `staging` que substitui o #11**. O Allan fecha o #11 sem merge.
+- **Verificação:** lint, typecheck, `npm test` (150 testes, com os de banco), build e ponta a ponta na versão compilada 16/16, **duas vezes**.
+- **7ª varredura completa (`revisor-seguranca`): LIBERADO COM RESSALVAS.** Nada crítico, alto ou médio, e as 4 correções foram confirmadas. Há **5 achados BAIXOS novos**, ainda não aceitos:
+  1. **Cupom adivinhado pelo "criar pedido"**, sem o limite de 20 por hora da tela de cupom. Onde: `src/lib/pedidos/servico.ts` (procura do cupom). Correção: `dentroDoLimite('cupom:<conta>', 20, 1h)` antes de procurar, com teste de banco.
+  2. **Transferência revela se um CPF está inscrito**, sem limite (LGPD). Exige uma inscrição própria no evento. Onde: `src/lib/atleta/transferencia.ts` (mensagem "O CPF … já tem inscrição"). Correção: o mesmo limite `cpf:<conta>` (60 por hora) e mensagem genérica depois dele, com teste de banco.
+  3. **Caractere nulo no endereço do evento ou do clube dá 500.** Onde: `/eventos/%00/agenda.ics` (público), `/painel/c/%00/pagamento/conectar` e `/painel/c/%00/eventos/<id>/planilha`. Correção: `ehSlug` em `src/lib/regras/`, usado em `eventoPorSlug`, `exigirClube` e na rota `conectar`.
+  4. **Datas do evento no ano 0000 ou em 31/12/9999** passam e dão 500 ao salvar. Correção: aceitar só anos de 2000 a 2100 em `conferirEvento`.
+  5. **Endurecimento:**
+     - cookie `mp_oauth` (e `google`) adulterado dá 500 nos callbacks: conferir o formato com `comoObjeto` e `typeof`;
+     - `enviarArquivoEventoAcao` sem `FormData` dá TypeError: conferir `instanceof FormData`.
+- **Próximo passo:** o Allan decide entre:
+  - corrigir os 5 baixos e rodar a 8ª varredura (o caminho seguido nas rodadas anteriores);
+  - ou aceitá-los e fazer o merge do PR novo no `staging`.
 
-**Branch:**
-- O trabalho está no branch `claude/inscricoes-fast-etapa-3-hum6h2` (PR #11 → `staging`), no commit `caf9c27`, que já inclui o PR #12.
-- Se a nova sessão não puder enviar para esse branch, crie o branch dela **a partir de `origin/claude/inscricoes-fast-etapa-3-hum6h2`** e abra um PR novo para o `staging`, dizendo que ele **substitui o #11**. O Allan fecha o #11 sem merge, como foi feito com o #5 → #6.
-
-**Os 4 achados da 6ª varredura** (todos BAIXOS; o agente provou cada um localmente):
+**Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
 1. **Consulta de CPF pelo "criar pedido" fura o limite de 60 por hora (LGPD).**
    - Onde: `src/lib/pedidos/servico.ts`, perto da mensagem "Já existe inscrição neste evento para o CPF…" (por volta das linhas 143 a 149). Ela sai antes de criar o pedido e não passa por `dentroDoLimite`.
    - Correção: antes de devolver esse erro, contar a tentativa em `dentroDoLimite('cpf:' + usuario.id, 60, 1h)`. Passado o limite, responder de forma genérica, sem dizer qual CPF.
@@ -149,6 +156,12 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
    - Webhook com o corpo `null` dá 500 antes da assinatura (`src/app/api/webhooks/mercadopago/route.ts`): tratar corpo que não é objeto.
    - Data inválida no evento ("2026-13-45T99:99") dá RangeError: `conferirEvento` (`src/lib/painel/evento-form.ts`) deve recusar datas inválidas.
    - Testes unitários dessas regras.
+   - ✅ **Como ficou:**
+     - **item 1:** `mensagemCpfJaInscrito` em `servico.ts`;
+     - **item 2:** regex do cupom em `validacao.ts`;
+     - **item 3:** provedor `'criando'` e `podeSimularPagamento` em `src/lib/pagamento/situacao.ts`;
+     - **item 4:** `ehUuid` (`src/lib/regras/uuid.ts`), `mensagemDoMapa`, `textoDoParametro` e `comoObjeto` (`src/lib/regras/parametros.ts`), e `dataDoCalendario` e `dataHoraDoCalendario` em `src/lib/regras/datas.ts`.
+     - **Testes:** `src/lib/regras/entradas.test.ts`, `situacao.test.ts`, `validacao.test.ts`, `painel.test.ts` e `src/lib/pedidos/sexta-varredura.db.test.ts`, que falha no código antigo.
 
 **Como verificar** (antes de pedir a varredura):
 1. `service postgresql start`. Se o banco local der "Este cupom esgotou", recriar o banco e rodar migrate + seed.
@@ -316,7 +329,14 @@ Melhorias de experiência sugeridas, para qualquer direção:
   - **PR #12** (agente de produto) juntado ao branch, com o conflito do `CONTINUACAO.md` resolvido.
 - **Sexta varredura completa (14/11): LIBERADO COM RESSALVAS** (4 baixos).
   - Confirmados com provas locais: as correções da 5ª, a rede de segurança dos logs (zero dados pessoais em 4 caminhos de erro do banco), o modo "em breve" fechado por 14 caminhos e o `npm audit` com 0.
-  - Os 4 baixos estão listados em **"Para a próxima sessão"** (seção 5).
+  - Os 4 baixos estão listados em **"Para a próxima sessão"** (seção 5). ✅ Corrigidos em 14/11 (tarde).
+- **Sétima varredura completa (14/11, tarde): LIBERADO COM RESSALVAS** (5 baixos novos, listados na seção 5).
+  - Confirmados com provas locais:
+    - as 4 correções da 6ª;
+    - o modo "em breve" fechado por 16 caminhos;
+    - o webhook sem erro com 16 corpos estranhos;
+    - permissões com servidor real;
+    - `npm audit` com 0.
   - **Ainda em aberto:**
     - **Master sem segundo fator.** Avaliar TOTP ou exigir Google para o master.
     - **Criar ou trocar a senha não pede confirmação** (há aviso por e-mail e as outras sessões caem).
@@ -347,7 +367,7 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Stack:** Next.js 15 (App Router), TypeScript, Tailwind 4, Drizzle + Postgres (Neon), Zod, Resend, Mercado Pago (API de Orders), Vercel Blob, Vitest e Playwright.
 - **Local:** Postgres 16 instalado no container (`service postgresql start`; ele **para sozinho** quando a sessão reinicia). Usuário, senha e banco são `inscricoes`. Rodar `npm run db:migrate` e `npm run db:seed`. O `.env.local` tem `LOGIN_CODIGO_TESTE=123456`.
 - **Testes:**
-  - `npm test` (130 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
+  - `npm test` (150 testes; os de `*.db.test.ts` precisam do Postgres local ligado e migrado);
   - ponta a ponta (8 testes × 2 tamanhos de tela = 16): `npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off` (estável, como no CI). Sem `E2E_PRODUCAO`, usa `next dev`, que pode falhar aleatoriamente. Se der "Este cupom esgotou", o banco local acumulou testes: recriar o banco e rodar migrate + seed;
   - `npm run lint`, `npm run typecheck` e `npm run build`;
   - o CI do GitHub roda tudo a cada push.
