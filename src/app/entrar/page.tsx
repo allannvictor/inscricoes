@@ -3,6 +3,7 @@ import { LoginCodigo } from '@/components/LoginCodigo';
 import { codigoTesteAtivo } from '@/lib/ambiente';
 import { googleAtivo } from '@/lib/auth/google';
 import { usuarioAtual } from '@/lib/auth/sessao';
+import { destinoInterno } from '@/lib/regras/redirecionamento';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Entrar' };
@@ -14,7 +15,7 @@ const ERROS: Record<string, string> = {
 
 export default async function Entrar({ searchParams }: { searchParams: Promise<{ voltar?: string; erro?: string }> }) {
   const { voltar, erro } = await searchParams;
-  const destino = voltar?.startsWith('/') && !voltar.startsWith('//') ? voltar : '/';
+  const destino = destinoInterno(voltar);
   if (await usuarioAtual()) redirect(destino);
   return (
     <div className="pagina">

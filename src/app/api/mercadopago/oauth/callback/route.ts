@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { clubes } from '@/db/schema';
 import { cifrar, iguais } from '@/lib/auth/cripto';
 import { verificarClube } from '@/lib/painel/acesso';
+import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { credenciaisApp, trocarCodigo, urlRetornoMercadoPago } from '@/lib/pagamento/oauth-mercadopago';
 
 const COOKIE_OAUTH_MP = 'mp_oauth';
@@ -29,12 +30,15 @@ export async function GET(req: Request) {
   const state = url.searchParams.get('state') ?? '';
   const code = url.searchParams.get('code');
   if (!code || !iguais(state, salvo.state)) return NextResponse.redirect(`${voltar}?erro=recusado`);
-  if (!(await verificarClube(salvo.clubeId))) return new NextResponse('Não encontrado', { status: 404 });
+  const acesso = await verificarClube(salvo.clubeId);
+  if (!acesso) return new NextResponse('Não encontrado', { status: 404 });
   const app = credenciaisApp();
   if (!app) return NextResponse.redirect(`${voltar}?erro=sem-app`);
 
+  let novoUsuarioMp: string | null = null;
   try {
     const t = await trocarCodigo(app, { code, verificador: salvo.verificador, redirectUri: urlRetornoMercadoPago() });
+    novoUsuarioMp = t.userId;
     await db
       .update(clubes)
       .set({
@@ -50,5 +54,11 @@ export async function GET(req: Request) {
     console.error('Mercado Pago OAuth: falha ao conectar', e);
     return NextResponse.redirect(`${voltar}?erro=falhou`);
   }
+  await avisarMudancaContaMp({
+    clube: acesso.clube,
+    acao: acesso.clube.mpConectado ? 'trocada' : 'conectada',
+    porEmail: acesso.usuario.email,
+    contaId: novoUsuarioMp,
+  });
   return NextResponse.redirect(`${voltar}?conectado=1`);
 }

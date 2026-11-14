@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { podePublicarEventos, situacaoDoPagamento } from './situacao';
+import { podePublicarEventos, simuladoPermitido, situacaoDoPagamento } from './situacao';
 
 const cf = { slug: 'cf-assessoria', mpAccessToken: null, mpConectado: false };
 const outro = { slug: 'outro-clube', mpAccessToken: null, mpConectado: false };
@@ -22,6 +22,11 @@ describe('situacaoDoPagamento', () => {
     expect(situacaoDoPagamento(outro, hml())).toBe('simulado');
     expect(situacaoDoPagamento(outro, { NODE_ENV: 'development' } as NodeJS.ProcessEnv)).toBe('simulado');
     expect(situacaoDoPagamento(outro, prod())).toBe('nao-configurado');
+  });
+  it('em produção, nunca simulado, nem com PERMITIR_SIMULADO (evita inscrição de graça)', () => {
+    expect(situacaoDoPagamento(outro, prod({ PERMITIR_SIMULADO: '1' }))).toBe('nao-configurado');
+    expect(simuladoPermitido(prod({ PERMITIR_SIMULADO: '1' }))).toBe(false);
+    expect(simuladoPermitido(hml())).toBe(true);
   });
 });
 

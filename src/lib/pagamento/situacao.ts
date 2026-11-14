@@ -2,7 +2,9 @@
  * Como cada clube recebe (regras puras, testadas em situacao.test.ts):
  * - "conectado": o clube conectou a própria conta Mercado Pago (OAuth).
  * - "ambiente": usa o token do site (MP_ACCESS_TOKEN). Só vale para o clube de MP_CLUBE_DO_TOKEN (padrão: cf-assessoria).
- * - "simulado": sem conta, Pix de mentira. Só fora de produção ou com PERMITIR_SIMULADO=1.
+ * - "simulado": sem conta, Pix de mentira. Só fora da produção da Vercel (local, CI, homologação).
+ *   Em produção (VERCEL_ENV=production) NUNCA, nem com PERMITIR_SIMULADO=1: senão quem compra poderia
+ *   "simular" o próprio Pix e se inscrever de graça.
  * - "nao-configurado": sem conta e sem simulado: não dá para cobrar.
  */
 
@@ -15,6 +17,7 @@ export interface ClubePagamento {
 }
 
 export function simuladoPermitido(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.VERCEL_ENV === 'production') return false;
   return env.NODE_ENV !== 'production' || env.PERMITIR_SIMULADO === '1';
 }
 

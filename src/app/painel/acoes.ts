@@ -18,6 +18,7 @@ import { gerarSlug } from '@/lib/regras/slug';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { enviarEmail } from '@/lib/email/enviar';
 import { emailConviteOrganizador } from '@/lib/email/modelos';
+import { avisarMudancaContaMp } from '@/lib/pagamento/avisos';
 import { podePublicarEventos } from '@/lib/pagamento/situacao';
 import { normalizarCor } from '@/lib/regras/cores';
 import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
@@ -382,6 +383,7 @@ export async function desconectarMercadoPagoAcao(clubeId: string): Promise<Resul
     .update(clubes)
     .set({ mpAccessToken: null, mpRefreshToken: null, mpUserId: null, mpTokenExpiraEm: null, mpConectado: false, mpConectadoEm: null })
     .where(eq(clubes.id, clubeId));
+  if (acesso.clube.mpConectado) await avisarMudancaContaMp({ clube: acesso.clube, acao: 'desconectada', porEmail: acesso.usuario.email });
   atualizarPainel();
   return { ok: true };
 }

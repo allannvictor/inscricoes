@@ -1,5 +1,5 @@
 {
-  "id": "3199dcc6-7b61-4e9a-90fd-3d69b0e0b9db",
+  "id": "23151987-c4f9-4c79-9ddd-a2cacbd02690",
   "prevId": "8df4fef4-db4e-414d-b97d-dd3ca5e03ac4",
   "version": "7",
   "dialect": "postgresql",
@@ -180,6 +180,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "criado_em": {
           "name": "criado_em",
           "type": "timestamp with time zone",
@@ -194,6 +200,27 @@
           "columns": [
             {
               "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "criado_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "codigos_login_ip_idx": {
+          "name": "codigos_login_ip_idx",
+          "columns": [
+            {
+              "expression": "ip_hash",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1182,6 +1209,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "criado_em": {
           "name": "criado_em",
           "type": "timestamp with time zone",
@@ -1196,6 +1229,27 @@
           "columns": [
             {
               "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "criado_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tentativas_senha_ip": {
+          "name": "tentativas_senha_ip",
+          "columns": [
+            {
+              "expression": "ip_hash",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

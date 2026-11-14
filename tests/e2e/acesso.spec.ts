@@ -9,9 +9,26 @@ async function entrarComCodigo(page: Page, email: string, destino = '/entrar') {
   await page.waitForURL((u) => !u.pathname.startsWith('/entrar'));
 }
 
-test('senha opcional: criar em Meus dados, entrar com senha, errar e remover', async ({ page }) => {
+test('depois do login, nunca redireciona para outro site', async ({ page }) => {
+  const email = `redir+${Date.now()}@exemplo.com`;
+  await page.goto('/entrar?voltar=' + encodeURIComponent('/\\site-falso.com'));
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByRole('button', { name: 'Receber código' }).click();
+  await page.getByLabel('Código').fill('123456');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.waitForURL((u) => !u.pathname.startsWith('/entrar'));
+  expect(new URL(page.url()).host).toBe('localhost:3100');
+  expect(new URL(page.url()).pathname).toBe('/');
+});
+
+test('senha opcional: criar em Meus dados, entrar com senha, errar e remover', async ({ page, browser }) => {
   const email = `senha+${Date.now()}@exemplo.com`;
   const senha = 'corrida de domingo';
+
+  // Outra sessão aberta (outro aparelho), que deve cair quando a senha for criada.
+  const outroAparelho = await browser.newContext();
+  const outra = await outroAparelho.newPage();
+  await entrarComCodigo(outra, email, '/entrar?voltar=/minha-conta');
 
   // Sem Google configurado, o botão não aparece.
   await page.goto('/entrar');
@@ -29,6 +46,11 @@ test('senha opcional: criar em Meus dados, entrar com senha, errar e remover', a
   await acesso.getByLabel('Repita a senha').fill(senha);
   await acesso.getByRole('button', { name: 'Salvar senha' }).click();
   await expect(acesso.getByText(/Senha salva/)).toBeVisible();
+
+  // A sessão do outro aparelho foi encerrada.
+  await outra.goto('/minha-conta');
+  await expect(outra).toHaveURL(/\/entrar/);
+  await outroAparelho.close();
 
   // Sai e entra com senha (errada, depois certa).
   await page.getByRole('button', { name: 'Sair' }).click();

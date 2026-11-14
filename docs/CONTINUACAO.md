@@ -186,12 +186,14 @@ Melhorias de experiência sugeridas, para qualquer direção:
 ## 7. Pendências e decisões em aberto
 
 - **Revisão de segurança (14/11):** criado o agente `revisor-seguranca` (`.claude/agents/revisor-seguranca.md`). Ele roda **antes de todo PR `staging` → `main`** e dá o veredito Liberado / Com ressalvas / Bloqueado. A regra está no `CLAUDE.md`.
-- **Achados da revisão manual de 14/11, a corrigir (aguardando o OK do Allan):**
-  1. **Redirecionamento aberto em `voltar`:** `/\site.com` passa na checagem `startsWith('/') && !startsWith('//')` e o navegador vai para outro site depois do login (risco de phishing). Existe desde a etapa 1.
-  2. **Troca da conta Mercado Pago sem aviso:** qualquer organizador do clube pode conectar outra conta. Avisar por e-mail todos os organizadores e o master quando a conta for conectada ou trocada.
-  3. **Criar ou trocar a senha não encerra as outras sessões:** quem tiver uma sessão roubada poderia criar uma senha. Encerrar as outras sessões ao mudar a senha e avisar por e-mail.
-  4. **Limite de tentativas só por e-mail:** falta também um limite por IP (tentativas em massa contra vários e-mails).
-  5. **Master sem segundo fator:** quem acessar o e-mail do master controla tudo. Avaliar um 2º fator para o master no futuro.
+- **Achados da revisão manual de 14/11:** o Allan autorizou, e os itens 1 a 4 (mais um 5º, achado depois) foram **corrigidos no PR #11**:
+  1. ✅ **Redirecionamento aberto em `voltar`** (`/\site.com`): agora todo destino passa por `destinoInterno` (`src/lib/regras/redirecionamento.ts`, com testes).
+  2. ✅ **Troca da conta Mercado Pago:** e-mail para todos os organizadores do clube e para os masters ao conectar, trocar ou desconectar (`src/lib/pagamento/avisos.ts`).
+  3. ✅ **Senha criada, trocada ou removida:** encerra as sessões nos outros aparelhos e manda um aviso por e-mail. Ligar a conta Google a uma conta existente também avisa.
+  4. ✅ **Limite por IP** (só o hash do IP é guardado): 30 senhas erradas a cada 15 minutos e 20 códigos por hora.
+  5. ✅ **Pix simulado em produção:** com `PERMITIR_SIMULADO=1` ainda ligado na produção, um clube que desconectasse o Mercado Pago depois de publicar teria Pix simulado, e o comprador poderia "simular" e se inscrever de graça. Agora `simuladoPermitido` é sempre falso com `VERCEL_ENV=production`.
+  - Ainda em aberto:
+    - **Master sem segundo fator:** quem acessar o e-mail do master controla tudo. Avaliar um 2º fator para o master no futuro.
 
 - **Etapa 7 (lançamento):**
   - decidir a **hospedagem comercial**: o plano Hobby da Vercel é para uso não comercial. Recomendação de 14/11: **Vercel Pro** (cerca de US$ 20 por mês; nada muda no projeto). Outras opções avaliadas: Netlify, Cloudflare Workers e Fly.io. O Allan pediu para **discutir no futuro**;

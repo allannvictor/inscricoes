@@ -86,6 +86,8 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda tudo isso a cada push.
 | Ícones | `src/components/Icones.tsx` |
 | Agenda (.ics), mapa e compartilhar | `src/lib/agenda.ts` e `src/app/eventos/[slug]/agenda.ics/route.ts` |
 | Página inicial | `src/app/page.tsx` |
+| Para onde o site pode mandar depois do login (só caminhos internos) | `src/lib/regras/redirecionamento.ts` |
+| Revisão de segurança antes da produção (agente) | `.claude/agents/revisor-seguranca.md` |
 | Página do evento | `src/app/eventos/[slug]/page.tsx` |
 | Formulário de inscrição | `src/components/FormularioInscricao.tsx` |
 | O que é obrigatório por pessoa (sexo só com categoria, camisa só se o evento pede) e quando "Você" aparece em resumo | `src/lib/regras/participante.ts` |
@@ -121,14 +123,16 @@ Cada clube conecta a própria conta em **Painel → Pagamento**, e o Pix das ins
   - copie o *Client ID* e o *Client Secret* para `MP_CLIENT_ID` e `MP_CLIENT_SECRET`.
 - **Tokens:** ficam criptografados no banco (chave derivada do `SESSION_SECRET`) e são renovados sozinhos antes de vencer (valem 180 dias).
 - **Token do site:** `MP_ACCESS_TOKEN` vale **só** para o clube de `MP_CLUBE_DO_TOKEN` (padrão: `cf-assessoria`). Um clube sem conta conectada nunca usa a conta de outro.
-- **Publicar evento:** só depois de conectar. Fora da produção, o Pix simulado também vale.
+- **Publicar evento:** só depois de conectar. Fora da produção, o Pix simulado também vale. **Em produção, o Pix simulado nunca vale**, mesmo com `PERMITIR_SIMULADO`.
+- **Aviso:** conectar, trocar ou desconectar a conta manda um e-mail para todos os organizadores do clube e para os masters.
 - Regras em `src/lib/pagamento/situacao.ts`; conexão em `src/lib/pagamento/oauth-mercadopago.ts`.
 
 ## Entrar (código, senha e Google)
 
 - **Código por e-mail:** o padrão; a conta nasce no primeiro acesso.
 - **Senha opcional:** criada em Meus dados → Acesso.
-  - Hash Argon2id; aceita 5 tentativas erradas a cada 15 minutos por e-mail.
+  - Hash Argon2id; aceita 5 tentativas erradas a cada 15 minutos por e-mail e 30 por IP (só o hash do IP é guardado). O pedido de código tem limite de 20 por hora por IP.
+  - Criar, trocar ou remover a senha encerra as sessões nos outros aparelhos e avisa por e-mail.
   - "Esqueci a senha": entrar com o código e criar outra.
   - Arquivos: `src/lib/auth/senha.ts` e `src/lib/regras/senha.ts`.
 - **Entrar com Google:** aparece quando `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estão configurados.

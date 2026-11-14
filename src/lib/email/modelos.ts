@@ -81,3 +81,16 @@ export function emailConviteOrganizador(args: { clube: string; link: string }) {
     ),
   };
 }
+
+/** Aviso de segurança genérico (senha, Google, Mercado Pago). Sempre diz o que fazer se a pessoa não reconhecer. */
+export function emailAvisoSeguranca(args: { assunto: string; titulo: string; linhas: string[]; seNaoFoiVoce: string }) {
+  return {
+    assunto: args.assunto,
+    texto: [...args.linhas, '', args.seNaoFoiVoce].join('\n'),
+    html: layout(
+      args.titulo,
+      `${args.linhas.map((l) => `<p style="margin:0 0 12px">${esc(l)}</p>`).join('')}
+<p style="margin:16px 0 0;padding:12px;background:#fff1d6;border-radius:8px;color:#9a5b00"><b>Não reconhece?</b> ${esc(args.seNaoFoiVoce)}</p>`,
+    ),
+  };
+}

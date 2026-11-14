@@ -8,7 +8,9 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { cupons, eventos, inscricoes, socios, usuarios } from '@/db/schema';
 import { solicitarCodigo, verificarCodigo } from '@/lib/auth/codigo-email';
-import { encerrarSessao, usuarioAtual } from '@/lib/auth/sessao';
+import { encerrarOutrasSessoes, encerrarSessao, usuarioAtual } from '@/lib/auth/sessao';
+import { enviarEmail } from '@/lib/email/enviar';
+import { emailAvisoSeguranca } from '@/lib/email/modelos';
 import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
 import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
@@ -44,13 +46,31 @@ export async function definirSenhaAcao(senha: string): Promise<{ ok: boolean; er
   const problema = problemaDaSenha(senha, usuario.email);
   if (problema) return { ok: false, erro: problema };
   await db.update(usuarios).set({ senhaHash: await gerarHashSenha(senha) }).where(eq(usuarios.id, usuario.id));
+  // Quem tivesse uma sessão roubada perde o acesso; a pessoa recebe um aviso.
+  await encerrarOutrasSessoes(usuario.id);
+  await avisarSenha(usuario.email, usuario.senhaHash ? 'trocada' : 'criada');
   return { ok: true };
+}
+
+async function avisarSenha(email: string, acao: 'criada' | 'trocada' | 'removida') {
+  const msg = emailAvisoSeguranca({
+    assunto: `Sua senha foi ${acao}`,
+    titulo: `Senha ${acao}`,
+    linhas: [
+      `A senha da sua conta no Inscrições Fast foi ${acao} agora.`,
+      acao === 'removida' ? 'Agora você entra só com o código enviado ao e-mail.' : 'Por segurança, saímos da sua conta nos outros aparelhos.',
+    ],
+    seNaoFoiVoce: 'Entre com o código enviado a este e-mail, vá em Meus dados → Acesso e crie uma nova senha (ou remova a senha).',
+  });
+  await enviarEmail({ para: email, ...msg }).catch((e) => console.error('Aviso de senha não enviado', e));
 }
 
 export async function removerSenhaAcao(): Promise<{ ok: boolean; erro?: string }> {
   const usuario = await usuarioAtual();
   if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
   await db.update(usuarios).set({ senhaHash: null }).where(eq(usuarios.id, usuario.id));
+  await encerrarOutrasSessoes(usuario.id);
+  await avisarSenha(usuario.email, 'removida');
   return { ok: true };
 }
 

@@ -78,9 +78,11 @@ export const tentativasSenha = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     email: text('email').notNull(),
+    // Hash do IP (nunca o IP em si), para o limite por IP.
+    ipHash: text('ip_hash'),
     criadoEm: criadoEm(),
   },
-  (t) => [index('tentativas_senha_email').on(t.email, t.criadoEm)],
+  (t) => [index('tentativas_senha_email').on(t.email, t.criadoEm), index('tentativas_senha_ip').on(t.ipHash, t.criadoEm)],
 );
 
 export const codigosLogin = pgTable(
@@ -92,9 +94,11 @@ export const codigosLogin = pgTable(
     expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
     tentativas: integer('tentativas').notNull().default(0),
     usadoEm: timestamp('usado_em', { withTimezone: true }),
+    // Hash do IP de quem pediu o código (limite por IP). Nunca o IP em si.
+    ipHash: text('ip_hash'),
     criadoEm: criadoEm(),
   },
-  (t) => [index('codigos_login_email_idx').on(t.email, t.criadoEm)],
+  (t) => [index('codigos_login_email_idx').on(t.email, t.criadoEm), index('codigos_login_ip_idx').on(t.ipHash, t.criadoEm)],
 );
 
 export const sessoes = pgTable('sessoes', {

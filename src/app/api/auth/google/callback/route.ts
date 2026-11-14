@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { iguais } from '@/lib/auth/cripto';
 import { credenciaisGoogle, trocarCodigoGoogle, urlRetornoGoogle } from '@/lib/auth/google';
 import { entrarComGoogle } from '@/lib/auth/google-login';
+import { destinoInterno } from '@/lib/regras/redirecionamento';
 
 /** Volta do Google: confere o state, troca o código e entra (ou cria a conta). */
 export async function GET(req: Request) {
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
   } catch {
     salvo = null;
   }
-  const voltar = salvo?.voltar?.startsWith('/') && !salvo.voltar.startsWith('//') ? salvo.voltar : '/';
+  const voltar = destinoInterno(salvo?.voltar);
   const falhou = (motivo: string) => NextResponse.redirect(`${base}/entrar?erro=${motivo}&voltar=${encodeURIComponent(voltar)}`);
 
   const code = url.searchParams.get('code');

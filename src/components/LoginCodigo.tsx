@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { entrarComSenhaAcao, solicitarCodigoAcao, verificarCodigoAcao } from '@/app/acoes';
+import { destinoInterno } from '@/lib/regras/redirecionamento';
 
 /**
  * Entrar: código de 6 dígitos no e-mail (padrão; a conta é criada no primeiro acesso),
@@ -33,7 +34,7 @@ export function LoginCodigo({ destino, modoTeste = false, google = false, erroIn
       setErro(null);
       const r = await entrarComSenhaAcao(email, senha);
       if (!r.ok) return setErro(r.erro ?? 'Não foi possível entrar.');
-      router.replace(destino);
+      router.replace(destinoInterno(destino));
       router.refresh();
     });
 
@@ -95,7 +96,7 @@ export function LoginCodigo({ destino, modoTeste = false, google = false, erroIn
       setErro(null);
       const r = await verificarCodigoAcao(email, codigo);
       if (!r.ok) return setErro(r.erro ?? 'Código inválido.');
-      router.replace(destino);
+      router.replace(destinoInterno(destino));
       router.refresh();
     });
 

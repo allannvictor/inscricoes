@@ -2,11 +2,11 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { pkce, tokenAleatorio } from '@/lib/auth/cripto';
 import { credenciaisGoogle, urlLoginGoogle, urlRetornoGoogle } from '@/lib/auth/google';
+import { destinoInterno } from '@/lib/regras/redirecionamento';
 
 /** "Entrar com Google": guarda state + verificador PKCE num cookie de 10 minutos e manda para o Google. */
 export async function GET(req: Request) {
-  const voltarBruto = new URL(req.url).searchParams.get('voltar') ?? '/';
-  const voltar = voltarBruto.startsWith('/') && !voltarBruto.startsWith('//') ? voltarBruto : '/';
+  const voltar = destinoInterno(new URL(req.url).searchParams.get('voltar'));
   const app = credenciaisGoogle();
   const base = process.env.APP_URL ?? new URL(req.url).origin;
   if (!app) return NextResponse.redirect(`${base}/entrar?voltar=${encodeURIComponent(voltar)}`);
