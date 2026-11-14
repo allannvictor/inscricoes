@@ -170,7 +170,8 @@ Melhorias de experiência sugeridas, para qualquer direção:
 - **Página inicial:** ✅ grade de eventos na etapa 4 + 5.
 - **Agente de produto (14/11):** criado o `especialista-produto` (`.claude/agents/especialista-produto.md`), com a memória em `docs/produto/` (estratégia, mercado, backlog de 18 oportunidades pontuadas e radares semanais).
   - Ele só propõe; nada do backlog entra no plano sem o Allan aprovar.
-  - **Em aberto:** o Allan decidir o dia, o horário e o formato da **rotina semanal** (tarefa agendada que roda o radar e entrega o resultado).
+  - **Rotina semanal (decidida em 14/11):** toda **segunda às 7h40** (horário de Brasília), uma tarefa agendada ("Radar semanal de produto") abre uma sessão nova, roda o agente no modo radar e abre um **PR para o `staging`** só com `docs/produto/`. Também avisa por notificação no celular.
+    - **Atenção:** a tarefa foi criada sem os conectores (GitHub). Se a sessão da segunda não conseguir enviar o branch ou abrir o PR, recriar a tarefa pela tela de tarefas agendadas do claude.ai, com o repositório `allannvictor/inscricoes` e o GitHub marcados.
   - **Limite da rede:** a sessão na nuvem faz buscas na web, mas não abre os sites dos concorrentes (ticketsports, sympla, minhasinscricoes, runsignup, haid). Para um radar mais rico, esses endereços podem ser liberados na rede do ambiente.
 
 ## 8. Dicas técnicas para a próxima sessão
