@@ -30,11 +30,15 @@ export const clubes = pgTable('clubes', {
   // Visual: cor de destaque (#RRGGBB; vazio = cor padrão da plataforma) e nome do preço especial (vazio = "Sócio").
   cor: text('cor'),
   nomePrecoEspecial: text('nome_preco_especial'),
-  // Conta Mercado Pago conectada (OAuth, etapa 2). Na etapa 1 usamos MP_ACCESS_TOKEN do ambiente.
+  // Conta Mercado Pago do clube, conectada pelo organizador (OAuth, etapa 6).
+  // Os tokens ficam CRIPTOGRAFADOS (src/lib/auth/cripto.ts). O token do ambiente (MP_ACCESS_TOKEN)
+  // vale só para o clube indicado em MP_CLUBE_DO_TOKEN (padrão: cf-assessoria).
   mpAccessToken: text('mp_access_token'),
   mpRefreshToken: text('mp_refresh_token'),
   mpUserId: text('mp_user_id'),
   mpConectado: boolean('mp_conectado').notNull().default(false),
+  mpTokenExpiraEm: timestamp('mp_token_expira_em', { withTimezone: true }),
+  mpConectadoEm: timestamp('mp_conectado_em', { withTimezone: true }),
   // Comissão da plataforma (etapa 6). 'nenhuma' | 'percentual' | 'fixa'
   comissaoTipo: text('comissao_tipo').notNull().default('nenhuma'),
   comissaoValor: integer('comissao_valor').notNull().default(0),
@@ -51,8 +55,10 @@ export const usuarios = pgTable('usuarios', {
   telefone: text('telefone'),
   camisa: text('camisa'),
   contatoEmergencia: text('contato_emergencia'),
-  // Reservado para login com senha no futuro (hoje o login é só por código no e-mail).
+  // Login opcional com senha (etapa 6). O código por e-mail continua valendo.
   senhaHash: text('senha_hash'),
+  // Conta Google ligada (Entrar com Google): o "sub" do Google.
+  googleId: text('google_id').unique(),
   criadoEm: criadoEm(),
 });
 
@@ -64,6 +70,17 @@ export const organizadores = pgTable(
     papel: text('papel').notNull().default('admin'),
   },
   (t) => [primaryKey({ columns: [t.clubeId, t.usuarioId] })],
+);
+
+/** Tentativas erradas de senha, para o limite de tentativas (5 a cada 15 minutos por e-mail). */
+export const tentativasSenha = pgTable(
+  'tentativas_senha',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (t) => [index('tentativas_senha_email').on(t.email, t.criadoEm)],
 );
 
 export const codigosLogin = pgTable(

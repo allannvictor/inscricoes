@@ -68,3 +68,16 @@ export function emailTransferenciaEnviada(args: { evento: string; nomeAnterior: 
     ),
   };
 }
+
+export function emailConviteOrganizador(args: { clube: string; link: string }) {
+  return {
+    assunto: `Você foi convidado para organizar o ${args.clube}`,
+    texto: `Você foi adicionado como organizador do ${args.clube} no Inscrições Fast.\nEntre com este e-mail em ${args.link} (enviamos um código de acesso na hora).`,
+    html: layout(
+      `Organizador do ${args.clube}`,
+      `<p style="margin:0 0 16px">Você foi adicionado como organizador do <b>${esc(args.clube)}</b> no Inscrições Fast. No painel você cria eventos, acompanha os inscritos e conecta a conta Mercado Pago do clube.</p>
+<p style="margin:0 0 16px"><a href="${esc(args.link)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:10px">Abrir o painel</a></p>
+<p style="margin:0;color:#5f6670">Entre com este e-mail. Enviamos um código de acesso na hora.</p>`,
+    ),
+  };
+}

@@ -49,9 +49,42 @@ test('atleta não acessa o painel', async ({ page }) => {
 
 test('master vê todos os clubes', async ({ page }) => {
   await entrar(page, 'master@exemplo.com', '/entrar?voltar=/painel');
-  await expect(page.getByRole('heading', { name: 'Escolha o clube' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Clubes', exact: true })).toBeVisible();
   await page.getByRole('link', { name: /CF Assessoria Esportiva/ }).click();
   await expect(page.getByText('Painel · acesso master')).toBeVisible();
+});
+
+test('master cria um clube e o organizador convidado entra no painel dele', async ({ page, browser }) => {
+  const t = Date.now();
+  const nome = `Clube E2E ${t}`;
+  const emailOrg = `org+${t}@exemplo.com`;
+  await entrar(page, 'master@exemplo.com', '/entrar?voltar=/painel');
+  await page.getByRole('link', { name: '+ Novo clube' }).click();
+  await page.getByLabel('Nome do clube').fill(nome);
+  await expect(page.getByLabel('Endereço no painel')).toHaveValue(`clube-e2e-${t}`);
+  await page.getByLabel('E-mail do primeiro organizador').fill(emailOrg);
+  await page.getByLabel(/Nome do preço especial/).fill('Associado');
+  await page.getByRole('button', { name: 'Criar clube e enviar convite' }).click();
+  await expect(page.getByText('Clube criado e convite enviado.')).toBeVisible();
+
+  // Mesmo endereço de novo: recusado.
+  await page.goto('/painel/clubes/novo');
+  await page.getByLabel('Nome do clube').fill(nome);
+  await page.getByLabel('E-mail do primeiro organizador').fill(emailOrg);
+  await page.getByRole('button', { name: 'Criar clube e enviar convite' }).click();
+  await expect(page.getByText(/Já existe um clube com o endereço/)).toBeVisible();
+
+  // O organizador convidado cai direto no clube e vê que falta conectar o Mercado Pago.
+  const ctx = await browser.newContext();
+  const org = await ctx.newPage();
+  await entrar(org, emailOrg, '/entrar?voltar=/painel');
+  await expect(org).toHaveURL(new RegExp(`/painel/c/clube-e2e-${t}$`));
+  await org.goto(`/painel/c/clube-e2e-${t}/pagamento`);
+  await expect(org.getByText('Conecte a conta Mercado Pago do clube', { exact: false })).toBeVisible();
+  // Organizador comum não cria clubes.
+  await org.goto('/painel/clubes/novo');
+  await expect(org.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
+  await ctx.close();
 });
 
 /** Data (AAAA-MM-DD) daqui a `dias` dias, para o teste não envelhecer. */

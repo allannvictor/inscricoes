@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { FormularioInscricao } from '@/components/FormularioInscricao';
 import { LoginCodigo } from '@/components/LoginCodigo';
 import { codigoTesteAtivo } from '@/lib/ambiente';
+import { googleAtivo } from '@/lib/auth/google';
 import { pessoasJaInscritas } from '@/lib/atleta/consultas';
 import { usuarioAtual } from '@/lib/auth/sessao';
 import { TemaClube } from '@/components/TemaClube';
@@ -40,7 +41,7 @@ export default async function Inscricao({ params }: { params: Promise<{ slug: st
     return (
       <div className="pagina">
         {voltar}
-        <LoginCodigo destino={`/eventos/${slug}/inscricao`} modoTeste={!!codigoTesteAtivo()} />
+        <LoginCodigo destino={`/eventos/${slug}/inscricao`} modoTeste={!!codigoTesteAtivo()} google={googleAtivo()} />
       </div>
     );
   }

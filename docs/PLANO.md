@@ -228,6 +228,8 @@ Decidido em 14/11/2026: o cadastro de clubes, antes na última etapa, vem para c
 - **Entrar com Google:** um toque, pela conta Google. Se o e-mail do Google já tiver conta, entra nela.
 - Precisa de um "cliente OAuth" no Google Cloud. O Allan cria pela tela e põe `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` na Vercel, nunca no chat.
 
+**Situação (14/11/2026):** feita, num PR para o `staging`. Detalhe técnico: a senha usa Argon2id (`@node-rs/argon2`) em `src/lib/auth/senha.ts`.
+
 **Pronto quando:** o Allan criar um segundo clube de teste pelo painel master, o organizador dele conectar um Mercado Pago (de teste) e publicar um evento, e der para entrar com senha e com Google, na homologação.
 
 ### Etapa 7: Uso real

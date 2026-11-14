@@ -6,9 +6,11 @@
 import { redirect } from 'next/navigation';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
-import { cupons, eventos, inscricoes, socios } from '@/db/schema';
+import { cupons, eventos, inscricoes, socios, usuarios } from '@/db/schema';
 import { solicitarCodigo, verificarCodigo } from '@/lib/auth/codigo-email';
 import { encerrarSessao, usuarioAtual } from '@/lib/auth/sessao';
+import { entrarComSenha, gerarHashSenha } from '@/lib/auth/senha';
+import { problemaDaSenha, SENHA_MAXIMO } from '@/lib/regras/senha';
 import { criarPedido, type ResultadoCriacao } from '@/lib/pedidos/servico';
 import { limparCpf, validarCpf } from '@/lib/regras/cpf';
 
@@ -27,6 +29,29 @@ export async function solicitarCodigoAcao(email: string): Promise<{ ok: boolean;
 export async function verificarCodigoAcao(email: string, codigo: string): Promise<{ ok: boolean; erro?: string }> {
   if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };
   return verificarCodigo(email, codigo);
+}
+
+export async function entrarComSenhaAcao(email: string, senha: string): Promise<{ ok: boolean; erro?: string }> {
+  if (!emailValido(email)) return { ok: false, erro: 'Digite um e-mail válido.' };
+  if (!senha) return { ok: false, erro: 'Digite a senha.' };
+  return entrarComSenha(email, senha.slice(0, SENHA_MAXIMO));
+}
+
+/** Cria ou troca a senha de quem está logado. Ter entrado (por código, Google ou senha) já prova que o e-mail é da pessoa. */
+export async function definirSenhaAcao(senha: string): Promise<{ ok: boolean; erro?: string }> {
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
+  const problema = problemaDaSenha(senha, usuario.email);
+  if (problema) return { ok: false, erro: problema };
+  await db.update(usuarios).set({ senhaHash: await gerarHashSenha(senha) }).where(eq(usuarios.id, usuario.id));
+  return { ok: true };
+}
+
+export async function removerSenhaAcao(): Promise<{ ok: boolean; erro?: string }> {
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: 'Entre de novo para continuar.' };
+  await db.update(usuarios).set({ senhaHash: null }).where(eq(usuarios.id, usuario.id));
+  return { ok: true };
 }
 
 export async function sairAcao(): Promise<void> {

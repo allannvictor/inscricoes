@@ -17,7 +17,7 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 | 3. Área do atleta | **Aprovada** (no `staging`): minhas inscrições (abas Inscrito, Cancelados e Passadas, agrupadas por prova), comprovante, transferência pelo atleta, meus dados |
 | 4. Identidade visual (layout novo) | **Pronta para teste**: cor e nome do preço especial por clube, página do evento com foto em destaque, ícones, selos, agenda, compartilhar e sanfonas |
 | 5. Versão para computador | **Pronta para teste**: evento, formulário e Pix com lateral fixa no computador, página inicial em grade, testes em 1366 px |
-| 6. Cadastro de clubes + login novo | A fazer: clubes criados pelo master, Mercado Pago por clube, senha opcional e Entrar com Google |
+| 6. Cadastro de clubes + login novo | **Pronta para teste**: clubes criados pelo master (com convite), "Conectar Mercado Pago" por clube, senha opcional e Entrar com Google |
 | 7 a 9 | A fazer (uso real, extras, plataforma aberta) |
 
 ## Stack
@@ -61,6 +61,7 @@ Depois abra **http://localhost:3000/eventos/simulado-10k-dezembro**.
 ```bash
 npm test             # regras de preço, meia, cupom, categoria, CPF, permissões, assinatura do webhook
 npm run test:e2e     # fluxo completo no navegador (roda no celular e num monitor de 1366 px; precisa do banco com seed; na 1ª vez: npx playwright install chromium)
+# Mais estável (versão compilada, como no CI): npm run build && E2E_PRODUCAO=1 npm run test:e2e
 npm run lint
 npm run typecheck
 ```
@@ -110,6 +111,30 @@ Os valores em dinheiro ficam sempre em **centavos** (inteiros), para não haver 
    - Localmente, a tela do Pix consulta o Mercado Pago a cada 5 segundos, então a confirmação funciona mesmo sem webhook.
 
 **No Pix real:** o e-mail de quem paga precisa ser diferente do e-mail da conta Mercado Pago que recebe.
+
+### Conta de cada clube ("Conectar Mercado Pago")
+
+Cada clube conecta a própria conta em **Painel → Pagamento**, e o Pix das inscrições dele cai direto nela.
+- **Na aplicação do Mercado Pago:**
+  - em **URLs de redirecionamento**, cadastre `https://SEU-SITE/api/mercadopago/oauth/callback` (uma para a homologação e outra para a produção);
+  - ligue o **PKCE**;
+  - copie o *Client ID* e o *Client Secret* para `MP_CLIENT_ID` e `MP_CLIENT_SECRET`.
+- **Tokens:** ficam criptografados no banco (chave derivada do `SESSION_SECRET`) e são renovados sozinhos antes de vencer (valem 180 dias).
+- **Token do site:** `MP_ACCESS_TOKEN` vale **só** para o clube de `MP_CLUBE_DO_TOKEN` (padrão: `cf-assessoria`). Um clube sem conta conectada nunca usa a conta de outro.
+- **Publicar evento:** só depois de conectar. Fora da produção, o Pix simulado também vale.
+- Regras em `src/lib/pagamento/situacao.ts`; conexão em `src/lib/pagamento/oauth-mercadopago.ts`.
+
+## Entrar (código, senha e Google)
+
+- **Código por e-mail:** o padrão; a conta nasce no primeiro acesso.
+- **Senha opcional:** criada em Meus dados → Acesso.
+  - Hash Argon2id; aceita 5 tentativas erradas a cada 15 minutos por e-mail.
+  - "Esqueci a senha": entrar com o código e criar outra.
+  - Arquivos: `src/lib/auth/senha.ts` e `src/lib/regras/senha.ts`.
+- **Entrar com Google:** aparece quando `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estão configurados.
+  - Liga a conta pelo e-mail verificado do Google.
+  - URL de retorno: `https://SEU-SITE/api/auth/google/callback`.
+  - Arquivos: `src/lib/auth/google.ts` e `src/lib/auth/google-login.ts`.
 
 ## Publicar (Vercel + Neon)
 
@@ -168,7 +193,9 @@ Com isso:
 
 Fica em **`/painel`**, com o mesmo login por código.
 - **Organizador:** quem está na lista de organizadores de um clube (Perfil do clube → Organizadores). Pode tudo nos eventos do clube.
-- **Master:** os e-mails em `ADMIN_EMAILS` acessam o painel de qualquer clube. Não existe senha master: o acesso é pelo código enviado ao e-mail.
+- **Master:** os e-mails em `ADMIN_EMAILS` acessam o painel de qualquer clube e **criam clubes** (`/painel` → "+ Novo clube").
+  - Ao criar um clube, o primeiro organizador recebe um convite por e-mail.
+  - O mesmo vale para quem é adicionado em Perfil do clube → Organizadores.
 
 ### Arquivos (imagem do evento, foto do clube, regulamento)
 

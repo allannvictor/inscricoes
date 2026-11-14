@@ -4,8 +4,6 @@
  * Ações do painel do organizador. TODAS conferem a permissão no servidor
  * (verificarClube / verificarEvento) antes de ler ou gravar qualquer coisa.
  */
-import { normalizarCor } from '@/lib/regras/cores';
-import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
 import { and, count, eq, inArray, ne, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -17,6 +15,12 @@ import { conferirEvento, dataHoraBrasilia, eventoFormSchema, fimDoDiaBrasilia, p
 import { lerListaSocios } from '@/lib/painel/socios-lista';
 import { limparCpf } from '@/lib/regras/cpf';
 import { gerarSlug } from '@/lib/regras/slug';
+import { usuarioAtual } from '@/lib/auth/sessao';
+import { enviarEmail } from '@/lib/email/enviar';
+import { emailConviteOrganizador } from '@/lib/email/modelos';
+import { podePublicarEventos } from '@/lib/pagamento/situacao';
+import { normalizarCor } from '@/lib/regras/cores';
+import { LIMITE_NOME_PRECO_ESPECIAL } from '@/lib/regras/preco';
 
 type Resultado<T = object> = ({ ok: true } & T) | { ok: false; erros: string[] };
 const negado = { ok: false as const, erros: ['Você não tem acesso a isto.'] };
@@ -110,6 +114,9 @@ export async function alterarStatusEventoAcao(eventoId: string, status: string):
   if (!acesso) return negado;
   const novo = statusSchema.safeParse(status);
   if (!novo.success) return { ok: false, erros: ['Status inválido.'] };
+  if (novo.data === 'publicado' && !podePublicarEventos(acesso.clube)) {
+    return { ok: false, erros: ['Conecte a conta Mercado Pago do clube (Painel → Pagamento) antes de publicar. Sem ela, não dá para receber as inscrições.'] };
+  }
   await db.update(eventos).set({ status: novo.data }).where(eq(eventos.id, eventoId));
   atualizarPainel();
   return { ok: true };
@@ -310,10 +317,50 @@ export async function adicionarOrganizadorAcao(clubeId: string, emailBruto: stri
   if (!acesso) return negado;
   const email = emailBruto.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erros: ['Digite um e-mail válido.'] };
-  const [usuario] = await db.insert(usuarios).values({ email }).onConflictDoUpdate({ target: usuarios.email, set: { email } }).returning({ id: usuarios.id });
-  await db.insert(organizadores).values({ clubeId, usuarioId: usuario.id }).onConflictDoNothing();
+  await convidarOrganizador(acesso.clube, email);
   atualizarPainel();
   return { ok: true };
+}
+
+/** Adiciona o e-mail como organizador do clube e manda o convite (se ainda não era organizador). */
+async function convidarOrganizador(clube: { id: string; nome: string; slug: string }, email: string): Promise<void> {
+  const [usuario] = await db.insert(usuarios).values({ email }).onConflictDoUpdate({ target: usuarios.email, set: { email } }).returning({ id: usuarios.id });
+  const novo = await db.insert(organizadores).values({ clubeId: clube.id, usuarioId: usuario.id }).onConflictDoNothing().returning();
+  if (novo.length) {
+    const link = `${process.env.APP_URL ?? ''}/entrar?voltar=${encodeURIComponent(`/painel/c/${clube.slug}`)}`;
+    await enviarEmail({ para: email, ...emailConviteOrganizador({ clube: clube.nome, link }) }).catch((e) => console.error('Convite de organizador não enviado', e));
+  }
+}
+
+// ---------------------------------------------------------------- Clubes (só o master)
+
+const RESERVADOS = new Set(['novo', 'clubes', 'admin', 'painel', 'api']);
+
+const novoClubeSchema = z.object({
+  nome: z.string().trim().min(2, 'Informe o nome do clube').max(120),
+  slug: z.string().trim().max(60),
+  emailOrganizador: z.string().trim().toLowerCase().email('Informe o e-mail do organizador'),
+  cor: z.string().trim().refine((v) => v === '' || normalizarCor(v) !== null, 'Cor inválida: use o formato #RRGGBB.'),
+  nomePrecoEspecial: z.string().trim().max(LIMITE_NOME_PRECO_ESPECIAL, `O nome do preço especial pode ter até ${LIMITE_NOME_PRECO_ESPECIAL} letras.`),
+});
+
+export async function criarClubeAcao(dados: z.input<typeof novoClubeSchema>): Promise<Resultado<{ slug: string }>> {
+  const usuario = await usuarioAtual();
+  if (!usuario?.admin) return negado;
+  const parse = novoClubeSchema.safeParse(dados);
+  if (!parse.success) return { ok: false, erros: [...new Set(parse.error.issues.map((i) => i.message))] };
+  const d = parse.data;
+  const slug = gerarSlug(d.slug || d.nome);
+  if (RESERVADOS.has(slug)) return { ok: false, erros: ['Escolha outro endereço para o clube.'] };
+  const [existe] = await db.select({ id: clubes.id }).from(clubes).where(eq(clubes.slug, slug));
+  if (existe) return { ok: false, erros: [`Já existe um clube com o endereço "${slug}". Escolha outro.`] };
+  const [clube] = await db
+    .insert(clubes)
+    .values({ nome: d.nome, slug, cor: normalizarCor(d.cor), nomePrecoEspecial: d.nomePrecoEspecial || null })
+    .returning();
+  await convidarOrganizador(clube, d.emailOrganizador);
+  atualizarPainel();
+  return { ok: true, slug };
 }
 
 export async function removerOrganizadorAcao(clubeId: string, usuarioId: string): Promise<Resultado> {
@@ -322,6 +369,19 @@ export async function removerOrganizadorAcao(clubeId: string, usuarioId: string)
   const lista = await db.select({ id: organizadores.usuarioId }).from(organizadores).where(eq(organizadores.clubeId, clubeId));
   if (lista.length <= 1 && lista.some((o) => o.id === usuarioId)) return { ok: false, erros: ['O clube precisa ter pelo menos um organizador.'] };
   await db.delete(organizadores).where(and(eq(organizadores.clubeId, clubeId), inArray(organizadores.usuarioId, [usuarioId])));
+  atualizarPainel();
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------- Mercado Pago do clube
+
+export async function desconectarMercadoPagoAcao(clubeId: string): Promise<Resultado> {
+  const acesso = await verificarClube(clubeId);
+  if (!acesso) return negado;
+  await db
+    .update(clubes)
+    .set({ mpAccessToken: null, mpRefreshToken: null, mpUserId: null, mpTokenExpiraEm: null, mpConectado: false, mpConectadoEm: null })
+    .where(eq(clubes.id, clubeId));
   atualizarPainel();
   return { ok: true };
 }

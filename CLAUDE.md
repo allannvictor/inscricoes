@@ -39,5 +39,6 @@ Se a sessão estiver perto do fim, ou o Allan avisar que vai abrir outra, atuali
 - Em subconsultas com `sql`, escreva a coluna com a tabela (`"eventos"."id"`), não `${eventos.id}`.
 - Prévias e homologação **nunca** usam o banco de produção: só `DATABASE_URL_PREVIEW` (veja `src/db/url.ts`).
 - O código fixo de login (`LOGIN_CODIGO_TESTE`) **nunca** vale em produção (veja `src/lib/ambiente.ts`).
-- Antes de abrir PR, rode `npm run lint`, `npm run typecheck`, `npm test` e os testes de ponta a ponta (`PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off`, com o Postgres local ligado: `service postgresql start`).
+- Antes de abrir PR, rode `npm run lint`, `npm run typecheck`, `npm test` e os testes de ponta a ponta na versão compilada (`npm run build` e depois `E2E_PRODUCAO=1 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --trace off`, com o Postgres local ligado: `service postgresql start`).
+- Tokens e segredos de clubes ficam criptografados no banco (`cifrar`/`decifrar` em `src/lib/auth/cripto.ts`). O token do Mercado Pago do ambiente só vale para o clube de `MP_CLUBE_DO_TOKEN`; o dinheiro de um clube nunca pode cair na conta de outro.
 - Não coloque identificadores de modelo de IA em commits, PRs ou código.

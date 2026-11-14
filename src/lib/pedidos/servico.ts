@@ -198,7 +198,7 @@ export async function criarPedido(usuario: UsuarioAtual, entradaBruta: unknown):
 
   // 9. Cria o Pix. Se o Mercado Pago falhar, libera as vagas.
   try {
-    const provedor = provedorDoClube(clube);
+    const provedor = await provedorDoClube(clube);
     const [pedido] = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId));
     const pix = await provedor.criarPix({
       pedidoId,
@@ -311,7 +311,7 @@ export async function sincronizarPagamento(pedidoId: string): Promise<void> {
     .where(eq(pedidos.id, pedidoId));
   if (!linha || !linha.pedido.pagamentoId || linha.pedido.provedor !== 'mercadopago') return;
   if (!['pendente', 'expirado'].includes(linha.pedido.status)) return;
-  const consulta = await provedorDoClube(linha.clube).consultar(linha.pedido.pagamentoId);
+  const consulta = await (await provedorDoClube(linha.clube)).consultar(linha.pedido.pagamentoId);
   if (consulta.pedidoId && consulta.pedidoId !== pedidoId) return;
   if (consulta.status === 'aprovado' && consulta.valorCentavos >= linha.pedido.totalCentavos) {
     await confirmarPagamento(pedidoId, consulta.taxaCentavos);
