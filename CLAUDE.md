@@ -34,6 +34,12 @@ Esses arquivos são a memória do projeto entre sessões. **Atualize-os no mesmo
 
 Se a sessão estiver perto do fim, ou o Allan avisar que vai abrir outra, atualize o `docs/CONTINUACAO.md` antes de encerrar.
 
+## Agente de produto
+
+- O agente **`especialista-produto`** (`.claude/agents/especialista-produto.md`) faz o discovery: radar semanal de mercado, discovery de um tema, roadmap e auditoria de experiência.
+- Ele escreve **só** em `docs/produto/` e **propõe**; quem decide é o Allan. Uma oportunidade só vira trabalho depois de aprovada e posta no `docs/PLANO.md`.
+- Antes de propor uma etapa ou melhoria, consulte `docs/produto/BACKLOG.md`, para não repetir ideias já descartadas.
+
 ## Regras técnicas que já custaram caro
 
 - Valores em dinheiro são sempre em **centavos** (inteiros).
