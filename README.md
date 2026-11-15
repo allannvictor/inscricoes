@@ -6,6 +6,7 @@ O fluxo do atleta é: página do evento → entra com o e-mail e um código de 6
 
 - **Plano completo e etapas:** [`docs/PLANO.md`](docs/PLANO.md)
 - **Onde paramos / como continuar:** [`docs/CONTINUACAO.md`](docs/CONTINUACAO.md)
+- **Guias pela tela (Mercado Pago, Google, migrar para CNPJ):** [`docs/guias/`](docs/guias/)
 - **Protótipo clicável:** [`docs/prototipo.html`](docs/prototipo.html), que abre direto no navegador.
 
 ## Situação
