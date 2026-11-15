@@ -3,7 +3,7 @@
 Este arquivo resume **onde paramos**, **como trabalhamos** e **o que falta**, para continuar numa nova sessão.
 Os detalhes técnicos estão no `README.md` e o plano completo em `docs/PLANO.md`.
 
-> Última atualização: 14/11/2026 (sessão da tarde). Etapa 3 aprovada e **parada no `staging`** (decisão do Allan). Etapas 4 + 5 no hml (PR #10), aguardando o teste do Allan. **Etapa 6 no [PR #14](https://github.com/allannvictor/inscricoes/pull/14)** (branch `claude/zealous-tesla-5e85gx`; **substitui o #11**). Os baixos da 6ª e da 7ª varreduras foram corrigidos. Os 2 baixos da 8ª também foram corrigidos (com a regra nova de até 4 pessoas por pedido). A 9ª varredura completa deu **LIBERADO COM RESSALVAS** (1 baixo e 1 observação técnica), e o Allan **aceitou os dois** para rever na próxima etapa. ✅ **PR #14 com merge no `staging`** (14/11, CI verde). Falta: fechar o #11, configurar a Preview e testar a etapa 6 no hml (ver **seção 5**). Agente de produto criado (PR #12, já no `staging`). Hospedagem comercial: discutir no futuro.
+> Última atualização: 15/11/2026. Etapas 3 a 6 estão no `staging` (hml); a etapa 3 está parada lá por decisão do Allan, e o PR `staging` → `main` só sai quando ele pedir. **Etapa 6:** PRs #14 e #16 com merge no `staging` (CI verde). O "Conectar Mercado Pago" foi configurado e testado no hml. **Próximo passo: configurar o "Entrar com Google"**, seguindo `docs/guias/entrar-com-google.md`, a partir do Passo 1. Ver **seção 5, "Agora (15/11)"**. Agente de produto criado (PR #12). Hospedagem comercial: discutir no futuro.
 >
 > **Regra:** atualizar este arquivo (e o `PLANO.md`, se o plano mudar) a cada andamento, no mesmo branch de trabalho.
 
@@ -110,7 +110,22 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
 
 ## 5. Próximo passo imediato
 
-### ⏭️ Para a próxima sessão
+### ▶️ Agora (15/11/2026): onde paramos
+- **Etapa 6 no hml:** PRs #14 e #16 com merge no `staging`, ambos com o CI verde. Fechar o **#11 sem merge**, se ainda não foi.
+- **Mercado Pago por clube:** ✅ configurado e testado. Detalhes em `docs/guias/mercado-pago-conectar.md`.
+  - Para testar inscrições no hml, o Clube Teste deve ficar **desconectado** (Pix simulado). O Allan já desconectou e testou com sucesso.
+- **Próximo passo: "Entrar com Google".** O Allan vai criar o projeto no Google Cloud, a partir do Passo 1 de `docs/guias/entrar-com-google.md`. Guiar tela por tela, pedindo prints.
+- **Dúvida respondida:** dá para passar tudo para um **CNPJ** no futuro. Ver `docs/guias/migrar-para-cnpj.md`. No Mercado Pago, é preciso criar uma aplicação nova e reconectar os clubes. Melhor fazer antes de ter muitos clubes e antes da comissão (etapa 9).
+- **Na próxima etapa de código:**
+  - corrigir as 2 ressalvas da 9ª varredura (ver "Aceito pelo Allan por enquanto", abaixo);
+  - rodar a **10ª varredura completa**, que deve cobrir também o PR #16 (senha atual, código "Esqueci a senha atual" e dados da conta MP).
+- **Ideias anotadas, ainda não aprovadas:** avisar ou recusar conexão de **conta de teste** do Mercado Pago (em produção, ninguém conseguiria pagar o clube).
+- **Antes de produção:**
+  - o PR `staging` → `main` precisa da varredura do `revisor-seguranca` e do pedido do Allan;
+  - variáveis da etapa 6 em Production;
+  - URLs de produção cadastradas no Mercado Pago (✅ já feito) e no Google.
+
+### ⏭️ Histórico desta etapa (14/11)
 
 **Situação (14/11, tarde):**
 - Os 4 baixos da 6ª varredura foram **corrigidos**, com testes (lista abaixo, ✅). Commit `7cc6767`.
@@ -171,7 +186,9 @@ PR da etapa 3: o [#5](https://github.com/allannvictor/inscricoes/pull/5) (branch
      - Migração `0007_conta_mp_conectada`, com colunas `mp_conta_*` em `clubes`.
      - Clubes já conectados buscam os dados uma vez.
   5. **Topo:** botão "Minha conta" no lugar do e-mail.
-- **Pendente:** Google (Parte 2 do passo a passo) e o Pix do clube de teste.
+- ✅ **PR #16 com merge no `staging`** (CI verde). O log novo mostrou o motivo do 402: **`invalid_users_involved`**. Uma conta de teste do Mercado Pago só faz transação com outra conta de teste, e o pagador era o e-mail real do Allan.
+- **Decisão do Allan (14/11):** considerar o teste do Mercado Pago **concluído**. A conexão OAuth, o token do clube e os dados da conta foram provados, e o Pix real usa o mesmo código já validado na produção da CF. Ele **não quer** o ajuste de "pagador de teste" na homologação.
+- **Pendente:** Google (Parte 2 do passo a passo).
 - **Segurança:** os itens 3 e 4 mexem em login e no Mercado Pago. Eles entram na **10ª varredura**, na próxima etapa (decisão do Allan).
 
 **Os 4 achados da 6ª varredura** (todos BAIXOS; ✅ **corrigidos em 14/11, tarde**):
